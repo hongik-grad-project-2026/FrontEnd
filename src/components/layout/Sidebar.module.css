@@ -87,7 +87,19 @@
     background-color: var(--color-neutral-10);
 }
 
+.navItemIcon {
+    /* border: 1px solid darkorange; */
+    width: 24px;
+    height: 24px;
+    background-image: var(--nav-icon);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
 
+.navItem-active .navItemIcon {
+    background-image: var(--nav-icon-hover);
+}
 
 .userCon {
     background-color: darkmagenta;

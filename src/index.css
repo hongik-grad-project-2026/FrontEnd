@@ -225,21 +225,21 @@
     img[src*="/icons/icon24/"] {
         width: 24px;
         height: 24px;
-        object-fit: fill;
+        object-fit: contain;
     }
 
     /* src 속성에 /icons/icon16/ 가 포함된 모든 img 태그에 일괄 적용 */
     img[src*="/icons/icon16/"] {
         width: 16px;
         height: 16px;
-        object-fit: fill;
+        object-fit: contain;
     }
 
     /* src 속성에 /icons/icon60/ 가 포함된 모든 img 태그에 일괄 적용 */
     img[src*="/icons/icon60/"] {
         width: 60px;
         height: 60px;
-        object-fit: fill;
+        object-fit: contain;
     }
 }
 

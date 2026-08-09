@@ -23,8 +23,8 @@ function Breadcrumbs() {
     return (
         <div className={styles.breadcrumbs}>
             <div className={styles.btnCon}>
-                <IconButtonBorder icon='back' size='24' onClick={() => navigate(-1)} />
-                <IconButtonBorder icon='forward' size='24' onClick={() => navigate(1)} />
+                <IconButtonBorder icon='back--n50' size='24' onClick={() => navigate(-1)} />
+                <IconButtonBorder icon='forward--n50' size='24' onClick={() => navigate(1)} />
             </div>
             <div className={styles.crumbsCon}>
                 {crumbs.map((crumb, index) => {

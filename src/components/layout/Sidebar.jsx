@@ -14,8 +14,14 @@ function NavItem({ itemName = 'itemName', navLink = '/', icon = 'dashboard', end
                     `${styles.navItem} ${isActive ? styles['navItem-active'] : ''}`
                 }
             >
-                <img src={`/icons/icon24/${icon}.png`} alt={`navItemIcon-${icon}`} />
-                <p className={styles.itemName}>{itemName}</p>
+                <span
+                    className={styles.navItemIcon}
+                    style={{
+                        '--nav-icon': `url(/icons/icon24/${icon}.png)`,
+                        '--nav-icon-hover': `url(/icons/icon24/${icon}--primary.png)`,
+                    }}
+                />
+                <span className={styles.itemName}>{itemName}</span>
             </NavLink>
         </li>
     );
