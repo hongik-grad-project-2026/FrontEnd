@@ -1,0 +1,39 @@
+* {
+    box-sizing: border-box;
+
+}
+
+/* 외곽선 있는 스타일 공통 */
+.IconButtonBorder {
+    background-color: var(--color-white);
+    /* background-color: darkgreen; */
+    border-radius: 4px;
+    border: 1px solid var(--color-neutral-20);
+
+}
+
+.IconButtonBorder:hover {
+    background-color: var(--color-neutral-20);
+}
+
+.IconButtonBorder:active {
+    background-color: var(--color-neutral-30);
+}
+
+
+.IconButtonBorder24 {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.IconButtonBorder32 {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

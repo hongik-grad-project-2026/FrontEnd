@@ -1,0 +1,94 @@
+import { NavLink } from 'react-router-dom';
+import { useUser } from '../../context/UserContext';
+import styles from './Sidebar.module.css';
+import { IconTextButton } from '../common/Button';
+
+// ----- NavItem -----//
+function NavItem({ itemName = 'itemName', navLink = '/', icon = 'dashboard', end = false }) {
+    return (
+        <li>
+            <NavLink
+                end={end}
+                to={navLink}
+                className={({ isActive }) =>
+                    `${styles.navItem} ${isActive ? styles['navItem-active'] : ''}`
+                }
+            >
+                <img className={styles.itemIcon}
+                    src={`/icons/icon24/${icon}.png`}
+                    alt={`navItemIcon-${icon}`} />
+                <p className={styles.itemName}>{itemName}</p>
+            </NavLink>
+        </li>
+    );
+}
+
+
+function NavSubtitle({ titleName = 'titleName', children }) {
+    return (
+        <ul className={styles.navList}>
+            <p className={styles.navSubtitle}>{titleName}</p>
+            {children}
+        </ul>
+    );
+}
+
+function AccountPanel({ userName, userRole, userId }) {
+
+    return (
+        <div className={styles.accountPanel}>
+            <div className={styles.buttonCon}>
+                <IconTextButton icon='notification' text='알림' />
+                <IconTextButton icon='logout' text='로그아웃' />
+            </div>
+            <div className={styles.userinfoCon}>
+                <div className={styles.profileimgCon}>
+                    <img src="/images/hongikLogo-circle.png" alt="" />
+                </div>
+                <div className={styles.profiletextCon}>
+                    <p className={styles.userName}>{userName}</p>
+                    <p className={styles.userInfo}>{userRole === 'admin' ? '관리자 모드' : userId}</p>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ----- Sidebar -----//
+
+function Sidebar() {
+    // Context에서 사용자 정보 읽어옴
+    const { user } = useUser();
+    const userName = user.name;
+    const userId = user.id;
+    const accountMode = user.role;
+
+    return (
+        <section className={styles.sidebar}>
+            <h1 className={styles.logoArea}>
+                <img src="/images/h1.png" alt="홍익대학교" />
+                멀티미디어실
+            </h1>
+
+            <div className={styles.navCon}>
+                <NavSubtitle titleName='overview' >
+                    <NavItem itemName="대시보드" navLink={`/${accountMode}/`} icon='dashboard' end />
+                </NavSubtitle>
+
+                <NavSubtitle titleName='Management' >
+                    <NavItem itemName="대여신청 승인" navLink={`/${accountMode}/approval`} icon='approval' />
+                    <NavItem itemName="대여 현황" navLink={`/${accountMode}/status`} icon='status' />
+                    <NavItem itemName="기자재 관리" navLink={`/${accountMode}/equipment`} icon='equipment' />
+                    <NavItem itemName="대여 기록" navLink={`/${accountMode}/history`} icon='history' />
+                </NavSubtitle>
+                <NavSubtitle titleName='Account' >
+                    <NavItem itemName="회원 관리" navLink={`/${accountMode}/members`} icon='members' />
+                </NavSubtitle>
+            </div>
+
+            <AccountPanel userName={userName} userRole={accountMode} userId={userId} />
+        </section>
+    );
+}
+
+export default Sidebar;
