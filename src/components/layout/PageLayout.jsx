@@ -15,11 +15,9 @@ function PageLayout() {
                 <Sidebar />
                 <div className={styles.contentWrap}>
                     <Breadcrumbs />
-                    <div className={styles.contentBody}>
-                        {/* 페이지마다 header 위치가 달라서 여기 고정해두면 안될 듯함. */}
-                        <PageHeader />
-                        <Outlet />
-                    </div>
+                    {/* 페이지마다 header 위치가 달라서 여기 고정해두면 안될 듯함. */}
+                    {/* <PageHeader /> */}
+                    <Outlet />
                 </div>
             </div>
         </main>
