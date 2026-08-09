@@ -78,8 +78,13 @@
     letter-spacing: var(--text-tab-letter-spacing);
 }
 
+
 .navItem:hover {
     background-color: var(--color-neutral-10);
+}
+
+.navItem:active {
+    background-color: var(--color-neutral-20);
 }
 
 .navItem-active {
