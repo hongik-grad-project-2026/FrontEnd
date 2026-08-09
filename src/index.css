@@ -1,13 +1,21 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 
 :root {
+
     color-scheme: light;
 
     /* Font */
-    --font-family-base:
-        "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto,
-        "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR",
-        "Malgun Gothic", sans-serif;
+    --font-family-base: "Pretendard",
+        -apple-system,
+        BlinkMacSystemFont,
+        system-ui,
+        Roboto,
+        "Helvetica Neue",
+        "Segoe UI",
+        "Apple SD Gothic Neo",
+        "Noto Sans KR",
+        "Malgun Gothic",
+        sans-serif;
 
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
@@ -211,6 +219,28 @@
 
     /* Shadow */
     --shadow-default: 0 1px 2px 2px rgb(0 0 0 / 20%);
+
+
+    /* src 속성에 /icons/icon24/ 가 포함된 모든 img 태그에 일괄 적용 */
+    img[src*="/icons/icon24/"] {
+        width: 24px;
+        height: 24px;
+        object-fit: fill;
+    }
+
+    /* src 속성에 /icons/icon16/ 가 포함된 모든 img 태그에 일괄 적용 */
+    img[src*="/icons/icon16/"] {
+        width: 16px;
+        height: 16px;
+        object-fit: fill;
+    }
+
+    /* src 속성에 /icons/icon60/ 가 포함된 모든 img 태그에 일괄 적용 */
+    img[src*="/icons/icon60/"] {
+        width: 60px;
+        height: 60px;
+        object-fit: fill;
+    }
 }
 
 /* CSS reset */

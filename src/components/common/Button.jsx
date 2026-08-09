@@ -10,7 +10,7 @@ function IconButtonBorder({ icon = 'back', size = '24', onClick }) {
             onClick={onClick}
             className={`${styles.IconButtonBorder} ${styles[`IconButtonBorder${size}`]}`}
         >
-            <img src={`/icons/icon16/${icon}.png`} alt="" />
+            <img src={`/icons/icon16/${icon}.png`} alt="아이콘" />
         </button>
     );
 }
@@ -23,7 +23,7 @@ function IconTextButton({ icon, text, onClick }) {
             onClick={onClick}
             className={styles.IconButtonBookmark}
         >
-            <img src={`/icons/icon24/${icon}.png`} alt="" />
+            <img src={`/icons/icon16/${icon}.png`} alt="아이콘" />
             <span>{text}</span>
         </button>
     )

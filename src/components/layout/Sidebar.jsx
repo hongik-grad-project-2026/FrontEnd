@@ -14,9 +14,7 @@ function NavItem({ itemName = 'itemName', navLink = '/', icon = 'dashboard', end
                     `${styles.navItem} ${isActive ? styles['navItem-active'] : ''}`
                 }
             >
-                <img className={styles.itemIcon}
-                    src={`/icons/icon24/${icon}.png`}
-                    alt={`navItemIcon-${icon}`} />
+                <img src={`/icons/icon24/${icon}.png`} alt={`navItemIcon-${icon}`} />
                 <p className={styles.itemName}>{itemName}</p>
             </NavLink>
         </li>
