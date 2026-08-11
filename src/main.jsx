@@ -1,15 +1,13 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx";
 
 // 라우터 관련 import
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { adminRoutes, commonRoutes } from './routes/RoutesConfig.jsx'
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { adminRoutes, commonRoutes } from "./routes/RoutesConfig.jsx";
 
-import { UserProvider } from './context/UserContext.jsx';
-
-
+import { UserProvider } from "./context/UserProvider.jsx";
 
 const router = createBrowserRouter([
   // 공동 라우트
@@ -22,11 +20,11 @@ const router = createBrowserRouter([
   // 추가 예정
 ]);
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     {/* <App /> */}
-    <UserProvider  >
+    <UserProvider>
       <RouterProvider router={router} />
-    </UserProvider >
+    </UserProvider>
   </StrictMode>,
-)
+);
