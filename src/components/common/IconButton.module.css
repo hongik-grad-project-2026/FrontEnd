@@ -1,0 +1,35 @@
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-neutral-20);
+  border-radius: var(--radius-4);
+}
+
+.iconButton:not(:disabled):hover {
+  background-color: var(--color-neutral-20);
+}
+
+.iconButton:not(:disabled):active {
+  background-color: var(--color-neutral-30);
+}
+
+.iconButton img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.size24 {
+  width: 24px;
+  height: 24px;
+  padding: var(--spacing-4);
+}
+
+.size32 {
+  width: 32px;
+  height: 32px;
+  padding: var(--spacing-8);
+}

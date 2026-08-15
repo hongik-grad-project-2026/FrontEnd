@@ -1,9 +1,19 @@
 import { NavLink } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import styles from "./Sidebar.module.css";
-import { IconTextButton } from "../common/Button";
 
-// ----- NavItem -----//
+function IconTextButton({ icon, text, type = "button", ...buttonProps }) {
+  return (
+    <button {...buttonProps} type={type}>
+      <img src={`/icons/icon16/${icon}.png`} alt="" aria-hidden="true" />
+
+      <span>{text}</span>
+    </button>
+  );
+}
+
+// ----- NavItem ----- //
+
 function NavItem({
   itemName = "itemName",
   navLink = "/",
@@ -33,6 +43,8 @@ function NavItem({
   );
 }
 
+// ----- NavSubtitle ----- //
+
 function NavSubtitle({ titleName = "titleName", children }) {
   return (
     <div>
@@ -43,19 +55,25 @@ function NavSubtitle({ titleName = "titleName", children }) {
   );
 }
 
+// ----- AccountPanel ----- //
+
 function AccountPanel({ userName, userRole, userId }) {
   return (
     <div className={styles.accountPanel}>
       <div className={styles.buttonCon}>
         <IconTextButton icon="notification" text="알림" />
+
         <IconTextButton icon="logout" text="로그아웃" />
       </div>
+
       <div className={styles.userinfoCon}>
         <div className={styles.profileimgCon}>
           <img src="/images/hongikLogo-circle.png" alt="" />
         </div>
+
         <div className={styles.profiletextCon}>
           <p className={styles.userName}>{userName}</p>
+
           <p className={styles.userInfo}>
             {userRole === "admin" ? "관리자 모드" : userId}
           </p>
@@ -65,11 +83,12 @@ function AccountPanel({ userName, userRole, userId }) {
   );
 }
 
-// ----- Sidebar -----//
+// ----- Sidebar ----- //
 
 function Sidebar() {
   // Context에서 사용자 정보 읽어옴
   const { user } = useUser();
+
   const userName = user.name;
   const userId = user.id;
   const accountMode = user.role;
@@ -97,22 +116,26 @@ function Sidebar() {
             navLink={`/${accountMode}/approval`}
             icon="approval"
           />
+
           <NavItem
             itemName="대여 현황"
             navLink={`/${accountMode}/status`}
             icon="status"
           />
+
           <NavItem
             itemName="기자재 관리"
             navLink={`/${accountMode}/equipment`}
             icon="equipment"
           />
+
           <NavItem
             itemName="대여 기록"
             navLink={`/${accountMode}/history`}
             icon="history"
           />
         </NavSubtitle>
+
         <NavSubtitle titleName="Account">
           <NavItem
             itemName="회원 관리"
