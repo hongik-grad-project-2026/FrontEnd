@@ -33,4 +33,24 @@ function IconButton({
   );
 }
 
+function InputIconButton({
+  icon = "search",
+  ariaLabel,
+  className,
+  type = "button",
+  ...buttonProps
+}) {
+  return (
+    <button
+      {...buttonProps}
+      type={type}
+      className={joinClassNames(styles.inputIconButton, className)}
+      aria-label={ariaLabel ?? "아이콘 버튼"}
+    >
+      <img src={`/icons/icon24/${icon}.png`} alt="" aria-hidden="true" />
+    </button>
+  );
+}
+
+export { InputIconButton };
 export default IconButton;

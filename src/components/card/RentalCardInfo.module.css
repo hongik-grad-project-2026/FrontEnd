@@ -1,0 +1,121 @@
+.info {
+  display: flex;
+  width: 100%;
+  min-width: 376px;
+  height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+  padding: var(--spacing-12) 0;
+}
+
+.titleGroup {
+  display: flex;
+  max-width: 100%;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+}
+
+.category {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-5-size);
+  font-weight: var(--text-head-5-weight);
+  line-height: var(--text-head-5-line-height);
+  letter-spacing: var(--text-head-5-letter-spacing);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titleRow {
+  display: flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-10);
+}
+
+.equipmentName {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-4-size);
+  font-weight: var(--text-head-4-weight);
+  line-height: var(--text-head-4-line-height);
+  letter-spacing: var(--text-head-4-letter-spacing);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rentalId {
+  flex: 0 0 auto;
+  color: var(--color-neutral-50);
+  font-size: var(--text-body-3-size);
+  font-weight: var(--text-body-3-weight);
+  line-height: var(--text-body-3-line-height);
+  letter-spacing: var(--text-body-3-letter-spacing);
+  white-space: nowrap;
+}
+
+.infoGroup {
+  display: flex;
+  width: 100%;
+  max-width: 656px;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  align-items: flex-end;
+  row-gap: var(--spacing-4);
+  font-size: var(--text-body-3-size);
+  font-weight: var(--text-body-3-weight);
+  line-height: var(--text-body-3-line-height);
+  letter-spacing: var(--text-body-3-letter-spacing);
+  white-space: nowrap;
+}
+
+.fieldGroup {
+  display: flex;
+  min-width: 266px;
+  max-width: 364px;
+  flex: 1 1 0;
+  align-items: center;
+}
+
+.field {
+  display: flex;
+  min-width: 132px;
+  max-width: 192px;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.fieldLabel,
+.fieldValue {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fieldLabel {
+  color: var(--color-neutral-50);
+}
+
+.fieldValue {
+  color: var(--color-neutral-70);
+}
+
+.fieldUnderlined .fieldLabel,
+.fieldUnderlined .fieldValue {
+  text-decoration-line: underline;
+  text-underline-position: from-font;
+}
+
+.fieldDanger .fieldLabel,
+.fieldDanger .fieldValue {
+  color: var(--color-status-danger);
+}

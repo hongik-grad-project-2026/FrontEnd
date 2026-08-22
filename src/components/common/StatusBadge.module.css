@@ -1,0 +1,31 @@
+.badge {
+  /* border: 1px solid red; */
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 99px;
+  font-size: var(--text-badge-small-size);
+  font-weight: var(--text-badge-small-weight);
+  line-height: var(--text-badge-small-line-height);
+  letter-spacing: var(--text-badge-small-letter-spacing);
+
+  box-shadow: var(--shadow-default);
+}
+
+.badge[status^="대여-"] span {
+  padding-bottom: 1px;
+}
+
+.badge:not([status="회원-블랙"]):not([status="대여-연체"]) span {
+  mix-blend-mode: plus-darker;
+}
+
+.height24 {
+  height: var(--spacing-24);
+  padding: 0 var(--spacing-12);
+}
+
+.height20 {
+  height: var(--spacing-20);
+  padding: 0 var(--spacing-8);
+}
