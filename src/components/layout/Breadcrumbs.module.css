@@ -1,7 +1,5 @@
 .breadcrumbs {
     background-color: rgba(255, 255, 255, 0.7);
-
-    /* 2. 배경 뒤쪽 요소에 블러 효과 적용 */
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     /* 사파리(Safari) 브라우저 지원 */
@@ -9,7 +7,6 @@
     transform: translateX(-32px);
     /* 왼쪽으로 32px : 부모컴포넌트에 padding32px 때문에 오른쪽으로 밀려서 밀린만큼 왼쪽으로 조정 */
 
-    /* border: 1px solid skyblue; */
     position: fixed;
     top: 0;
     right: inherit;
@@ -18,6 +15,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
+
+    z-index: 100;
 }
 
 
