@@ -1,8 +1,8 @@
-import styles from "./Breadcrumbs.module.css";
-import { IconButtonBorder } from "../common/Button";
-// useMatches()를 호출하면 현재 URL에 해당하는 최상위 부모부터 최하위 자식까지의 라우트 정보가 배열로 들어옴
 import { Link, useMatches, useNavigate } from "react-router-dom";
+import IconButton from "../common/IconButton";
+import styles from "./Breadcrumbs.module.css";
 
+// useMatches()를 호출하면 현재 URL에 해당하는  최상위 부모부터 최하위 자식까지의 라우트 정보가 배열로 들어옴
 function Breadcrumbs() {
   const navigate = useNavigate();
   const matches = useMatches();
@@ -23,17 +23,11 @@ function Breadcrumbs() {
   return (
     <div className={styles.breadcrumbs}>
       <div className={styles.btnCon}>
-        <IconButtonBorder
-          icon="back--n50"
-          size="24"
-          onClick={() => navigate(-1)}
-        />
-        <IconButtonBorder
-          icon="forward--n50"
-          size="24"
-          onClick={() => navigate(1)}
-        />
+        <IconButton icon="back--n50" size={24} onClick={() => navigate(-1)} />
+
+        <IconButton icon="forward--n50" size={24} onClick={() => navigate(1)} />
       </div>
+
       <div className={styles.crumbsCon}>
         {crumbs.map((crumb, index) => {
           return (
@@ -43,8 +37,9 @@ function Breadcrumbs() {
                   index === crumbs.length - 1 ? styles.currentPath : styles.path
                 }
               >
-                <Link to={crumb.to}> {crumb.label} </Link>
+                <Link to={crumb.to}>{crumb.label}</Link>
               </span>
+
               {index < crumbs.length - 1 ? <span>/</span> : null}
             </div>
           );

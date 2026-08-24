@@ -1,0 +1,8 @@
+.contentArea {
+    position: relative;
+    width: 100%;
+    background-color: var(--color-white);
+    border-radius: var(--radius-8);
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    overflow: hidden;
+}
