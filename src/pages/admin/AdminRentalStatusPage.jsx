@@ -244,7 +244,7 @@ function AdminRentalStatusPage() {
             ariaLabel="대여 현황"
           />
 
-          <SearchBar />
+          <SearchBar placeholder="기자재명으로 검색..." />
         </div>
 
         <section className={styles.cardListContainer} aria-label="대여 목록"        >

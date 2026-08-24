@@ -1,0 +1,28 @@
+.pagination {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: 0 var(--spacing-16);
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-8);
+}
+
+.pageNumbers {
+  display: flex;
+  align-items: center;
+}
+
+.ellipsis {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-50);
+  font-size: var(--text-body-3-size);
+  font-weight: var(--text-body-3-weight);
+  line-height: var(--text-body-3-line-height);
+  letter-spacing: var(--text-body-3-letter-spacing);
+}

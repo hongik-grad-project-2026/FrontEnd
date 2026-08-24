@@ -1,3 +1,4 @@
+//AdminRentalStatusPage 에서 사용
 import styles from "./RentalCardInfo.module.css";
 
 function joinClassNames(...classNames) {

@@ -1,0 +1,189 @@
+.dataTableRoot {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.toolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-24);
+}
+
+.toolbarStart {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.selectionSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-3-size);
+  font-weight: var(--text-head-3-weight);
+  line-height: var(--text-head-3-line-height);
+  letter-spacing: var(--text-head-3-letter-spacing);
+  white-space: nowrap;
+}
+
+.selectedCount,
+.totalCount {
+  font-size: var(--text-head-2-size);
+  font-weight: var(--text-head-2-weight);
+  line-height: var(--text-head-2-line-height);
+  letter-spacing: var(--text-head-2-letter-spacing);
+}
+
+.selectedCount {
+  color: var(--color-brand-primary);
+}
+
+.totalCount {
+  color: var(--color-neutral-90);
+}
+
+.bulkAction {
+  display: flex;
+  align-items: center;
+}
+
+.bulkAction > button[data-size="Default"] {
+  width: 140px;
+}
+
+.searchSlot {
+  width: 400px;
+  max-width: 100%;
+  flex: 0 1 400px;
+}
+
+.tableViewport {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.tableFrame {
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-bottom: 0;
+  border-radius: var(--radius-8) var(--radius-8) 0 0;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.selectionColumn {
+  width: 64px;
+}
+
+.headerRow {
+  height: 48px;
+}
+
+.bodyRow {
+  height: 64px;
+}
+
+.headerCell,
+.bodyCell,
+.selectionCell {
+  height: inherit;
+  vertical-align: middle;
+  background-color: var(--color-white);
+  border-bottom: var(--border-width-default) solid var(--color-border-default);
+}
+
+.headerCell,
+.bodyCell {
+  padding-right: var(--spacing-16);
+  overflow: hidden;
+  text-align: left;
+}
+
+.selectionCell {
+  width: 64px;
+  padding: 0 var(--spacing-16);
+  text-align: center;
+}
+
+.headerCell {
+  color: var(--color-neutral-60);
+  font-size: var(--text-head-5-size);
+  font-weight: var(--text-head-5-weight);
+  line-height: var(--text-head-5-line-height);
+  letter-spacing: var(--text-head-5-letter-spacing);
+}
+
+.bodyCell {
+  color: var(--color-neutral-90);
+  font-size: var(--text-body-3-size);
+  font-weight: var(--text-body-3-weight);
+  line-height: var(--text-body-3-line-height);
+  letter-spacing: var(--text-body-3-letter-spacing);
+}
+
+.bodyRow:hover > .bodyCell,
+.bodyRow:hover > .selectionCell,
+.bodyRow[data-selected="true"] > .bodyCell,
+.bodyRow[data-selected="true"] > .selectionCell {
+  background-color: var(--color-neutral-10);
+}
+
+.cellContent {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  align-items: center;
+  overflow: hidden;
+}
+
+.centerCell {
+  text-align: center;
+}
+
+.centerCell .cellContent {
+  justify-content: center;
+}
+
+.rightCell {
+  text-align: right;
+}
+
+.rightCell .cellContent {
+  justify-content: flex-end;
+}
+
+.emptyState {
+  height: 160px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  background-color: var(--color-white);
+  border-bottom: var(--border-width-default) solid var(--color-border-default);
+  font-size: var(--text-body-2-size);
+  font-weight: var(--text-body-2-weight);
+  line-height: var(--text-body-2-line-height);
+  letter-spacing: var(--text-body-2-letter-spacing);
+}
+
+.paginationSlot {
+  display: flex;
+  width: 100%;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+}

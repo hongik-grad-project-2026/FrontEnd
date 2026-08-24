@@ -1,3 +1,4 @@
+//AdminRentalStatusPage 에서 사용
 import styles from "./RentalCard.module.css";
 
 function RentalCard({
