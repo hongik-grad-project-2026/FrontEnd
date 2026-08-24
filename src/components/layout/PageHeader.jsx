@@ -8,9 +8,9 @@ function PageHeader() {
     const title = currentMatch?.handle?.title ?? '제목 없음'
 
     return (
-        <div className={styles.pageHeader}>
+        <h2 className={styles.pageHeader}>
             {title}
-        </div>
+        </h2>
     );
 }
 

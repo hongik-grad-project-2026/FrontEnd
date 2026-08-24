@@ -33,6 +33,29 @@ function IconButton({
   );
 }
 
+function IconTextButton({
+  icon = "logout",
+  ariaLabel,
+  className,
+  type = "button",
+  text,
+  ...buttonProps
+}) {
+
+  return (
+    <button
+      {...buttonProps}
+      type={type}
+      className={joinClassNames(styles.iconButton, styles.IconTextButton, className)}
+      aria-label={ariaLabel ?? "아이콘 버튼"}
+    >
+      <img src={`/icons/icon16/${icon}.png`} alt="" aria-hidden="true" />
+      {text && <span className={styles.iconButtonText}>{text}</span>}
+    </button>
+  );
+}
+
+
 function InputIconButton({
   icon = "search",
   ariaLabel,
@@ -52,5 +75,5 @@ function InputIconButton({
   );
 }
 
-export { InputIconButton };
+export { IconTextButton, InputIconButton };
 export default IconButton;
