@@ -34,6 +34,18 @@
   padding: var(--spacing-8);
 }
 
+.IconTextButton {
+  height: 32px;
+  width: auto;
+  gap: var(--spacing-4);
+  padding: 0 var(--spacing-8);
+  font-size: var(--text-body-2-size);
+  font-weight: var(--text-body-2-weight);
+  line-height: var(--text-body-2-line-height);
+  letter-spacing: var(--text-body-2-letter-spacing);
+  color: var(--color-neutral-90);
+}
+
 .inputIconButton {
   display: inline-flex;
   align-items: center;

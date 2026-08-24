@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-// import App from "./App.jsx";
+import { QueryClient, QueryClientProvider, } from "@tanstack/react-query";
 
 // TanStack Query 관련 import (무한스크롤)
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -31,6 +31,8 @@ const router = createBrowserRouter([
   // 학생모드 라우트
   // 추가 예정
 ]);
+
+const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
