@@ -1,6 +1,8 @@
 import { useState } from "react";
 import styles from "./AdminRentalStatusPage.module.css";
 
+import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
+
 import PageHeader from "../../components/layout/PageHeader";
 import RentalCard from "../../components/card/RentalCard";
 import RentalCardInfo from "../../components/card/RentalCardInfo";
@@ -108,6 +110,29 @@ const temporaryRentals = [
   },
 ];
 
+// 임시 데이터를 API처럼 반환하는 함수 (실제 API 연결 전 무한스크롤, 로딩 스피너, UI 동작을 확인하기 위함)
+async function fetchTemporaryRentals({ pageParam }) {
+  // 네트워크 지연 시뮬레이션 (0.3초 가상 로딩 시간)
+  await new Promise((resolve) => {
+    setTimeout(resolve, 300);
+  });
+
+  // 임시 데이터 ID 고유화
+  const items = temporaryRentals.map((rental, index) => ({
+    ...rental,
+    id: `${rental.id}-page-${pageParam}-${index}`,
+    rentalId: `${rental.rentalId}-${pageParam}-${index}`,
+  }));
+
+  // 4번까지만 데이터를 불러오고 그 이후에는 스크롤을 멈추도록 테스트 제약
+  const hasNextPage = pageParam < 4;
+
+  return {
+    items,
+    nextPage: hasNextPage ? pageParam + 1 : undefined,
+  };
+}
+
 // 카드 상태별 기본 버튼
 const primaryButtonByStatus = {
   waiting: {
@@ -149,6 +174,19 @@ function isVisibleInTab(rental, activeTab) {
 function AdminRentalStatusPage() {
   const [activeTab, setActiveTab] = useState("all");
 
+  const {
+    items: rentalItems,
+    loadMoreRef,
+    isLoading,
+    isError,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteScroll({
+    queryKey: ["admin-rentals"],
+    queryFn: fetchTemporaryRentals,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+
   // 탭 확인용 임시 개수
   // 실제 API 연결 후 서버에서 받은 개수로 교체
   const rentalCounts = {
@@ -176,7 +214,9 @@ function AdminRentalStatusPage() {
     },
   ];
 
-  const filteredRentals = temporaryRentals.filter((rental) =>
+  // 무한스크롤 확인을 위해 useInfiniteScroll훅이 합쳐준 rentalItems로 교체
+  // const filteredRentals = temporaryRentals.filter((rental) =>
+  const filteredRentals = rentalItems.filter((rental) =>
     isVisibleInTab(rental, activeTab),
   );
 
@@ -207,7 +247,9 @@ function AdminRentalStatusPage() {
           <SearchBar />
         </div>
 
-        <section className={styles.cardListContainer} aria-label="대여 목록">
+        <section className={styles.cardListContainer} aria-label="대여 목록"        >
+          {isError && <p>대여 목록을 불러오지 못했습니다.</p>}
+
           {visibleRentals.map((rental) => {
             const primaryButton = primaryButtonByStatus[rental.status];
             const badgeStatus = badgeStatusByRentalStatus[rental.status];
@@ -248,6 +290,10 @@ function AdminRentalStatusPage() {
               </RentalCard>
             );
           })}
+          <div ref={loadMoreRef} aria-hidden="true" />
+
+          {isFetchingNextPage && <p>더 불러오는 중...</p>}
+          {!hasNextPage && !isLoading && <p>마지막 목록입니다.</p>}
         </section>
       </div>
     </div>
