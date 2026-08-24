@@ -3,6 +3,7 @@ import styles from "./AdminRentalStatusPage.module.css";
 
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 
+import PageHeader from "../../components/layout/PageHeader";
 import RentalCard from "../../components/card/RentalCard";
 import RentalCardInfo from "../../components/card/RentalCardInfo";
 import Button from "../../components/common/Button";
@@ -232,7 +233,7 @@ function AdminRentalStatusPage() {
 
   return (
     <div className={styles.adminRentalStatusPage}>
-      <h1>대여 현황</h1>
+      <PageHeader />
 
       <div className={styles.listViewContainer}>
         <div className={styles.toolsContainer}>
