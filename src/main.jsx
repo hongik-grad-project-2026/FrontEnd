@@ -1,11 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { QueryClient, QueryClientProvider, } from "@tanstack/react-query";
 
 // TanStack Query 관련 import (무한스크롤)
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 // 라우터 관련 import
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -32,8 +31,6 @@ const router = createBrowserRouter([
   // 추가 예정
 ]);
 
-const queryClient = new QueryClient();
-
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     {/* <App /> */}
@@ -41,7 +38,8 @@ createRoot(document.getElementById("root")).render(
       <UserProvider>
         <RouterProvider router={router} />
       </UserProvider>
-      <ReactQueryDevtools initialIsOpen={false} />   {/*Devtools : 개발용 패널, 프로덕션 빌드 시 자동 비활성화됨 */}
+      <ReactQueryDevtools initialIsOpen={false} />{" "}
+      {/*Devtools : 개발용 패널, 프로덕션 빌드 시 자동 비활성화됨 */}
     </QueryClientProvider>
   </StrictMode>,
 );
