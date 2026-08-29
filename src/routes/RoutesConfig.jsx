@@ -76,6 +76,13 @@ const adminRoutes = {
                 title: "회원 관리",
             }
         },
+        {
+            path: 'notices',
+            element: <AdminNoticeListPage />,
+            handle: {
+                title: "공지사항",
+            }
+        },
     ]
 };
 

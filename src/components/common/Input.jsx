@@ -5,9 +5,10 @@ function joinClassNames(...classNames) {
 }
 
 function InputBar({
+  status = 'default', // default | disabled
   width = 220,
   height = "md",
-  placeholder = "Input.jsx",
+  placeholder = "placeholder",
   helperText,
   rightElement,
   ...props
@@ -28,7 +29,7 @@ function InputBar({
           styles.inputBar,
           heightClassName,
           (rightElement === null || rightElement === undefined) &&
-            styles.noRightElement,
+          styles.noRightElement,
         )}
         style={{ width: resolvedWidth }}
       >
@@ -36,6 +37,7 @@ function InputBar({
           className={styles.input}
           type="text"
           placeholder={placeholder}
+          disabled={status === 'disabled'}
           {...props}
         />
 

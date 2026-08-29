@@ -98,9 +98,7 @@
 }
 
 .button[data-kind="fill"][data-size="Default"][data-color="Primary"][data-status="Hovered"],
-.button[data-kind="fill"][data-size="Default"][data-color="Primary"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="fill"][data-size="Default"][data-color="Primary"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-white);
   background-color: var(--color-brand-primary-dark);
   border-color: var(--color-brand-primary);
@@ -125,9 +123,7 @@
 }
 
 .button[data-kind="fill"][data-size="Default"][data-color="Neutral"][data-status="Hovered"],
-.button[data-kind="fill"][data-size="Default"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="fill"][data-size="Default"][data-color="Neutral"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-neutral-50);
   background-color: var(--color-neutral-20);
   border-color: var(--color-neutral-20);
@@ -142,21 +138,15 @@
 }
 
 .button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Hovered"],
-.button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-white);
   background-color: var(--color-brand-primary);
   border-color: var(--color-brand-primary);
 }
 
 .button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="MouseDown"],
-.button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Default"]:not(
-    :disabled
-  ):active,
-.button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Hovered"]:not(
-    :disabled
-  ):active {
+.button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Default"]:not( :disabled):active,
+.button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Hovered"]:not( :disabled):active {
   color: var(--color-white);
   background-color: #0c51d1;
   border-color: var(--color-brand-primary);
@@ -175,21 +165,15 @@
 }
 
 .button[data-kind="border"][data-color="Danger"][data-status="Hovered"],
-.button[data-kind="border"][data-color="Danger"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="border"][data-color="Danger"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-white);
   background-color: var(--color-status-danger);
   border-color: var(--color-status-danger);
 }
 
 .button[data-kind="border"][data-size="Default"][data-color="Danger"][data-status="MouseDown"],
-.button[data-kind="border"][data-size="Default"][data-color="Danger"][data-status="Default"]:not(
-    :disabled
-  ):active,
-.button[data-kind="border"][data-size="Default"][data-color="Danger"][data-status="Hovered"]:not(
-    :disabled
-  ):active {
+.button[data-kind="border"][data-size="Default"][data-color="Danger"][data-status="Default"]:not( :disabled):active,
+.button[data-kind="border"][data-size="Default"][data-color="Danger"][data-status="Hovered"]:not( :disabled):active {
   color: var(--color-white);
   background-color: var(--color-status-danger-dark);
   border-color: var(--color-status-danger);
@@ -204,21 +188,15 @@
 }
 
 .button[data-kind="border"][data-size="Default"][data-color="Neutral"][data-status="Hovered"],
-.button[data-kind="border"][data-size="Default"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="border"][data-size="Default"][data-color="Neutral"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-neutral-70);
   background-color: var(--color-neutral-20);
   border-color: var(--color-neutral-60);
 }
 
 .button[data-kind="border"][data-size="Default"][data-color="Neutral"][data-status="MouseDown"],
-.button[data-kind="border"][data-size="Default"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):active,
-.button[data-kind="border"][data-size="Default"][data-color="Neutral"][data-status="Hovered"]:not(
-    :disabled
-  ):active {
+.button[data-kind="border"][data-size="Default"][data-color="Neutral"][data-status="Default"]:not( :disabled):active,
+.button[data-kind="border"][data-size="Default"][data-color="Neutral"][data-status="Hovered"]:not( :disabled):active {
   color: var(--color-white);
   background-color: var(--color-neutral-70);
   border-color: var(--color-neutral-70);
@@ -229,16 +207,14 @@
 .button[data-kind="border"][data-size="Xsmall"][data-color="Neutral"][data-status="Default"] {
   color: var(--color-neutral-90);
   background-color: transparent;
-  border-color: var(--color-neutral-20);
+  border-color: var(--color-neutral-30);
 }
 
 .button[data-kind="border"][data-size="Xsmall"][data-color="Neutral"][data-status="Hovered"],
-.button[data-kind="border"][data-size="Xsmall"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="border"][data-size="Xsmall"][data-color="Neutral"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-neutral-90);
   background-color: var(--color-neutral-20);
-  border-color: var(--color-neutral-20);
+  border-color: var(--color-neutral-30);
 }
 
 .button[data-kind="border"][data-size="Xsmall"][data-color="Neutral"][data-status="Active"] {
@@ -255,9 +231,7 @@
 }
 
 .button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Hovered"],
-.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-neutral-50);
   background-color: transparent;
   font-size: var(--text-button-1-size);
@@ -266,22 +240,14 @@
   letter-spacing: var(--text-button-1-letter-spacing);
 }
 
-.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Hovered"]
-  .label,
-.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):hover
-  .label {
+.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Hovered"] .label,
+.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Default"]:not( :disabled):hover .label {
   border-bottom-color: var(--color-neutral-50);
 }
 
 .button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="MouseDown"],
-.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):active,
-.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Hovered"]:not(
-    :disabled
-  ):active {
+.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Default"]:not( :disabled):active,
+.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Hovered"]:not( :disabled):active {
   color: var(--color-neutral-50);
   background-color: var(--color-neutral-10);
   font-size: var(--text-button-1-size);
@@ -290,16 +256,9 @@
   letter-spacing: var(--text-button-1-letter-spacing);
 }
 
-.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="MouseDown"]
-  .label,
-.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):active
-  .label,
-.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Hovered"]:not(
-    :disabled
-  ):active
-  .label {
+.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="MouseDown"] .label,
+.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Default"]:not( :disabled):active .label,
+.button[data-kind="pagination"][data-size="small"][data-color="Neutral"][data-status="Hovered"]:not( :disabled):active .label {
   border-bottom-color: var(--color-neutral-50);
 }
 
@@ -329,24 +288,17 @@
 }
 
 .button[data-kind="login"][data-size="small"][data-color="Primary"][data-status="Hovered"],
-.button[data-kind="login"][data-size="small"][data-color="Primary"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="login"][data-size="small"][data-color="Primary"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-brand-primary);
 }
 
 .button[data-kind="login"][data-size="small"][data-color="Neutral"][data-status="Hovered"],
-.button[data-kind="login"][data-size="small"][data-color="Neutral"][data-status="Default"]:not(
-    :disabled
-  ):hover {
+.button[data-kind="login"][data-size="small"][data-color="Neutral"][data-status="Default"]:not( :disabled):hover {
   color: var(--color-neutral-60);
 }
 
 .button[data-kind="login"][data-size="small"][data-status="Hovered"] .label,
-.button[data-kind="login"][data-size="small"][data-status="Default"]:not(
-    :disabled
-  ):hover
-  .label {
+.button[data-kind="login"][data-size="small"][data-status="Default"]:not( :disabled):hover .label {
   border-bottom-color: currentColor;
 }
 

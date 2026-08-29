@@ -20,6 +20,10 @@
   letter-spacing: var(--text-body-3-letter-spacing);
 }
 
+.inputBar:has(.input[disabled]) {
+  background-color: var(--color-neutral-10);
+}
+
 .inputBar.noRightElement {
   padding: 0 var(--spacing-16);
 }
