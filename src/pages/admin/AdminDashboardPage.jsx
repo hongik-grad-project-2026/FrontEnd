@@ -2,14 +2,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { today, fetchRentals } from '../../api/rentalApi';
-import { MOCK_NOTICES, fetchNotices } from '../../api/noticeApi';
+import { fetchNotices } from '../../api/noticeApi';
 import IconButton, { IconTextButton } from "../../components/common/IconButton";
 import styles from "./AdminDashboardPage.module.css"
 import PageHeader from "../../components/layout/PageHeader";
 import AccordionItem from "../../components/common/AccordionItem";
-
-import InputBar from "../../components/common/Input";
-import Dropdown from "../../components/common/Dropdown";
 
 
 function CurruntStateBox({ title, count, ...props }) {
@@ -20,8 +17,6 @@ function CurruntStateBox({ title, count, ...props }) {
         </div>
     );
 }
-
-
 
 function NoticeArea() {
 
@@ -40,11 +35,10 @@ function NoticeArea() {
 
     const notices = data?.content ?? [];
 
-
     return (
         <div>
             {notices.map((notice) => {
-                const hasAttachments = notice.attachments.length > 0 ? true : false;
+                const hasAttachments = notice.hasAttachment ? true : false;
                 const formattedDate = notice.createdAt.split("T")[0].replace(/-/g, ".");
 
                 return (<AccordionItem
@@ -53,13 +47,15 @@ function NoticeArea() {
                     title={notice.title}
                     hasAttachments={hasAttachments}
                     createdAt={formattedDate}
-                    content={notice.content}
+                    content={notice.summary}
                 />)
             })}
 
         </div>
     );
 }
+
+
 
 function AdminDashboardPage() {
     const [currentTime, setCurrentTime] = useState(() => new Date());
@@ -113,8 +109,6 @@ function AdminDashboardPage() {
 
         return counts;
     }, initialCounts);
-
-    // console.log('=======rentalCounts=======', rentalCounts);
 
     return (
         <main className={styles.dashboardPage}>

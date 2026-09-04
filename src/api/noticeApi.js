@@ -1,8 +1,30 @@
-// 임시 API
-export async function fetchNotices({ page = 0, size = 10 }) {
+// 목록용 요약
+function toNoticeSummary(notice) {
+    return {
+        noticeId: notice.noticeId,
+        title: notice.title,
+        summary: (notice.content ?? "").trim().slice(0, 220), // 220자까지만 가져오기
+        hasAttachment: notice.attachments.length > 0, // 개수가 아닌 boolean으로
+        viewCount: notice.viewCount,
+        important: notice.important,                  // '중요공지' 표시에 필요
+        createdAt: notice.createdAt,
+    };
+}
+
+
+// 임시 API 1 : 목록용
+export async function fetchNotices({ page = 0, size = 10, }) {
+
+    // 네트워크 지연 흉내 (로딩 UI 테스트용)
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // 삭제된 공지 제외
+    const activeNotices = MOCK_NOTICES.filter(
+        (notice) => notice.deletedAt === null,
+    );
 
     // 중요 공지 우선
-    const sortedNotices = [...MOCK_NOTICES].sort(
+    const sortedNotices = [...activeNotices].sort(
         (firstNotice, secondNotice) => {
             // 중요 공지 우선
             const importantOrder =
@@ -23,16 +45,34 @@ export async function fetchNotices({ page = 0, size = 10 }) {
 
     const startIndex = page * size;
     const endIndex = startIndex + size;
-    const content = sortedNotices.slice(startIndex, endIndex);
+
+    // 잘라낸 뒤 요약 형태로 변환
+    const content = sortedNotices.slice(startIndex, endIndex).map(toNoticeSummary);
+
+
     return {
         content,                                // 현재 페이지에 해당하는 공지사항 데이터 배열
         page,                                   // 현재 페이지 번호
         size,                                   // 한 페이지당 요청한 데이터 개수
         totalElements: MOCK_NOTICES.length,     // 전체 공지사항 데이터 총 개수
-        totalPages: Math.ceil(MOCK_NOTICES.length / size), // 전체 페이지 수 (전체 개수 / 페이지 크기 올림)
+        totalPages: Math.ceil(sortedNotices.length / size), // 전체 페이지 수 (전체 개수 / 페이지 크기 올림)
         last: endIndex >= MOCK_NOTICES.length,  // 마지막 페이지 여부 (더 이상 불러올 데이터가 없으면 true)
     };
 }
+
+
+// 임시 API 2 : 상세 조회용. 단건, 전체 필드
+export async function fetchNoticeDetail(noticeId) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const notice = MOCK_NOTICES.find(
+        (item) => item.noticeId === Number(noticeId),
+    );
+
+    // 상세는 원본 그대로
+    return { ...notice };
+}
+
 
 // 임시 목업 데이터 20개
 export const MOCK_NOTICES = [

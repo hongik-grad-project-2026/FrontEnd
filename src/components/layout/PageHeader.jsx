@@ -5,7 +5,10 @@ import styles from './PageHeader.module.css'
 function PageHeader() {
     const matches = useMatches()
     const currentMatch = matches.at(-1)
-    const title = currentMatch?.handle?.title ?? '제목 없음'
+    const titleConfig = currentMatch?.handle?.title
+    const title = typeof titleConfig === 'function'
+        ? titleConfig(currentMatch)
+        : titleConfig ?? '제목 없음'
 
     return (
         <h2 className={styles.pageHeader}>
