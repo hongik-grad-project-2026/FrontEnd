@@ -1,0 +1,20 @@
+.attachmentItem {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-neutral-20);
+    height: 40px;
+    border-radius: var(--radius-8);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-16);
+    padding: 0 var(--spacing-8) 0 var(--spacing-16);
+
+    color: var(--color-neutral-80);
+    font-size: var(--text-body-3-size);
+    font-weight: var(--text-body-3-weight);
+    line-height: var(--text-body-3-line-height);
+    letter-spacing: var(--text-body-3-letter-spacing);
+}
+
+.fileSize {
+    color: var(--color-neutral-60);
+}

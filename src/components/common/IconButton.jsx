@@ -33,8 +33,10 @@ function IconButton({
   );
 }
 
+
 function IconTextButton({
   icon = "logout",
+  border = true,
   ariaLabel,
   className,
   type = "button",
@@ -46,7 +48,7 @@ function IconTextButton({
     <button
       {...buttonProps}
       type={type}
-      className={joinClassNames(styles.iconButton, styles.IconTextButton, className)}
+      className={joinClassNames(styles.IconTextButton, className) + (border ? ` ${styles.border}` : ` ${styles.nonBorder}`)}
       aria-label={ariaLabel ?? "아이콘 버튼"}
     >
       <img src={`/icons/icon16/${icon}.png`} alt="" aria-hidden="true" />

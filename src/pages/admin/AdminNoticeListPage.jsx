@@ -12,7 +12,6 @@ import SearchBar from "../../components/common/SearchBar";
 import Pagination from "../../components/common/Pagination";
 import DataTable from "../../components/table/DataTable";
 
-
 function NoticeTitleCell({ request }) {
     return (
         <div className={styles.titleCell}>

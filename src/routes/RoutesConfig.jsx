@@ -89,6 +89,9 @@ const adminRoutes = {
                 {
                     index: true,
                     element: <AdminNoticeListPage />,
+                    // handle: {
+                    //     title: "공지사항",
+                    // },
                 },
                 {
                     path: ':noticeId',
