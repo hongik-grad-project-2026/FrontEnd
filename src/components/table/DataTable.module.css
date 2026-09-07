@@ -61,9 +61,9 @@
 }
 
 .searchSlot {
-  width: 400px;
-  max-width: 100%;
-  flex: 0 1 400px;
+  width: 360px;
+  min-width: 360px;
+  flex: 0 0 360px;
 }
 
 .tableViewport {

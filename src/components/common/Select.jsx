@@ -1,82 +1,105 @@
 import { useEffect, useId, useRef, useState } from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+
 import Button from "./Button";
 import styles from "./Select.module.css";
+
+const KOREAN_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function joinClassNames(...classNames) {
   return classNames.filter(Boolean).join(" ");
 }
 
-function findSelectedIndex(options, value) {
-  return options.findIndex((option) => Object.is(option.value, value));
+function isValidDate(value) {
+  return value instanceof Date && !Number.isNaN(value.getTime());
+}
+
+function isSameDate(firstDate, secondDate) {
+  if (!isValidDate(firstDate) || !isValidDate(secondDate)) {
+    return false;
+  }
+
+  return firstDate.getTime() === secondDate.getTime();
+}
+
+function formatDate(date) {
+  if (!isValidDate(date)) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}.${month}.${day}`;
 }
 
 function Select({
   ariaLabel,
+  calendarLocale = "ko-KR",
+  calendarProps = {},
   className = "",
+  clearable = false,
+  closeOnCalendarSelect = true,
   defaultValue = "",
   disabled = false,
   id,
-  name,
+  maxDate,
+  minDate,
   onChange,
   options = [],
-  placeholder = "선택하세요.",
+  placeholder,
+  type = "list",
   value,
   width = 300,
 }) {
   const generatedId = useId();
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
-  const listRef = useRef(null);
 
   const [internalValue, setInternalValue] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
 
-  const canOpen = !disabled && options.length > 0;
+  const isCalendar = type === "calendar";
+  const isControlled = value !== undefined;
+
+  const selectedValue = isControlled ? value : internalValue;
+
+  const selectedOption = isCalendar
+    ? undefined
+    : options.find((option) => option.value === selectedValue);
+
+  const selectedDate =
+    isCalendar && isValidDate(selectedValue) ? selectedValue : null;
+
+  const isFilled = isCalendar
+    ? selectedDate !== null
+    : selectedOption !== undefined;
+
+  const canOpen = !disabled && (isCalendar || options.length > 0);
+
   const resolvedIsOpen = isOpen && canOpen;
 
-  const isControlled = value !== undefined;
-  const selectedValue = isControlled ? value : internalValue;
-  const selectedIndex = findSelectedIndex(options, selectedValue);
-  const selectedOption =
-    selectedIndex >= 0 ? options[selectedIndex] : undefined;
-
   const selectId = id ?? `${generatedId}-select`;
-  const listboxId = `${selectId}-listbox`;
+
+  const popupId = `${selectId}-popup`;
 
   const resolvedWidth = typeof width === "number" ? `${width}px` : width;
-  const displayText = selectedOption?.label ?? placeholder;
 
-  const getOptionButtons = () => {
-    if (!listRef.current) {
-      return [];
+  const resolvedPlaceholder =
+    placeholder ?? (isCalendar ? "날짜를 선택하세요." : "선택하세요.");
+
+  const displayText = isCalendar
+    ? formatDate(selectedDate) || resolvedPlaceholder
+    : (selectedOption?.label ?? resolvedPlaceholder);
+
+  const updateValue = (nextValue, detail) => {
+    if (!isControlled) {
+      setInternalValue(nextValue);
     }
 
-    return Array.from(listRef.current.querySelectorAll('[role="option"]'));
-  };
-
-  const focusOption = (index) => {
-    const optionButtons = getOptionButtons();
-
-    if (optionButtons.length === 0) {
-      return;
-    }
-
-    const normalizedIndex =
-      (index + optionButtons.length) % optionButtons.length;
-
-    optionButtons[normalizedIndex]?.focus();
-  };
-
-  const openSelect = (focusIndex) => {
-    if (!canOpen) {
-      return;
-    }
-
-    setIsOpen(true);
-
-    window.requestAnimationFrame(() => {
-      focusOption(focusIndex);
-    });
+    onChange?.(nextValue, detail);
   };
 
   const closeSelect = ({ restoreFocus = false } = {}) => {
@@ -88,91 +111,51 @@ function Select({
   };
 
   const handleTriggerClick = () => {
-    if (resolvedIsOpen) {
-      closeSelect();
-      return;
-    }
-
-    openSelect(selectedIndex >= 0 ? selectedIndex : 0);
-  };
-
-  const handleTriggerKeyDown = (event) => {
     if (!canOpen) {
       return;
     }
 
-    switch (event.key) {
-      case "ArrowDown":
-        event.preventDefault();
-        openSelect(selectedIndex >= 0 ? selectedIndex : 0);
-        break;
-
-      case "ArrowUp":
-        event.preventDefault();
-        openSelect(selectedIndex >= 0 ? selectedIndex : options.length - 1);
-        break;
-
-      case "Escape":
-        if (resolvedIsOpen) {
-          event.preventDefault();
-          closeSelect();
-        }
-        break;
-
-      default:
-        break;
-    }
+    setIsOpen((previousIsOpen) => {
+      return !previousIsOpen;
+    });
   };
 
-  const selectOption = (option) => {
-    const valueChanged = !Object.is(option.value, selectedValue);
+  const handleRootKeyDown = (event) => {
+    if (event.key !== "Escape" || !resolvedIsOpen) {
+      return;
+    }
 
-    if (valueChanged) {
-      if (!isControlled) {
-        setInternalValue(option.value);
-      }
+    event.preventDefault();
+    event.stopPropagation();
 
-      onChange?.(option.value, option);
+    closeSelect({ restoreFocus: true });
+  };
+
+  const handleOptionSelect = (option) => {
+    const isSelected = option.value === selectedValue;
+
+    if (isSelected && clearable) {
+      updateValue("", null);
+    } else if (!isSelected) {
+      updateValue(option.value, option);
     }
 
     closeSelect({ restoreFocus: true });
   };
 
-  const handleOptionKeyDown = (event, optionIndex) => {
-    switch (event.key) {
-      case "ArrowRight":
-      case "ArrowDown":
-        event.preventDefault();
-        focusOption(optionIndex + 1);
-        break;
+  const handleCalendarChange = (nextValue, event) => {
+    const nextDate = Array.isArray(nextValue) ? nextValue[0] : nextValue;
 
-      case "ArrowLeft":
-      case "ArrowUp":
-        event.preventDefault();
-        focusOption(optionIndex - 1);
-        break;
+    if (!isValidDate(nextDate)) {
+      return;
+    }
 
-      case "Home":
-        event.preventDefault();
-        focusOption(0);
-        break;
+    if (!isSameDate(nextDate, selectedDate)) {
+      updateValue(nextDate, event);
+    }
 
-      case "End":
-        event.preventDefault();
-        focusOption(options.length - 1);
-        break;
-
-      case "Escape":
-        event.preventDefault();
-        closeSelect({ restoreFocus: true });
-        break;
-
-      case "Tab":
-        closeSelect();
-        break;
-
-      default:
-        break;
+    if (closeOnCalendarSelect) {
+      closeSelect({ restoreFocus: true });
     }
   };
 
@@ -210,77 +193,105 @@ function Select({
 
   const rootClassName = joinClassNames(styles.select, className);
 
+  const iconClassName = joinClassNames(
+    styles.icon,
+    isCalendar ? styles.calendarIcon : styles.chevronIcon,
+  );
+
   return (
     <div
       ref={rootRef}
       className={rootClassName}
       style={{ width: resolvedWidth }}
+      data-type={isCalendar ? "calendar" : "list"}
       data-open={resolvedIsOpen}
-      data-filled={selectedOption !== undefined}
+      data-filled={isFilled}
       data-disabled={disabled}
+      onKeyDown={handleRootKeyDown}
     >
-      {name ? (
-        <input
-          type="hidden"
-          name={name}
-          value={selectedOption?.value ?? ""}
-          disabled={disabled}
-        />
-      ) : null}
-
       <button
         ref={triggerRef}
         id={selectId}
         type="button"
         className={styles.trigger}
         aria-label={ariaLabel ? `${ariaLabel}: ${displayText}` : undefined}
-        aria-haspopup="listbox"
+        aria-haspopup={isCalendar ? "dialog" : undefined}
         aria-expanded={resolvedIsOpen}
-        aria-controls={resolvedIsOpen ? listboxId : undefined}
+        aria-controls={popupId}
         disabled={disabled}
         onClick={handleTriggerClick}
-        onKeyDown={handleTriggerKeyDown}
       >
-        <span className={selectedOption ? styles.value : styles.placeholder}>
+        <span className={isFilled ? styles.value : styles.placeholder}>
           {displayText}
         </span>
 
-        <span className={styles.icon} aria-hidden="true" />
+        <span className={iconClassName} aria-hidden="true" />
       </button>
 
-      {resolvedIsOpen ? (
-        <div
-          ref={listRef}
-          id={listboxId}
-          className={styles.optionList}
-          role="listbox"
-          aria-label={ariaLabel ? `${ariaLabel} 옵션` : "선택 옵션"}
-          aria-orientation="horizontal"
-        >
-          {options.map((option, optionIndex) => {
-            const isSelected = Object.is(option.value, selectedValue);
+      <div
+        className={styles.popup}
+        data-open={resolvedIsOpen}
+        aria-hidden={resolvedIsOpen ? undefined : true}
+      >
+        {isCalendar ? (
+          <div
+            id={popupId}
+            className={joinClassNames(
+              styles.popupContent,
+              styles.calendarPanel,
+            )}
+            role="dialog"
+            aria-label={ariaLabel ? `${ariaLabel} 달력` : "날짜 선택 달력"}
+          >
+            <Calendar
+              {...calendarProps}
+              className={styles.calendar}
+              calendarType="gregory"
+              locale={calendarLocale}
+              minDate={minDate}
+              maxDate={maxDate}
+              minDetail="month"
+              maxDetail="month"
+              next2Label={null}
+              prev2Label={null}
+              selectRange={false}
+              showFixedNumberOfWeeks
+              value={selectedDate}
+              formatDay={(_, date) => String(date.getDate())}
+              formatMonthYear={(_, date) => `${date.getMonth() + 1}월`}
+              formatShortWeekday={(_, date) => KOREAN_WEEKDAYS[date.getDay()]}
+              onChange={handleCalendarChange}
+            />
+          </div>
+        ) : (
+          <div
+            id={popupId}
+            className={joinClassNames(styles.popupContent, styles.optionList)}
+            role="group"
+            aria-label={ariaLabel ? `${ariaLabel} 옵션` : "선택 옵션"}
+          >
+            {options.map((option) => {
+              const isSelected = option.value === selectedValue;
 
-            return (
-              <Button
-                key={`${typeof option.value}:${String(option.value)}`}
-                className={styles.option}
-                color="Neutral"
-                kind="border"
-                size="Xsmall"
-                status={isSelected ? "Active" : "Default"}
-                text={option.label}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                data-selected={isSelected}
-                tabIndex={-1}
-                onClick={() => selectOption(option)}
-                onKeyDown={(event) => handleOptionKeyDown(event, optionIndex)}
-              />
-            );
-          })}
-        </div>
-      ) : null}
+              return (
+                <Button
+                  key={`${typeof option.value}:${String(option.value)}`}
+                  className={styles.option}
+                  color="Neutral"
+                  kind="border"
+                  size="Xsmall"
+                  status={isSelected ? "Active" : "Default"}
+                  text={option.label}
+                  type="button"
+                  aria-pressed={isSelected}
+                  data-selected={isSelected}
+                  onClick={() => handleOptionSelect(option)}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
