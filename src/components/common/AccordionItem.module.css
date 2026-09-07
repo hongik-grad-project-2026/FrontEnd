@@ -6,6 +6,7 @@
     flex-direction: column;
     justify-content: center;
     border-bottom: var(--border-width-default) solid var(--color-neutral-20);
+    cursor: pointer;
 }
 
 .accordionItem:last-child {

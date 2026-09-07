@@ -42,7 +42,7 @@ function NoticeArea() {
                 const formattedDate = notice.createdAt.split("T")[0].replace(/-/g, ".");
 
                 return (<AccordionItem
-                    key={notice.noticeId}
+                    noticeId={notice.noticeId}
                     isImportant={notice.important}
                     title={notice.title}
                     hasAttachments={hasAttachments}
