@@ -1,0 +1,118 @@
+/* BaseModal의 기본 너비보다 우선하도록 dialog 속성을 함께 지정. */
+.modal[role="dialog"] {
+  display: flex;
+  width: 403px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: calc(var(--spacing-12) - var(--border-width-default));
+  color: var(--color-text-primary);
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-neutral-30);
+  border-radius: var(--radius-12);
+  box-shadow: 0 1px 2px 2px rgb(0 0 0 / 20%);
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) 0;
+}
+
+.icon {
+  display: block;
+  width: 60px;
+  height: 60px;
+  flex: 0 0 60px;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* 기존 PNG의 투명 윤곽을 재사용하고 표시 색상만 적용. */
+.icon[data-icon="help"] {
+  color: var(--color-brand-secondary);
+  -webkit-mask-image: url("/icons/icon60/help--n20.png");
+  mask-image: url("/icons/icon60/help--n20.png");
+}
+
+.icon[data-icon="warning"] {
+  color: var(--color-neutral-30);
+  -webkit-mask-image: url("/icons/icon60/warning--n20.png");
+  mask-image: url("/icons/icon60/warning--n20.png");
+}
+
+.icon[data-icon="checkmark"] {
+  color: var(--color-brand-primary);
+  -webkit-mask-image: url("/icons/icon60/checkmark--n20.png");
+  mask-image: url("/icons/icon60/checkmark--n20.png");
+}
+
+.title,
+.description,
+.secondaryDescription {
+  width: 100%;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--text-head-2-size);
+  font-weight: var(--text-head-2-weight);
+  line-height: var(--text-head-2-line-height);
+  letter-spacing: var(--text-head-2-letter-spacing);
+}
+
+.descriptionGroup {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding: var(--spacing-12) 0;
+}
+
+.description {
+  color: var(--color-neutral-90);
+  font-size: var(--text-body-1-size);
+  font-weight: var(--text-body-1-weight);
+  line-height: var(--text-body-1-line-height);
+  letter-spacing: var(--text-body-1-letter-spacing);
+}
+
+.secondaryDescription {
+  color: var(--color-neutral-50);
+  font-size: var(--text-body-2-size);
+  font-weight: var(--text-body-2-weight);
+  line-height: var(--text-body-2-line-height);
+  letter-spacing: var(--text-body-2-letter-spacing);
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+}
+
+/* Button의 기본 160px 너비와 고정 flex 값을 이 Modal 안에서만 조정 */
+.actions .action[data-size="Default"] {
+  width: auto;
+  min-width: 0;
+  max-width: 200px;
+  flex: 1 1 0;
+}

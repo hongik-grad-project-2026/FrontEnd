@@ -110,21 +110,19 @@ const temporaryRentals = [
   },
 ];
 
-// 임시 데이터를 API처럼 반환하는 함수 (실제 API 연결 전 무한스크롤, 로딩 스피너, UI 동작을 확인하기 위함)
+// 화면 확인용 임시 조회 함수
+// 실제 기자재 API와 연결된 함수가 아님
 async function fetchTemporaryRentals({ pageParam }) {
-  // 네트워크 지연 시뮬레이션 (0.3초 가상 로딩 시간)
   await new Promise((resolve) => {
     setTimeout(resolve, 300);
   });
 
-  // 임시 데이터 ID 고유화
   const items = temporaryRentals.map((rental, index) => ({
     ...rental,
     id: `${rental.id}-page-${pageParam}-${index}`,
     rentalId: `${rental.rentalId}-${pageParam}-${index}`,
   }));
 
-  // 4번까지만 데이터를 불러오고 그 이후에는 스크롤을 멈추도록 테스트 제약
   const hasNextPage = pageParam < 4;
 
   return {
@@ -133,7 +131,6 @@ async function fetchTemporaryRentals({ pageParam }) {
   };
 }
 
-// 카드 상태별 기본 버튼
 const primaryButtonByStatus = {
   waiting: {
     text: "수령 처리하기",
@@ -152,7 +149,6 @@ const primaryButtonByStatus = {
   },
 };
 
-// 카드의 임시 상태를 StatusBadge의 공개 status 값으로 변환
 const badgeStatusByRentalStatus = {
   waiting: "대여-수령대기",
   renting: "대여-대여중",
@@ -173,6 +169,7 @@ function isVisibleInTab(rental, activeTab) {
 
 function AdminRentalStatusPage() {
   const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const {
     items: rentalItems,
@@ -187,8 +184,8 @@ function AdminRentalStatusPage() {
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
-  // 탭 확인용 임시 개수
-  // 실제 API 연결 후 서버에서 받은 개수로 교체
+  // 탭 표시 확인용 임시 개수
+  // 실제 API 연결 후 서버에서 받은 값으로 교체
   const rentalCounts = {
     waiting: 10,
     renting: 10,
@@ -214,87 +211,123 @@ function AdminRentalStatusPage() {
     },
   ];
 
-  // 무한스크롤 확인을 위해 useInfiniteScroll훅이 합쳐준 rentalItems로 교체
-  // const filteredRentals = temporaryRentals.filter((rental) =>
-  const filteredRentals = rentalItems.filter((rental) =>
-    isVisibleInTab(rental, activeTab),
-  );
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-  // 대여중 탭에서는 연체 카드를 일반 대여중 카드보다 먼저 표시
+  const filteredRentals = rentalItems.filter((rental) => {
+    const matchesTab = isVisibleInTab(rental, activeTab);
+
+    const matchesSearch =
+      !normalizedSearchTerm ||
+      rental.equipmentName.toLowerCase().includes(normalizedSearchTerm);
+
+    return matchesTab && matchesSearch;
+  });
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = (inputText) => {
+    setSearchTerm(inputText);
+  };
+
   const visibleRentals =
     activeTab === "renting"
       ? [...filteredRentals].sort((firstRental, secondRental) => {
-        const firstIsOverdue = firstRental.status === "overdue";
-        const secondIsOverdue = secondRental.status === "overdue";
+          const firstIsOverdue = firstRental.status === "overdue";
+          const secondIsOverdue = secondRental.status === "overdue";
 
-        return Number(secondIsOverdue) - Number(firstIsOverdue);
-      })
+          return Number(secondIsOverdue) - Number(firstIsOverdue);
+        })
       : filteredRentals;
 
   return (
     <div className={styles.adminRentalStatusPage}>
       <PageHeader />
 
-      <div className={styles.listViewContainer}>
-        <div className={styles.toolsContainer}>
-          <Tabs
-            items={rentalStatusTabs}
-            value={activeTab}
-            onChange={setActiveTab}
-            ariaLabel="대여 현황"
-          />
+      <div
+        className={styles.contentViewport}
+        role="region"
+        aria-label="대여 현황 목록 영역"
+        tabIndex={0}
+      >
+        <div className={styles.content}>
+          <div className={styles.toolsContainer}>
+            <Tabs
+              className={styles.statusTabs}
+              items={rentalStatusTabs}
+              value={activeTab}
+              onChange={setActiveTab}
+              ariaLabel="대여 현황"
+            />
 
-          <SearchBar placeholder="기자재명으로 검색..." />
+            <SearchBar
+              className={styles.search}
+              name="rentalStatusSearch"
+              width={360}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onSubmit={handleSearchSubmit}
+              ariaLabel="대여 현황 기자재명 검색"
+              placeholder="기자재명으로 검색..."
+            />
+          </div>
+
+          <section className={styles.cardListContainer} aria-label="대여 목록">
+            {isError && <p>대여 목록을 불러오지 못했습니다.</p>}
+
+            {!isLoading && !isError && visibleRentals.length === 0 && (
+              <p>검색 조건에 해당하는 대여 현황이 없습니다.</p>
+            )}
+
+            {visibleRentals.map((rental) => {
+              const primaryButton = primaryButtonByStatus[rental.status];
+              const badgeStatus = badgeStatusByRentalStatus[rental.status];
+
+              return (
+                <RentalCard
+                  key={rental.id}
+                  ariaLabel={rental.ariaLabel}
+                  badge={<StatusBadge status={badgeStatus} />}
+                  actions={
+                    <>
+                      <Button
+                        kind={primaryButton.kind}
+                        status="Default"
+                        size="Default"
+                        color={primaryButton.color}
+                        showLeftIcon={false}
+                        text={primaryButton.text}
+                      />
+
+                      <Button
+                        kind="border"
+                        status="Default"
+                        size="Default"
+                        color="Primary"
+                        showLeftIcon={false}
+                        text="상세 보기"
+                      />
+                    </>
+                  }
+                >
+                  <RentalCardInfo
+                    category={rental.category}
+                    equipmentName={rental.equipmentName}
+                    rentalId={rental.rentalId}
+                    fields={rental.infoFields}
+                  />
+                </RentalCard>
+              );
+            })}
+
+            <div ref={loadMoreRef} aria-hidden="true" />
+
+            {isFetchingNextPage && <p>더 불러오는 중...</p>}
+
+            {!hasNextPage && !isLoading && <p>마지막 목록입니다.</p>}
+          </section>
         </div>
-
-        <section className={styles.cardListContainer} aria-label="대여 목록"        >
-          {isError && <p>대여 목록을 불러오지 못했습니다.</p>}
-
-          {visibleRentals.map((rental) => {
-            const primaryButton = primaryButtonByStatus[rental.status];
-            const badgeStatus = badgeStatusByRentalStatus[rental.status];
-
-            return (
-              <RentalCard
-                key={rental.id}
-                ariaLabel={rental.ariaLabel}
-                badge={<StatusBadge status={badgeStatus} />}
-                actions={
-                  <>
-                    <Button
-                      kind={primaryButton.kind}
-                      status="Default"
-                      size="Default"
-                      color={primaryButton.color}
-                      showLeftIcon={false}
-                      text={primaryButton.text}
-                    />
-
-                    <Button
-                      kind="border"
-                      status="Default"
-                      size="Default"
-                      color="Primary"
-                      showLeftIcon={false}
-                      text="상세 보기"
-                    />
-                  </>
-                }
-              >
-                <RentalCardInfo
-                  category={rental.category}
-                  equipmentName={rental.equipmentName}
-                  rentalId={rental.rentalId}
-                  fields={rental.infoFields}
-                />
-              </RentalCard>
-            );
-          })}
-          <div ref={loadMoreRef} aria-hidden="true" />
-
-          {isFetchingNextPage && <p>더 불러오는 중...</p>}
-          {!hasNextPage && !isLoading && <p>마지막 목록입니다.</p>}
-        </section>
       </div>
     </div>
   );
