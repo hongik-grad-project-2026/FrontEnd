@@ -234,48 +234,56 @@ function AdminRentalApprovalPage() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>대여신청 승인</h1>
-
-      <DataTable
-        ariaLabel="대여 신청 승인 목록"
-        columns={columns}
-        rows={visibleRequests}
-        totalCount={filteredRequests.length}
-        selectedRowIds={selectedRequestIds}
-        onSelectedRowIdsChange={setSelectedRequestIds}
-        getRowId={(request) => request.id}
-        getRowLabel={(request) =>
-          `${request.studentName}님의 ${request.equipmentName} 대여 신청`
-        }
-        emptyMessage="검색 조건에 해당하는 대여 신청이 없습니다."
-        bulkAction={
-          <Button
-            kind="fill"
-            size="Default"
-            color="Primary"
-            status="Default"
-            text="신청 승인"
-            disabled={selectedRequestIds.length === 0}
+      <div
+        className={styles.contentViewport}
+        role="region"
+        aria-label="대여 신청 승인 목록 영역"
+        tabIndex={0}
+      >
+        <div className={styles.content}>
+          <DataTable
+            ariaLabel="대여 신청 승인 목록"
+            columns={columns}
+            rows={visibleRequests}
+            totalCount={filteredRequests.length}
+            selectedRowIds={selectedRequestIds}
+            onSelectedRowIdsChange={setSelectedRequestIds}
+            getRowId={(request) => request.id}
+            getRowLabel={(request) =>
+              `${request.studentName}님의 ${request.equipmentName} 대여 신청`
+            }
+            emptyMessage="검색 조건에 해당하는 대여 신청이 없습니다."
+            bulkAction={
+              <Button
+                kind="fill"
+                size="Default"
+                color="Primary"
+                status="Default"
+                text="신청 승인"
+                disabled={selectedRequestIds.length === 0}
+              />
+            }
+            search={
+              <SearchBar
+                width={360}
+                value={searchTerm}
+                ariaLabel="대여 신청 검색어"
+                placeholder="학생명, 학번 또는 기자재명으로 검색..."
+                onChange={handleSearchChange}
+                onSubmit={() => setCurrentPage(1)}
+              />
+            }
+            pagination={
+              <Pagination
+                page={resolvedCurrentPage}
+                totalPages={totalPages}
+                onChange={setCurrentPage}
+                ariaLabel="대여 신청 목록 페이지 이동"
+              />
+            }
           />
-        }
-        search={
-          <SearchBar
-            width={400}
-            value={searchTerm}
-            ariaLabel="대여 신청 검색어"
-            placeholder="학생명, 학번 또는 기자재명으로 검색..."
-            onChange={handleSearchChange}
-            onSubmit={() => setCurrentPage(1)}
-          />
-        }
-        pagination={
-          <Pagination
-            page={resolvedCurrentPage}
-            totalPages={totalPages}
-            onChange={setCurrentPage}
-            ariaLabel="대여 신청 목록 페이지 이동"
-          />
-        }
-      />
+        </div>
+      </div>
     </div>
   );
 }
