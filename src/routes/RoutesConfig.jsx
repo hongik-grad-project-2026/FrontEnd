@@ -1,4 +1,5 @@
 // ------ 공용 ------
+import { Outlet } from 'react-router-dom'
 import PageLayout from '../components/layout/PageLayout'
 import NotFoundPage from '../pages/error/NotFoundPage'
 
@@ -13,6 +14,8 @@ import AdminMemberListPage from '../pages/admin/AdminMemberListPage'
 // // 2차 페이지
 import AdminAssetListPage from '../pages/admin/AdminAssetListPage'
 import AdminNoticeListPage from '../pages/admin/AdminNoticeListPage'
+import AdminNoticeDetailPage from '../pages/admin/AdminNoticeDetailPage'
+import { fetchNoticeDetail } from '../api/noticeApi'
 
 
 
@@ -39,7 +42,7 @@ const adminRoutes = {
             element: <AdminDashboardPage />,
             handle: {
                 title: "대시보드",
-            }
+            },
         },
         {
             path: 'approval',
@@ -78,10 +81,27 @@ const adminRoutes = {
         },
         {
             path: 'notices',
-            element: <AdminNoticeListPage />,
+            element: <Outlet />,
             handle: {
                 title: "공지사항",
-            }
+            },
+            children: [
+                {
+                    index: true,
+                    element: <AdminNoticeListPage />,
+                    // handle: {
+                    //     title: "공지사항",
+                    // },
+                },
+                {
+                    path: ':noticeId',
+                    element: <AdminNoticeDetailPage />,
+                    loader: ({ params }) => fetchNoticeDetail(params.noticeId),
+                    handle: {
+                        title: ({ data }) => data?.title ?? "공지사항 상세",
+                    },
+                },
+            ],
         },
     ]
 };

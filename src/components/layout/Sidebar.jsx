@@ -1,16 +1,8 @@
 import { NavLink } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import { IconTextButton } from "../common/IconButton";
 import styles from "./Sidebar.module.css";
 
-function IconTextButton({ icon, text, type = "button", ...buttonProps }) {
-  return (
-    <button {...buttonProps} type={type}>
-      <img src={`/icons/icon16/${icon}.png`} alt="" aria-hidden="true" />
-
-      <span>{text}</span>
-    </button>
-  );
-}
 
 // ----- NavItem ----- //
 
@@ -61,9 +53,9 @@ function AccountPanel({ userName, userRole, userId }) {
   return (
     <div className={styles.accountPanel}>
       <div className={styles.buttonCon}>
-        <IconTextButton icon="notification" text="알림" />
+        <IconTextButton icon="notification" text="알림" border={false} />
 
-        <IconTextButton icon="logout" text="로그아웃" />
+        <IconTextButton icon="logout" text="로그아웃" border={false} />
       </div>
 
       <div className={styles.userinfoCon}>

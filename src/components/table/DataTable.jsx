@@ -47,6 +47,7 @@ function DataTable({
   search,
   selectedRowIds = [],
   totalCount,
+  onRowClick,
 }) {
   const selectable = typeof onSelectedRowIdsChange === "function";
 
@@ -198,6 +199,7 @@ function DataTable({
                       key={rowId}
                       className={styles.bodyRow}
                       data-selected={isSelected}
+                      onClick={() => onRowClick(row)}
                     >
                       {selectable ? (
                         <td className={styles.selectionCell}>

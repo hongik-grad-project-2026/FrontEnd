@@ -7,15 +7,15 @@ function Breadcrumbs() {
   const navigate = useNavigate();
   const matches = useMatches();
 
-  console.log("Breadcrumbs-----matches", matches);
-
   // handle.title이 존재하는 라우트만 뽑아내기
   const crumbs = matches
     .filter((match) => match.handle?.title)
     .map((match) => {
+      const title = match.handle.title;
+
       return {
         id: match.id,
-        label: match.handle.title,
+        label: typeof title === "function" ? title(match) : title,
         to: match.pathname,
       };
     });

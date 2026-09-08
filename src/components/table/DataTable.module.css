@@ -56,7 +56,7 @@
   align-items: center;
 }
 
-.bulkAction > button[data-size="Default"] {
+.bulkAction>button[data-size="Default"] {
   width: 140px;
 }
 
@@ -120,6 +120,11 @@
   text-align: center;
 }
 
+.headerRow>.headerCell:first-child,
+.bodyCell:first-child {
+  padding-left: var(--spacing-16);
+}
+
 .headerCell {
   color: var(--color-neutral-60);
   font-size: var(--text-head-5-size);
@@ -136,10 +141,10 @@
   letter-spacing: var(--text-body-3-letter-spacing);
 }
 
-.bodyRow:hover > .bodyCell,
-.bodyRow:hover > .selectionCell,
-.bodyRow[data-selected="true"] > .bodyCell,
-.bodyRow[data-selected="true"] > .selectionCell {
+.bodyRow:hover>.bodyCell,
+.bodyRow:hover>.selectionCell,
+.bodyRow[data-selected="true"]>.bodyCell,
+.bodyRow[data-selected="true"]>.selectionCell {
   background-color: var(--color-neutral-10);
 }
 
