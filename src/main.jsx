@@ -32,14 +32,16 @@ const router = createBrowserRouter([
 ]);
 
 createRoot(document.getElementById("root")).render(
+  // <>
   <StrictMode>
     {/* <App /> */}
-    <QueryClientProvider client={queryClient}>
+    < QueryClientProvider client={queryClient} >
       <UserProvider>
         <RouterProvider router={router} />
       </UserProvider>
       <ReactQueryDevtools initialIsOpen={false} />{" "}
       {/*Devtools : 개발용 패널, 프로덕션 빌드 시 자동 비활성화됨 */}
-    </QueryClientProvider>
-  </StrictMode>,
+    </ QueryClientProvider>
+  </StrictMode>
+  // </>
 );

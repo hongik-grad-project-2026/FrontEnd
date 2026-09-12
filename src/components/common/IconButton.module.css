@@ -54,6 +54,7 @@
 
 .IconTextButton.border {
   background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-neutral-20);
   height: 32px;
   border-radius: var(--radius-4);
   padding: 0 var(--spacing-8);

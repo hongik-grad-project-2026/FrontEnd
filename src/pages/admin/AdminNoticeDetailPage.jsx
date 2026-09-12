@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import styles from "./AdminNoticeDetailPage.module.css";
 import paginationStyles from "../../components/common/Pagination.module.css";
@@ -58,12 +58,19 @@ function AdminNoticeDetailPage() {
     const noticeData = useLoaderData();
     console.log('noticeData', noticeData);
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+    const [isImportant, setIsImportnat] = useState(noticeData.isImportant);
+    const [viewCount, setViewCount] = useState(noticeData.viewCount);
+
+
+    useEffect(() => {
+        setViewCount((prev) => prev + 1);
+    }, []);
 
     return (
         <div className={styles.noticeDetailPage}>
 
             <div className={styles.toolsCon}>
-                <ToggleButton text="중요 공지 설정" status={noticeData.important} />
+                <ToggleButton text="중요 공지 설정" status={isImportant} onChange={() => setIsImportnat((prev) => !prev)} />
                 <div className={styles.btnWrap}>
 
                     <Button color='Primary' kind='border' showLeftIcon={true} size='Default' status='Default' text="공지 수정" />
@@ -86,7 +93,7 @@ function AdminNoticeDetailPage() {
                     </div>
                     <div className={styles.noticeMetaItem}>
                         <span>조회수</span>
-                        <span>{noticeData.viewCount}</span>
+                        <span>{viewCount}</span>
                     </div>
                 </div>
                 {noticeData.attachments.length === 0 ? '' : (

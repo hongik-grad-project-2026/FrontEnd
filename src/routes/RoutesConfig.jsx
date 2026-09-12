@@ -16,6 +16,7 @@ import AdminAssetListPage from '../pages/admin/AdminAssetListPage'
 import AdminNoticeListPage from '../pages/admin/AdminNoticeListPage'
 import AdminNoticeDetailPage from '../pages/admin/AdminNoticeDetailPage'
 import { fetchNoticeDetail } from '../api/noticeApi'
+import AdminNoticeCreatePage from '../pages/admin/AdminNoticeCreatePage'
 
 
 
@@ -99,6 +100,13 @@ const adminRoutes = {
                     loader: ({ params }) => fetchNoticeDetail(params.noticeId),
                     handle: {
                         title: ({ data }) => data?.title ?? "공지사항 상세",
+                    },
+                },
+                {
+                    path: 'create',
+                    element: <AdminNoticeCreatePage />,
+                    handle: {
+                        title: "공지사항 작성",
                     },
                 },
             ],

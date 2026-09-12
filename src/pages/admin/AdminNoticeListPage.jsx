@@ -78,7 +78,7 @@ function AdminNoticeListPage() {
 
     return (
         <div className={styles.noticeListPage} >
-            <PageHeader />
+            <PageHeader customTitle='공지사항' />
             <div className={styles.contentArea} >
 
                 <DataTable
@@ -90,12 +90,11 @@ function AdminNoticeListPage() {
                             size={'Default'}
                             color={'Primary'}
                             text={'공지사항 작성'}
+                            onClick={() => navigate(`/admin/notices/create`)}
                         />
                     }
                     search={
-                        <SearchBar
-                            placeholder='제목으로 검색...'
-                            width={400} />
+                        <SearchBar placeholder='제목으로 검색...' />
                     }
                     pagination={
                         <Pagination

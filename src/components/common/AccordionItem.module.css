@@ -14,7 +14,6 @@
 }
 
 .accordionHeader {
-    /* border: 1px solid red; */
     display: flex;
     gap: var(--spacing-8);
     align-items: center;
@@ -45,6 +44,15 @@
     flex: 1;
 }
 
+.updownIcon {
+    width: 24px;
+    height: 24px;
+    background-image: url('/icons/icon24/down.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
 .attachmentIcon {
     opacity: calc(6/9);
 }
@@ -61,6 +69,7 @@
     display: grid;
     grid-template-rows: 0fr;
     padding-bottom: 0;
+    padding-right: 32px;
     overflow: hidden;
     transition:
         grid-template-rows 0.3s ease,
@@ -85,6 +94,9 @@
     background-color: var(--color-neutral-10);
 }
 
+.accordionItem:hover .updownIcon {
+    background-image: url('/icons/icon24/up.png');
+}
 
 .accordionItem:active {
     background-color: var(--color-neutral-20);
