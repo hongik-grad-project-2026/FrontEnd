@@ -1,8 +1,11 @@
 .noticeCreateArea {
-    /* border: 1px solid gold; */
+    border-radius: var(--radius-8);
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     flex: 1;
+    gap: var(--spacing-4);
 }
 
 
@@ -11,7 +14,6 @@
     display: flex;
     align-items: top;
     padding: var(--spacing-12) var(--spacing-16);
-    /* border: 1px solid brown; */
 }
 
 .createSection:nth-child(3) {

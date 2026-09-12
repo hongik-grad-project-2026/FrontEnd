@@ -17,6 +17,7 @@ import AdminNoticeListPage from '../pages/admin/AdminNoticeListPage'
 import AdminNoticeDetailPage from '../pages/admin/AdminNoticeDetailPage'
 import { fetchNoticeDetail } from '../api/noticeApi'
 import AdminNoticeCreatePage from '../pages/admin/AdminNoticeCreatePage'
+import AdminNoticeEditPage from '../pages/admin/AdminNoticeEditPage'
 
 
 
@@ -107,6 +108,14 @@ const adminRoutes = {
                     element: <AdminNoticeCreatePage />,
                     handle: {
                         title: "공지사항 작성",
+                    },
+                },
+                {
+                    path: 'edit/:noticeId',
+                    element: <AdminNoticeEditPage />,
+                    loader: ({ params }) => fetchNoticeDetail(params.noticeId),
+                    handle: {
+                        title: "공지사항 수정",
                     },
                 },
             ],
