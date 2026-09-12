@@ -440,7 +440,7 @@ function AdminEquipmentListPage() {
     },
     {
       key: "actions",
-      header: "수정 / 폐기",
+      header: "수정/폐기",
       width: 68,
       render: (equipment) => <EquipmentActionsCell equipment={equipment} />,
     },

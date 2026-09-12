@@ -62,7 +62,6 @@
 .imageCell {
   display: flex;
   align-items: center;
-  padding-left: var(--spacing-16);
 }
 
 .imagePlaceholder {
