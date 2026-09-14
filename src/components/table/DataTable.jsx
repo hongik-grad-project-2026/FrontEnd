@@ -199,7 +199,11 @@ function DataTable({
                       key={rowId}
                       className={styles.bodyRow}
                       data-selected={isSelected}
-                      onClick={() => onRowClick(row)}
+                      onClick={
+                        typeof onRowClick === "function"
+                          ? () => onRowClick(row)
+                          : undefined
+                      }
                     >
                       {selectable ? (
                         <td className={styles.selectionCell}>
