@@ -19,6 +19,9 @@ import { fetchNoticeDetail } from '../api/noticeApi'
 import AdminNoticeCreatePage from '../pages/admin/AdminNoticeCreatePage'
 import AdminNoticeEditPage from '../pages/admin/AdminNoticeEditPage'
 
+// ------ 학생모드 ------
+// // 1차 페이지
+import StudentDashboardPage from '../pages/student/StudentDashboardPage'
 
 
 // 공동 라우트
@@ -123,5 +126,24 @@ const adminRoutes = {
     ]
 };
 
+// 학생모드 라우트 그룹
+const studentRoutes = {
+    path: '/student',
+    element: <PageLayout />,
+    handle: {
+        title: "학생모드",
+    },
+    children: [
+        {
+            index: true,
+            // path: '/dashboard',
+            element: <StudentDashboardPage />,
+            handle: {
+                title: "대시보드",
+            },
+        },
+    ]
+};
 
-export { commonRoutes, adminRoutes }
+
+export { commonRoutes, adminRoutes, studentRoutes }

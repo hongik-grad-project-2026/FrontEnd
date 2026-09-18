@@ -85,3 +85,58 @@
 .inputIconButton:not(:disabled):active {
   background-color: var(--color-neutral-20);
 }
+
+
+.wishIconButton {
+  border: var(--border-width-default) solid var(--color-neutral-20);
+  background-color: var(--color-white);
+  border-radius: var(--radius-8);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wishIconImg {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+
+.wishIconButton[aria-pressed="false"] .wishIconImg {
+  opacity: calc(5/9);
+  background-image: url('/icons/icon24/bookmark-plus.png');
+}
+
+.wishIconButton:hover {
+  background-color: var(--color-neutral-20);
+}
+
+.wishIconButton:active {
+  background-color: var(--color-neutral-30);
+  border-color: var(--color-neutral-30);
+}
+
+.wishIconButton[aria-pressed="false"]:hover .wishIconImg {
+  background-image: url('/icons/icon24/bookmark-plus--primary.png');
+  opacity: 1;
+}
+
+.wishIconButton[aria-pressed="false"]:active .wishIconImg {
+  background-image: url('/icons/icon24/bookmark-plus--primary.png');
+}
+
+.wishIconButton[aria-pressed="true"] .wishIconImg {
+  opacity: 1;
+  background-image: url('/icons/icon24/bookmark--primary.png');
+}
+
+
+.wishIconButton[aria-pressed="true"]:hover .wishIconImg {
+  background-image: url('/icons/icon24/bookmark-minus--primary.png');
+  opacity: calc(5/9);
+}

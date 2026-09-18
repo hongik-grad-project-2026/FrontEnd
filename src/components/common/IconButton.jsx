@@ -11,6 +11,16 @@ function joinClassNames(...classNames) {
   return classNames.filter(Boolean).join(" ");
 }
 
+function IconImage({ icon, size = 16 }) {
+  return (
+    <img
+      src={`/icons/icon${size}/${icon}.png`}
+      alt=""
+      aria-hidden="true"
+    />
+  );
+}
+
 function IconButton({
   icon = "back",
   size = 24,
@@ -28,7 +38,7 @@ function IconButton({
       className={joinClassNames(styles.iconButton, sizeClassName, className)}
       aria-label={ariaLabel ?? iconButtonLabels[icon] ?? "아이콘 버튼"}
     >
-      <img src={`/icons/icon16/${icon}.png`} alt="" aria-hidden="true" />
+      <IconImage icon={icon} />
     </button>
   );
 }
@@ -51,7 +61,7 @@ function IconTextButton({
       className={joinClassNames(styles.IconTextButton, className) + (border ? ` ${styles.border}` : ` ${styles.nonBorder}`)}
       aria-label={ariaLabel ?? "아이콘 버튼"}
     >
-      <img src={`/icons/icon16/${icon}.png`} alt="" aria-hidden="true" />
+      <IconImage icon={icon} />
       {text && <span className={styles.iconButtonText}>{text}</span>}
     </button>
   );
@@ -72,10 +82,30 @@ function InputIconButton({
       className={joinClassNames(styles.inputIconButton, className)}
       aria-label={ariaLabel ?? "아이콘 버튼"}
     >
-      <img src={`/icons/icon24/${icon}.png`} alt="" aria-hidden="true" />
+      <IconImage icon={icon} size={24} />
     </button>
   );
 }
 
-export { IconTextButton, InputIconButton };
+function WishIconButton({
+  ariaLabel,
+  isWish = false,
+  className,
+  type = "button",
+  ...buttonProps
+}) {
+  return (
+    <button
+      {...buttonProps}
+      type={type}
+      className={joinClassNames(styles.wishIconButton, className,)}
+      aria-label={ariaLabel ?? (isWish ? "찜 해제" : "찜하기")}
+      aria-pressed={isWish}
+    >
+      <div className={styles.wishIconImg}></div>
+    </button>
+  )
+}
+
+export { IconTextButton, InputIconButton, WishIconButton };
 export default IconButton;
