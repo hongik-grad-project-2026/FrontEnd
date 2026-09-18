@@ -49,18 +49,24 @@ function NavSubtitle({ titleName = "titleName", children }) {
 
 // ----- AccountPanel ----- //
 
-function AccountPanel({ userName, userRole, userId }) {
+function AccountPanel({ userName, userRole, userId, profileImage }) {
   return (
-    <div className={styles.accountPanel}>
+    <div className={styles.accountPanel} data-userRole={userRole}>
       <div className={styles.buttonCon}>
         <IconTextButton icon="notification" text="알림" border={false} />
-
         <IconTextButton icon="logout" text="로그아웃" border={false} />
       </div>
 
       <div className={styles.userinfoCon}>
-        <div className={styles.profileimgCon}>
-          <img src="/images/hongikLogo-circle.png" alt="" />
+        <div
+          className={styles.profileimgCon}
+          data-profile-image={Boolean(profileImage)}
+        >
+          {userRole === "admin" ? (
+            <img src="/images/hongikLogo-circle.png" alt="" />
+          ) : profileImage ? (
+            <img src={profileImage} alt="프로필" />
+          ) : null}
         </div>
 
         <div className={styles.profiletextCon}>
@@ -84,6 +90,7 @@ function Sidebar() {
   const userName = user.name;
   const userId = user.id;
   const accountMode = user.role;
+  const profileImage = user.profile_image_url;
 
   return (
     <section className={styles.sidebar}>
@@ -102,48 +109,81 @@ function Sidebar() {
           />
         </NavSubtitle>
 
-        <NavSubtitle titleName="Management">
-          <NavItem
-            itemName="대여신청 승인"
-            navLink={`/${accountMode}/approval`}
-            icon="approval"
-          />
 
-          <NavItem
-            itemName="대여 현황"
-            navLink={`/${accountMode}/status`}
-            icon="status"
-          />
+        {user.role === 'admin' ? (
+          <>
+            <NavSubtitle titleName="Management">
+              <NavItem
+                itemName="대여신청 승인"
+                navLink={`/${accountMode}/approval`}
+                icon="approval"
+              />
 
-          <NavItem
-            itemName="기자재 관리"
-            navLink={`/${accountMode}/equipment`}
-            icon="equipment"
-          />
+              <NavItem
+                itemName="대여 현황"
+                navLink={`/${accountMode}/status`}
+                icon="status"
+              />
 
-          <NavItem
-            itemName="대여 기록"
-            navLink={`/${accountMode}/history`}
-            icon="history"
-          />
-        </NavSubtitle>
+              <NavItem
+                itemName="기자재 관리"
+                navLink={`/${accountMode}/equipment`}
+                icon="equipment"
+              />
 
-        <NavSubtitle titleName="Account">
-          <NavItem
-            itemName="회원 관리"
-            navLink={`/${accountMode}/members`}
-            icon="members"
-          />
-        </NavSubtitle>
+              <NavItem
+                itemName="대여 기록"
+                navLink={`/${accountMode}/history`}
+                icon="history"
+              />
+            </NavSubtitle>
+
+            <NavSubtitle titleName="Account">
+              <NavItem
+                itemName="회원 관리"
+                navLink={`/${accountMode}/members`}
+                icon="members"
+              />
+            </NavSubtitle>
+          </>
+        ) : (
+          <>
+            <NavSubtitle titleName="Rental">
+
+              <NavItem
+                itemName="기자재 조회&신청"
+                navLink={`/${accountMode}/equipment`}
+                icon="equipment"
+              />
+              <NavItem
+                itemName="내 대여 내역"
+                navLink={`/${accountMode}/history`}
+                icon="status"
+              />
+            </NavSubtitle>
+
+            <NavSubtitle titleName="Account">
+              <NavItem
+                itemName="마이페이지"
+                navLink={`/${accountMode}/mypage`}
+                icon="user"
+              />
+            </NavSubtitle>
+          </>
+        )}
+
       </div>
 
       <AccountPanel
         userName={userName}
         userRole={accountMode}
         userId={userId}
+        profileImage={profileImage}
       />
     </section>
   );
 }
 
 export default Sidebar;
+
+

@@ -155,11 +155,43 @@
 }
 
 .profileimgCon {
-    background-color: white;
     width: 32px;
     height: 32px;
     border-radius: 999px;
+    position: relative;
+    overflow: hidden;
 }
+
+.profileimgCon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.accountPanel[data-userRole='admin'] .profileimgCon {
+    background-color: var(--color-white);
+}
+
+
+.accountPanel[data-userRole='student'] .profileimgCon::before {
+    content: "";
+    background-color: var(--color-neutral-20);
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    inset: 0;
+    background-image: url("/icons/icon24/profile.png");
+    background-size: 24px;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: calc(5/9);
+}
+
+.accountPanel[data-userRole='student'] .profileimgCon[data-profile-image='true']::before {
+    display: none;
+}
+
+
 
 .profiletextCon {
     display: flex;

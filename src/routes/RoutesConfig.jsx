@@ -22,6 +22,11 @@ import AdminNoticeEditPage from '../pages/admin/AdminNoticeEditPage'
 // ------ 학생모드 ------
 // // 1차 페이지
 import StudentDashboardPage from '../pages/student/StudentDashboardPage'
+import StudentEquipmentListPage from '../pages/student/StudentEquipmentListPage'
+import StudentRentalHistoryPage from '../pages/student/StudentRentalHistoryPage'
+import StudentMyPage from '../pages/student/StudentMyPage'
+// // 2차 페이지
+import StudentNoticeListPage from '../pages/student/StudentNoticeListPage'
 
 
 // 공동 라우트
@@ -126,6 +131,7 @@ const adminRoutes = {
     ]
 };
 
+
 // 학생모드 라우트 그룹
 const studentRoutes = {
     path: '/student',
@@ -141,6 +147,50 @@ const studentRoutes = {
             handle: {
                 title: "대시보드",
             },
+        },
+        {
+            path: 'equipment',
+            element: <StudentEquipmentListPage />,
+            handle: {
+                title: "기자재 조회&신청",
+            }
+        },
+        {
+            path: 'history',
+            element: <StudentRentalHistoryPage />,
+            handle: {
+                title: "내 대여내역",
+            }
+        },
+        {
+            path: 'mypage',
+            element: <StudentMyPage />,
+            handle: {
+                title: "마이페이지",
+            }
+        },
+        {
+            path: 'notices',
+            element: <Outlet />,
+            handle: {
+                title: "공지사항",
+            },
+            children: [
+                {
+                    index: true,
+                    element: <StudentNoticeListPage />,
+
+                },
+                {
+                    path: ':noticeId',
+                    element: <StudentNoticeListPage />,
+                    loader: ({ params }) => fetchNoticeDetail(params.noticeId),
+                    handle: {
+                        title: ({ data }) => data?.title ?? "공지사항 상세",
+                    },
+                },
+
+            ],
         },
     ]
 };
