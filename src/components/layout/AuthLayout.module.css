@@ -1,0 +1,64 @@
+.authLayout {
+    /* border: 1px solid red; */
+    background-color: var(--color-neutral-10);
+    width: 100%;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contentSection {
+    background-color: var(--color-white);
+    border-radius: var(--radius-12);
+    width: 488px;
+    padding: 16px 44px;
+    display: flex;
+    flex-direction: column;
+}
+
+.contentSection>* {
+    width: 100%;
+}
+
+.logoArea {
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--color-neutral-100);
+    font-size: var(--text-title-1-size);
+    font-weight: var(--text-title-1-weight);
+    line-height: var(--text-title-1-line-height);
+    letter-spacing: var(--text-title-1-letter-spacing);
+}
+
+.logoArea img {
+    height: 18px;
+}
+
+
+/* inputLayout */
+.inputSection {
+    /* border: 1px solid red; */
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-12) 0;
+    gap: var(--spacing-12) 0;
+    width: 100%;
+}
+
+
+.sectionTitle {
+    /* border: 1px solid darkkhaki; */
+    width: min-content;
+    white-space: nowrap;
+    color: var(--color-neutral-90);
+    font-size: var(--text-head-4-size);
+    font-weight: var(--text-head-4-weight);
+    line-height: var(--text-head-4-line-height);
+    letter-spacing: var(--text-head-4-letter-spacing);
+}

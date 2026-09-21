@@ -8,7 +8,12 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 // 라우터 관련 import
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { adminRoutes, studentRoutes, commonRoutes } from "./routes/RoutesConfig.jsx";
+import {
+  adminRoutes,
+  studentRoutes,
+  commonRoutes,
+  authRoutes,
+} from "./routes/RoutesConfig.jsx";
 import { UserProvider } from "./context/UserProvider.jsx";
 
 const queryClient = new QueryClient(/*{
@@ -23,6 +28,9 @@ const queryClient = new QueryClient(/*{
 const router = createBrowserRouter([
   // 공동 라우트
   commonRoutes,
+
+  // 인증 라우트
+  authRoutes,
 
   // 관리자모드 라우트
   adminRoutes,

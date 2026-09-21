@@ -1,7 +1,9 @@
 // ------ 공용 ------
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import PageLayout from '../components/layout/PageLayout'
+import AuthLayout from '../components/layout/AuthLayout'
 import NotFoundPage from '../pages/error/NotFoundPage'
+import LoginPage from '../pages/auth/LoginPage'
 
 // ------ 관리자모드 ------
 // // 1차 페이지
@@ -32,10 +34,24 @@ import StudentNoticeListPage from '../pages/student/StudentNoticeListPage'
 // 공동 라우트
 const commonRoutes = {
     path: '/',
-    element: <div>root TEST</div>,
-    handle: {
-        title: "root",
-    }
+    element: <Navigate to="/login" replace />,
+};
+
+const authRoutes = {
+    path: '/login',
+    element: <AuthLayout />,
+    // handle: {
+    //     title: "로그인",
+    // },
+    children: [
+        {
+            index: true,
+            element: <LoginPage />,
+            handle: {
+                title: "로그인",
+            },
+        },
+    ]
 };
 
 // 관리자모드 라우트 그룹
@@ -196,4 +212,4 @@ const studentRoutes = {
 };
 
 
-export { commonRoutes, adminRoutes, studentRoutes }
+export { commonRoutes, authRoutes, adminRoutes, studentRoutes }

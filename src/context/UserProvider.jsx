@@ -1,45 +1,42 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UserContext } from "./UserContext.jsx";
+import { login as loginRequest } from "../api/authApi.js";
 
-const MOCK_USER = {
-  id: "C123456",
-  name: "홍길동",
-  // role: "admin",
-  role: "student",
-  profile_image_url: 'https://media.licdn.com/dms/image/v2/C4D1BAQGT7ihga9VFvw/company-background_10000/company-background_10000/0/1618498738825/_cover?e=2147483647&v=beta&t=VAMjKXM8VeaRsYbJlMeoO09R0RN8FIOAKDjvjwff7QY'
+
+const EMPTY_USER = {
+  id: null,
+  name: null,
+  role: null,
+  profile_image_url: null,
 };
 
+const STORAGE_KEY = "user";
+
+// 새로고침 시 저장된 로그인 정보 복원
+function getInitialUser() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored ? JSON.parse(stored) : EMPTY_USER;
+}
+
 export function UserProvider({ children }) {
-  const [user, setUser] = useState({
-    id: null,
-    name: null,
-    role: null,
-    profile_image_url: null
-  });
+  const [user, setUser] = useState(getInitialUser);
 
-  useEffect(() => {
-    let cancelled = false;
+  async function login({ id, password }) {
+    const userInfo = await loginRequest({ id, password });
 
-    async function loadUser() {
-      const userInfo = await Promise.resolve(MOCK_USER);
+    setUser(userInfo);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userInfo));
 
-      if (!cancelled) {
-        setUser(userInfo);
-      }
-    }
+    return userInfo; // 호출한 쪽에서 role로 이동 경로를 정할 수 있도록
+  }
 
-    loadUser();
+  function logout() {
+    setUser(EMPTY_USER);
+    localStorage.removeItem(STORAGE_KEY);
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log(user);
-  }, [user]);
-
-  const value = { user, setUser };
+  const value = { user, setUser, login, logout };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
+
