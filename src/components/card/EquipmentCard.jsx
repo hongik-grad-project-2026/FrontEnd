@@ -20,7 +20,7 @@ function EquipmentCard({
     return (
         <div
             className={styles.equipmentCard}
-            data-stockOut={isStockOut}>
+            data-stockout={isStockOut}>
             <div className={styles.imageCon} data-img={Boolean(modelImageUrl)}>
                 {modelImageUrl ?
                     <img src={modelImageUrl} alt={`${modelName}-image`} />

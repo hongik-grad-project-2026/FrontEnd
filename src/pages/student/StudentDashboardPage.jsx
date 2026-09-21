@@ -88,6 +88,7 @@ function NoticeArea() {
         const formattedDate = notice.createdAt.split("T")[0].replace(/-/g, ".");
 
         return (<AccordionItem
+          key={notice.noticeId}
           noticeId={notice.noticeId}
           isImportant={notice.important}
           title={notice.title}
@@ -104,7 +105,7 @@ function NoticeArea() {
 
 function RentalsLi({ rental }) {
   return (
-    <li className={styles.rentalsLi} data-rantalStatus={rental.status}>
+    <li className={styles.rentalsLi} data-rantalstatus={rental.status}>
       <div >
         <span className={styles.liModelName}>{rental.modelName}</span>
       </div>
