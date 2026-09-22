@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { IconTextButton } from "../common/IconButton";
 import styles from "./Sidebar.module.css";
@@ -49,12 +49,12 @@ function NavSubtitle({ titleName = "titleName", children }) {
 
 // ----- AccountPanel ----- //
 
-function AccountPanel({ userName, userRole, userId, profileImage }) {
+function AccountPanel({ userName, userRole, userId, profileImage, onLogout }) {
   return (
     <div className={styles.accountPanel} data-userrole={userRole}>
       <div className={styles.buttonCon}>
         <IconTextButton icon="notification" text="알림" border={false} />
-        <IconTextButton icon="logout" text="로그아웃" border={false} />
+        <IconTextButton icon="logout" text="로그아웃" border={false} onClick={onLogout} />
       </div>
 
       <div className={styles.userinfoCon}>
@@ -85,12 +85,20 @@ function AccountPanel({ userName, userRole, userId, profileImage }) {
 
 function Sidebar() {
   // Context에서 사용자 정보 읽어옴
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
 
   const userName = user.name;
   const userId = user.id;
   const accountMode = user.role;
   const profileImage = user.profile_image_url;
+
+
+  function handleLogout() {
+    logout();
+    // replace: 뒤로가기로 로그인 이전 페이지에 돌아가지 못하도록
+    navigate("/login", { replace: true });
+  }
 
   return (
     <section className={styles.sidebar}>
@@ -179,6 +187,7 @@ function Sidebar() {
         userRole={accountMode}
         userId={userId}
         profileImage={profileImage}
+        onLogout={handleLogout}
       />
     </section>
   );

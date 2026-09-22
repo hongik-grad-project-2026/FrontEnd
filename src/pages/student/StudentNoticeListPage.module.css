@@ -1,0 +1,37 @@
+.noticeListPage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-32);
+}
+
+.noticeDataTable tr:hover {
+    cursor: pointer;
+}
+
+.noticeDataTable tr:hover .title>span {
+    display: inline-flex;
+    border-bottom: 1px solid var(--color-neutral-90);
+}
+
+.titleCell {
+    width: 100%;
+    display: flex;
+    gap: var(--spacing-8);
+    color: var(--color-neutral-90);
+    font-size: var(--text-head-5-size);
+    font-weight: var(--text-head-5-weight);
+    line-height: var(--text-head-5-line-height);
+    letter-spacing: var(--text-head-5-letter-spacing);
+}
+
+
+.important {
+    color: var(--color-status-danger);
+}
+
+.title {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
