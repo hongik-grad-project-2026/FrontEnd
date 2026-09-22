@@ -33,6 +33,7 @@ import StudentRentalHistoryPage from '../pages/student/StudentRentalHistoryPage'
 import StudentMyPage from '../pages/student/StudentMyPage'
 // // 2차 페이지
 import StudentNoticeListPage from '../pages/student/StudentNoticeListPage'
+import StudentNoticeDetailPage from '../pages/student/StudentNoticeDetailPage'
 import AdminAssetListPage from "../pages/admin/AdminAssetListPage";
 import AdminMemberDetailPage from "../pages/admin/AdminMemberDetailPage";
 import AdminNoticeDetailPage from "../pages/admin/AdminNoticeDetailPage";
@@ -253,7 +254,7 @@ const studentRoutes = {
                 },
                 {
                     path: ':noticeId',
-                    element: <StudentNoticeListPage />,
+                    element: <StudentNoticeDetailPage />,
                     loader: ({ params }) => fetchNoticeDetail(params.noticeId),
                     handle: {
                         title: ({ data }) => data?.title ?? "공지사항 상세",
