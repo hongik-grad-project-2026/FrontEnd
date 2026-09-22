@@ -245,7 +245,8 @@ html {
   min-height: 100%;
   font-family: var(--font-family-base);
   -webkit-text-size-adjust: 100%;
-  scrollbar-gutter: stable;
+  /* scrollbar-gutter: stable; */
+  scrollbar-gutter: auto;
 }
 
 body {

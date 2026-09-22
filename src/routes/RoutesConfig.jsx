@@ -1,4 +1,8 @@
 // ------ 공용 ------
+import { Navigate, Outlet } from 'react-router-dom'
+import PageLayout from '../components/layout/PageLayout'
+import AuthLayout from '../components/layout/AuthLayout'
+import NotFoundPage from '../pages/error/NotFoundPage'
 import { Outlet } from "react-router-dom";
 
 import { getAdminEquipmentModelSummary } from "../api/equipmentApi";
@@ -62,13 +66,42 @@ async function loadAdminMemberSummary({ params }) {
   }
 }
 
+// ------ 로그인/회원가입 ------
+import LoginPage from '../pages/auth/LoginPage'
+import SignUpPage from '../pages/auth/SignUpPage'
+import SignUpCompletePage from '../pages/auth/SignUpCompletePage'
+
 // 공동 라우트
 const commonRoutes = {
-  path: "/",
-  element: <div>root TEST</div>,
-  handle: {
-    title: "root",
-  },
+    path: '/',
+    element: <Navigate to="/login" replace />,
+};
+
+const authRoutes = {
+    element: <AuthLayout />,
+    children: [
+        {
+            path: '/login',
+            element: <LoginPage />,
+            handle: {
+                title: "로그인",
+            },
+        },
+        {
+            path: '/signup',
+            element: <SignUpPage />,
+            handle: {
+                title: "회원가입",
+            },
+        },
+        {
+            path: '/signup/complete',
+            element: <SignUpCompletePage />,
+            handle: {
+                title: "회원가입 완료",
+            },
+        },
+    ]
 };
 
 // 관리자모드 라우트 그룹
@@ -273,4 +306,4 @@ const studentRoutes = {
 };
 
 
-export { commonRoutes, adminRoutes, studentRoutes }
+export { commonRoutes, authRoutes, adminRoutes, studentRoutes }
