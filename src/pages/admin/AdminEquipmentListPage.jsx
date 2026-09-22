@@ -1,4 +1,5 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
@@ -6,6 +7,10 @@ import SearchBar from "../../components/common/SearchBar";
 import StatusBadge from "../../components/common/StatusBadge";
 import Tabs from "../../components/common/Tabs";
 import PageHeader from "../../components/layout/PageHeader";
+import ConfirmModal from "../../components/modal/ConfirmModal";
+import EquipmentCreateModal from "../../components/modal/EquipmentCreateModal";
+import EquipmentDisposeModal from "../../components/modal/EquipmentDisposeModal";
+import EquipmentItemEditModal from "../../components/modal/EquipmentItemEditModal";
 import DataTable from "../../components/table/DataTable";
 import styles from "./AdminEquipmentListPage.module.css";
 
@@ -24,15 +29,13 @@ const CATEGORY_LABELS = Object.fromEntries(
   EQUIPMENT_CATEGORIES.map((category) => [category.value, category.label]),
 );
 
-// 페이지 내부의 UI 상태를 기존 StatusBadge 계약으로 변환합니다.
 const STATUS_BADGES = {
   active: "기자재-대여진행",
   paused: "기자재-대여중지",
 };
 
-// 화면과 목록 동작 확인용 임시 데이터입니다.
-// 실제 기자재, 제품 사양, API 응답 또는 서버 상태값을 의미하지 않습니다.
-// stockText는 숫자의 업무 의미가 확정되지 않은 표시용 문자열입니다.
+// 화면과 목록 동작 확인용 임시 데이터
+// 실제 기자재, 제품 사양, API 응답 또는 서버 상태값을 의미하지 않음
 const MOCK_EQUIPMENT = [
   {
     id: "mock-equipment-001",
@@ -205,6 +208,19 @@ const MOCK_EQUIPMENT = [
   },
 ];
 
+function canDisposeEquipment(equipment) {
+  const matchedStock = equipment.stockText.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/);
+
+  if (!matchedStock) {
+    return false;
+  }
+
+  const availableCount = Number(matchedStock[1]);
+  const totalCount = Number(matchedStock[2]);
+
+  return availableCount === totalCount;
+}
+
 function EquipmentImageCell() {
   return (
     <span className={styles.imageCell} aria-hidden="true">
@@ -277,17 +293,26 @@ function EquipmentDateCell({ equipment }) {
   );
 }
 
-function EquipmentActionsCell({ equipment }) {
+function EquipmentActionsCell({ equipment, onDispose, onEdit }) {
+  const handleEdit = (event) => {
+    event.stopPropagation();
+    onEdit(equipment, event);
+  };
+
+  const handleDispose = (event) => {
+    event.stopPropagation();
+    onDispose(equipment, event);
+  };
+
   return (
     <span className={styles.actionButtons}>
-      {/* 업무 미연결: 외형은 유지하고 사용 불가 의미만 전달합니다. */}
       <IconButton
         className={styles.actionButton}
         icon="edit"
         size={24}
         type="button"
         ariaLabel={equipment.name + " 수정"}
-        aria-disabled="true"
+        onClick={handleEdit}
       />
 
       <IconButton
@@ -296,19 +321,28 @@ function EquipmentActionsCell({ equipment }) {
         size={24}
         type="button"
         ariaLabel={equipment.name + " 폐기"}
-        aria-disabled="true"
+        onClick={handleDispose}
       />
     </span>
   );
 }
 
 function AdminEquipmentListPage() {
+  const navigate = useNavigate();
   const panelId = useId();
+  const registerButtonRef = useRef(null);
+  const editButtonRef = useRef(null);
+  const disposeButtonRef = useRef(null);
+
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editTargetEquipment, setEditTargetEquipment] = useState(null);
+  const [disposeTargetEquipment, setDisposeTargetEquipment] = useState(null);
+  const [feedbackType, setFeedbackType] = useState(null);
 
-  // 탭의 숫자는 검색 전 전체 목업의 모델 수입니다.
+  // 탭의 숫자는 검색 전 전체 목업의 모델 수
   const tabItems = [
     {
       value: "all",
@@ -351,6 +385,7 @@ function AdminEquipmentListPage() {
   const resolvedCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
 
   const pageStartIndex = (resolvedCurrentPage - 1) * ROWS_PER_PAGE;
+
   const visibleEquipment = filteredEquipment.slice(
     pageStartIndex,
     pageStartIndex + ROWS_PER_PAGE,
@@ -371,14 +406,68 @@ function AdminEquipmentListPage() {
     setCurrentPage(1);
   };
 
+  const handleOpenAssetList = (equipment) => {
+    navigate(`/admin/equipment/${encodeURIComponent(equipment.id)}/assets`);
+  };
+
+  const handleOpenCreateModal = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  const handleCreateEquipment = () => {
+    // 실제 등록 API와 목록 추가는 아직 연결하지 않음
+    setIsCreateModalOpen(false);
+    setFeedbackType("create-success");
+  };
+
+  const handleOpenEditModal = (equipment, event) => {
+    editButtonRef.current = event.currentTarget;
+    setEditTargetEquipment(equipment);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditTargetEquipment(null);
+  };
+
+  const handleUpdateEquipment = () => {
+    // 실제 수정 API와 목록 변경은 아직 연결하지 않음
+    setEditTargetEquipment(null);
+    setFeedbackType("edit-success");
+  };
+
+  const handleOpenDisposeModal = (equipment, event) => {
+    disposeButtonRef.current = event.currentTarget;
+    setDisposeTargetEquipment(equipment);
+  };
+
+  const handleCloseDisposeModal = () => {
+    setDisposeTargetEquipment(null);
+  };
+
+  const handleDisposeEquipment = (equipment) => {
+    // 실제 폐기 API가 없어서 임시 재고 문자열로 결과만 구분
+    const nextFeedbackType = canDisposeEquipment(equipment)
+      ? "dispose-success"
+      : "dispose-failure";
+
+    setDisposeTargetEquipment(null);
+    setFeedbackType(nextFeedbackType);
+  };
+
+  const handleCloseFeedback = () => {
+    setFeedbackType(null);
+  };
+
   const emptyMessage = normalizedSearchTerm
     ? "검색 조건에 해당하는 기자재가 없습니다."
     : selectedCategory === "all"
       ? "표시할 기자재가 없습니다."
       : "해당 카테고리에 표시할 기자재가 없습니다.";
 
-  // DataTable의 오른쪽 셀 여백 16px을 포함한 열 너비입니다.
-  // 첫 이미지 셀에는 페이지 전용 왼쪽 여백 16px도 포함합니다.
   const columns = [
     {
       key: "image",
@@ -442,7 +531,13 @@ function AdminEquipmentListPage() {
       key: "actions",
       header: "수정/폐기",
       width: 68,
-      render: (equipment) => <EquipmentActionsCell equipment={equipment} />,
+      render: (equipment) => (
+        <EquipmentActionsCell
+          equipment={equipment}
+          onEdit={handleOpenEditModal}
+          onDispose={handleOpenDisposeModal}
+        />
+      ),
     },
   ];
 
@@ -490,6 +585,7 @@ function AdminEquipmentListPage() {
               columns={columns}
               rows={visibleEquipment}
               getRowId={(equipment) => equipment.id}
+              onRowClick={handleOpenAssetList}
               minWidth={1120}
               emptyMessage={emptyMessage}
             />
@@ -504,8 +600,8 @@ function AdminEquipmentListPage() {
               ariaLabel="기자재 목록 페이지 이동"
             />
 
-            {/* 등록 Modal과 API는 별도 작업에서 연결합니다. */}
             <Button
+              ref={registerButtonRef}
               className={styles.registerButton}
               kind="border"
               size="Default"
@@ -514,11 +610,94 @@ function AdminEquipmentListPage() {
               showLeftIcon={false}
               type="button"
               text="기자재 등록"
-              aria-disabled="true"
+              onClick={handleOpenCreateModal}
             />
           </div>
         </div>
       </div>
+
+      <EquipmentCreateModal
+        isOpen={isCreateModalOpen}
+        categoryOptions={EQUIPMENT_CATEGORIES}
+        onClose={handleCloseCreateModal}
+        onConfirm={handleCreateEquipment}
+        returnFocusRef={registerButtonRef}
+      />
+
+      {editTargetEquipment ? (
+        <EquipmentItemEditModal
+          key={editTargetEquipment.id}
+          isOpen
+          equipment={editTargetEquipment}
+          categoryOptions={EQUIPMENT_CATEGORIES}
+          onClose={handleCloseEditModal}
+          onConfirm={handleUpdateEquipment}
+          returnFocusRef={editButtonRef}
+        />
+      ) : null}
+
+      {disposeTargetEquipment ? (
+        <EquipmentDisposeModal
+          isOpen
+          equipment={disposeTargetEquipment}
+          categoryLabel={
+            CATEGORY_LABELS[disposeTargetEquipment.category] ?? "-"
+          }
+          onClose={handleCloseDisposeModal}
+          onConfirm={handleDisposeEquipment}
+          returnFocusRef={disposeButtonRef}
+        />
+      ) : null}
+
+      <ConfirmModal
+        isOpen={feedbackType === "create-success"}
+        icon="checkmark"
+        title="등록 완료"
+        description="정상적으로 등록되었습니다."
+        secondaryDescription="기자재 모델 상세페이지에서 기기를 등록해주세요."
+        confirmText="확인"
+        showCancel={false}
+        onClose={handleCloseFeedback}
+        onConfirm={handleCloseFeedback}
+        returnFocusRef={registerButtonRef}
+      />
+
+      <ConfirmModal
+        isOpen={feedbackType === "edit-success"}
+        icon="checkmark"
+        title="수정 완료"
+        description="정상적으로 수정되었습니다."
+        confirmText="확인"
+        showCancel={false}
+        onClose={handleCloseFeedback}
+        onConfirm={handleCloseFeedback}
+        returnFocusRef={editButtonRef}
+      />
+
+      <ConfirmModal
+        isOpen={feedbackType === "dispose-success"}
+        icon="checkmark"
+        title="폐기 완료"
+        description="정상적으로 폐기처리되었습니다."
+        confirmText="확인"
+        showCancel={false}
+        onClose={handleCloseFeedback}
+        onConfirm={handleCloseFeedback}
+        returnFocusRef={disposeButtonRef}
+      />
+
+      <ConfirmModal
+        isOpen={feedbackType === "dispose-failure"}
+        icon="warning"
+        title="폐기 불가능 상태입니다"
+        description="아직 대여중인 기기가 존재합니다."
+        confirmText="확인"
+        confirmColor="Danger"
+        showCancel={false}
+        onClose={handleCloseFeedback}
+        onConfirm={handleCloseFeedback}
+        returnFocusRef={disposeButtonRef}
+      />
     </section>
   );
 }
