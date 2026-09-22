@@ -1,0 +1,43 @@
+.studentEquipmentListPage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-32);
+    padding-bottom: var(--spacing-32);
+}
+
+.equipmentListSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-12);
+}
+
+.toolsCon {
+    display: flex;
+    justify-content: space-between;
+}
+
+
+.equipmentGrid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+
+@media (max-width: 1280px) {
+    .equipmentGrid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (max-width: 1040px) {
+    .equipmentGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 800px) {
+    .equipmentGrid {
+        grid-template-columns: 1fr;
+    }
+}
