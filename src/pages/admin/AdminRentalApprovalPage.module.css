@@ -16,6 +16,10 @@
   letter-spacing: var(--text-title-1-letter-spacing);
 }
 
+.approvalCount {
+  color: var(--color-brand-primary);
+}
+
 .applicantCell {
   display: flex;
   min-width: 0;

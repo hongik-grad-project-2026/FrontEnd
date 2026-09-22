@@ -7,17 +7,8 @@ import IconButton, { IconTextButton } from "../../components/common/IconButton";
 import styles from "./AdminDashboardPage.module.css";
 import PageHeader from "../../components/layout/PageHeader";
 import AccordionItem from "../../components/common/AccordionItem";
+import DashboardStatusCard from "../../components/card/DashboardStatusCard";
 
-function CurruntStateBox({ title, count, ...props }) {
-    return (
-        <div className={styles.curruntStateBox} data-title={title} {...props}>
-            <p>{title}</p>
-            <p>
-                <span>{count}</span>건
-            </p>
-        </div>
-    );
-}
 
 function NoticeArea() {
 
@@ -145,10 +136,10 @@ function AdminDashboardPage() {
                         <p>{formattedCurrentTime}</p>
                     </div>
                     <div className={styles.BoxesContainer}>
-                        <CurruntStateBox title={'승인 대기'} count={rentalCounts.waitingApproval} onClick={() => navigate("/admin/approval")} />
-                        <CurruntStateBox title={'오늘 수령'} count={rentalCounts.todayPickup} onClick={() => navigate("/admin/status")} />
-                        <CurruntStateBox title={'오늘 반납'} count={rentalCounts.todayReturn} onClick={() => navigate("/admin/status")} />
-                        <CurruntStateBox title={'연체'} count={rentalCounts.overdue} onClick={() => navigate("/admin/status")} />
+                        <DashboardStatusCard title={'승인 대기'} count={rentalCounts.waitingApproval} onClick={() => navigate("/admin/approval")} color='yellow' />
+                        <DashboardStatusCard title={'오늘 수령'} count={rentalCounts.todayPickup} onClick={() => navigate("/admin/status")} color='green' />
+                        <DashboardStatusCard title={'오늘 반납'} count={rentalCounts.todayReturn} onClick={() => navigate("/admin/status")} color='green' />
+                        <DashboardStatusCard title={'연체'} count={rentalCounts.overdue} onClick={() => navigate("/admin/status")} color='red' />
                     </div>
                 </div>
             </section>
