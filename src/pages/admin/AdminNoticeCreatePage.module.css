@@ -1,0 +1,74 @@
+.noticeCreateArea {
+    border-radius: var(--radius-8);
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: var(--spacing-4);
+}
+
+
+.createSection {
+    background-color: var(--color-white);
+    display: flex;
+    align-items: top;
+    padding: var(--spacing-12) var(--spacing-16);
+}
+
+.createSection:nth-child(3) {
+    /* background-color: darkblue; */
+    flex: 1;
+}
+
+.createSection>*:nth-child(2) {
+    flex: 1;
+}
+
+.sectionTitle {
+    /* border: 1px solid fuchsia; */
+    width: 80px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    color: var(--color-neutral-100);
+    font-size: var(--text-head-4-size);
+    font-weight: var(--text-head-4-weight);
+    line-height: var(--text-head-4-line-height);
+    letter-spacing: var(--text-head-4-letter-spacing);
+}
+
+
+
+/* AdminNoticeCreatePage */
+.noticeCreatePage {
+    /* border: 1px solid fuchsia; */
+    flex: 1;
+    margin-bottom: var(--spacing-32);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-24);
+}
+
+.attachmentsArea {
+    /* border: 1px solid fuchsia; */
+    display: flex;
+    gap: var(--spacing-8);
+    transition: 0.3s ease;
+}
+
+.attachmentsWrapper {
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    background-color: var(--color-neutral-10);
+    border-radius: var(--radius-8);
+    padding: var(--spacing-4);
+    display: flex;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+}
+
+.buttonWrapper {
+    display: flex;
+    gap: var(--spacing-12);
+    justify-content: center;
+}

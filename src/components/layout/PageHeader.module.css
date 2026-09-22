@@ -1,0 +1,12 @@
+.pageHeader {
+    /* border: 1px solid fuchsia; */
+    /* max-height: 98px; */
+    height: min-content;
+    width: 100%;
+    font-size: var(--text-title-1-size);
+    font-weight: var(--text-title-1-weight);
+    line-height: var(--text-title-1-line-height);
+    letter-spacing: var(--text-title-1-letter-spacing);
+
+
+}

@@ -1,0 +1,103 @@
+.accordionItem {
+    background-color: var(--color-white);
+    position: relative;
+    padding: 0 var(--spacing-20);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-bottom: var(--border-width-default) solid var(--color-neutral-20);
+    cursor: pointer;
+}
+
+.accordionItem:last-child {
+    border-bottom: none;
+}
+
+.accordionHeader {
+    display: flex;
+    gap: var(--spacing-8);
+    align-items: center;
+    overflow: visible;
+    height: 40px;
+}
+
+
+.importantNotice {
+    font-size: var(--text-tab-size);
+    font-weight: var(--text-tab-weight);
+    line-height: var(--text-tab-line-height);
+    letter-spacing: var(--text-tab-letter-spacing);
+    color: var(--color-status-danger);
+}
+
+.title,
+.content {
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    line-height: var(--text-body-2-line-height);
+    letter-spacing: var(--text-body-2-letter-spacing);
+    color: var(--color-neutral-90);
+
+}
+
+.title {
+    flex: 1;
+}
+
+.updownIcon {
+    width: 24px;
+    height: 24px;
+    background-image: url('/icons/icon24/down.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+.attachmentIcon {
+    opacity: calc(6/9);
+}
+
+.createdAt {
+    font-size: var(--text-body-3-size);
+    font-weight: var(--text-body-3-weight);
+    line-height: var(--text-body-3-line-height);
+    letter-spacing: var(--text-body-3-letter-spacing);
+    color: var(--color-neutral-60);
+}
+
+.content {
+    display: grid;
+    grid-template-rows: 0fr;
+    padding-bottom: 0;
+    padding-right: 32px;
+    overflow: hidden;
+    transition:
+        grid-template-rows 0.3s ease,
+        padding-bottom 0.3s ease;
+}
+
+.contentInner {
+    min-height: 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.accordionItem:hover .content {
+    grid-template-rows: 1fr;
+    padding-bottom: var(--spacing-10);
+}
+
+.accordionItem:hover {
+    background-color: var(--color-neutral-10);
+}
+
+.accordionItem:hover .updownIcon {
+    background-image: url('/icons/icon24/up.png');
+}
+
+.accordionItem:active {
+    background-color: var(--color-neutral-20);
+}

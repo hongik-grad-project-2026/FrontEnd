@@ -1,0 +1,214 @@
+/*  ----- Sidebar ----- */
+
+.sidebar {
+    position: sticky;
+    top: 0;
+    background-color: var(--color-white);
+    width: 208px;
+    flex: 0 0 208px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: var(--color-neutral-100);
+}
+
+.logoArea {
+    width: 100%;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+
+    font-size: var(--text-sidebar-title-size);
+    font-weight: var(--text-sidebar-title-weight);
+    line-height: var(--text-sidebar-title-line-height);
+    letter-spacing: var(--text-sidebar-title-letter-spacing);
+}
+
+.logoArea>img {
+    width: 80px;
+}
+
+.navCon {
+    padding: 8px;
+    flex: 1;
+}
+
+
+
+/* ----- NavSubtitle ----- */
+.navSubtitle {
+    color: var(--color-neutral-40);
+    padding: 16px 12px 2px 12px;
+    font-size: var(--text-label-size);
+    font-weight: var(--text-label-weight);
+    line-height: var(--text-label-line-height);
+    letter-spacing: var(--text-label-letter-spacing);
+}
+
+.navList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+/* ----- NavItem ----- */
+
+.navItem {
+    background-color: var(--color-white);
+    border-radius: 8px;
+    width: auto;
+    height: 48px;
+    display: flex;
+    padding: 12px;
+    align-items: center;
+    gap: 8px;
+
+    font-size: var(--text-tab-size);
+    font-weight: var(--text-tab-weight);
+    line-height: var(--text-tab-line-height);
+    letter-spacing: var(--text-tab-letter-spacing);
+}
+
+
+.navItem:hover {
+    background-color: var(--color-neutral-10);
+}
+
+.navItem:active {
+    background-color: var(--color-neutral-20);
+}
+
+.navItem-active {
+    color: var(--color-brand-primary);
+    background-color: var(--color-neutral-10);
+}
+
+.navItemIcon {
+    width: 24px;
+    height: 24px;
+    background-image: var(--nav-icon);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+.navItem-active .navItemIcon {
+    background-image: var(--nav-icon-hover);
+}
+
+.userCon {
+    background-color: darkmagenta;
+}
+
+
+
+/* ----- AccountPanel ----- */
+
+.accountPanel {
+    /* background-color: forestgreen; */
+    display: flex;
+    flex-direction: column;
+    padding: 12px 8px;
+    gap: 20px;
+}
+
+.buttonCon {
+    /* background-color: violet; */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 8px
+}
+
+.buttonCon>button {
+    /* background-color: skyblue; */
+    display: flex;
+    width: fit-content;
+    gap: 6px;
+    align-items: center;
+    height: 16px;
+    border-bottom: 1px solid var(--color-white);
+
+    font-size: var(--text-tab-size);
+    font-weight: var(--text-tab-weight);
+    line-height: var(--text-tab-line-height);
+    letter-spacing: var(--text-tab-letter-spacing);
+    color: var(--color-neutral-70);
+}
+
+.buttonCon>button>img {
+    width: 16px;
+    height: 16px;
+}
+
+.userinfoCon {
+    padding: 12px 8px;
+    color: var(--color-neutral-100);
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid var(--color-neutral-20);
+
+}
+
+.profileimgCon {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    position: relative;
+    overflow: hidden;
+}
+
+.profileimgCon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.accountPanel[data-userrole='admin'] .profileimgCon {
+    background-color: var(--color-white);
+}
+
+
+.accountPanel[data-userrole='student'] .profileimgCon::before {
+    content: "";
+    background-color: var(--color-neutral-20);
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    inset: 0;
+    background-image: url("/icons/icon24/profile.png");
+    background-size: 24px;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: calc(5/9);
+}
+
+.accountPanel[data-userrole='student'] .profileimgCon[data-profile-image='true']::before {
+    display: none;
+}
+
+
+
+.profiletextCon {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.userName {
+    font-size: var(--text-head-2-size);
+    font-weight: var(--text-head-2-weight);
+    line-height: var(--text-head-2-line-height);
+    letter-spacing: var(--text-head-2-letter-spacing);
+}
+
+.userInfo {
+    font-size: var(--text-body-3-size);
+    font-weight: var(--text-body-3-weight);
+    line-height: var(--text-body-3-line-height);
+    letter-spacing: var(--text-body-3-letter-spacing);
+}

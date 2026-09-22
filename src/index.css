@@ -1,111 +1,353 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  color-scheme: light;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Font */
+  --font-family-base:
+    "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+    "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR",
+    "Malgun Gothic", sans-serif;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  --letter-spacing-normal: 0;
+  --letter-spacing-tight: -0.02em;
+
+  /* Typography: Title */
+  --text-title-1-size: 34px;
+  --text-title-1-weight: var(--font-weight-black);
+  --text-title-1-line-height: 1.4;
+  --text-title-1-letter-spacing: var(--letter-spacing-tight);
+
+  /* Typography: Heading */
+  --text-head-1-size: 28px;
+  --text-head-1-weight: var(--font-weight-bold);
+  --text-head-1-line-height: 1.1;
+  --text-head-1-letter-spacing: var(--letter-spacing-normal);
+
+  --text-head-2-size: 18px;
+  --text-head-2-weight: var(--font-weight-bold);
+  --text-head-2-line-height: 1;
+  --text-head-2-letter-spacing: var(--letter-spacing-normal);
+
+  --text-head-3-size: 16px;
+  --text-head-3-weight: var(--font-weight-semibold);
+  --text-head-3-line-height: 1;
+  --text-head-3-letter-spacing: var(--letter-spacing-normal);
+
+  --text-head-4-size: 14px;
+  --text-head-4-weight: var(--font-weight-semibold);
+  --text-head-4-line-height: 1;
+  --text-head-4-letter-spacing: var(--letter-spacing-normal);
+
+  --text-head-5-size: 12px;
+  --text-head-5-weight: var(--font-weight-semibold);
+  --text-head-5-line-height: 1;
+  --text-head-5-letter-spacing: var(--letter-spacing-normal);
+
+  /* Typography: Sidebar */
+  --text-sidebar-title-size: 18px;
+  --text-sidebar-title-weight: var(--font-weight-bold);
+  --text-sidebar-title-line-height: 1;
+  --text-sidebar-title-letter-spacing: var(--letter-spacing-normal);
+
+  /* Typography: Body */
+  --text-body-1-size: 16px;
+  --text-body-1-weight: var(--font-weight-medium);
+  --text-body-1-line-height: 1.4;
+  --text-body-1-letter-spacing: var(--letter-spacing-normal);
+
+  --text-body-2-size: 14px;
+  --text-body-2-weight: var(--font-weight-medium);
+  --text-body-2-line-height: 1.4;
+  --text-body-2-letter-spacing: var(--letter-spacing-normal);
+
+  --text-body-3-size: 12px;
+  --text-body-3-weight: var(--font-weight-medium);
+  --text-body-3-line-height: 1.4;
+  --text-body-3-letter-spacing: var(--letter-spacing-normal);
+
+  /* Typography: Tab */
+  --text-tab-size: 14px;
+  --text-tab-weight: var(--font-weight-semibold);
+  --text-tab-line-height: 1;
+  --text-tab-letter-spacing: var(--letter-spacing-normal);
+
+  /* Typography: Button */
+  --text-button-1-size: 12px;
+  --text-button-1-weight: var(--font-weight-semibold);
+  --text-button-1-line-height: 1;
+  --text-button-1-letter-spacing: var(--letter-spacing-normal);
+
+  --text-button-2-size: 10px;
+  --text-button-2-weight: var(--font-weight-medium);
+  --text-button-2-line-height: 1;
+  --text-button-2-letter-spacing: var(--letter-spacing-normal);
+
+  /* Typography: Badge */
+  --text-badge-small-size: 10px;
+  --text-badge-small-weight: var(--font-weight-semibold);
+  --text-badge-small-line-height: 1;
+  --text-badge-small-letter-spacing: var(--letter-spacing-normal);
+
+  --text-badge-medium-size: 12px;
+  --text-badge-medium-weight: var(--font-weight-semibold);
+  --text-badge-medium-line-height: 1;
+  --text-badge-medium-letter-spacing: var(--letter-spacing-normal);
+
+  /* Typography: Label */
+  --text-label-size: 10px;
+  --text-label-weight: var(--font-weight-medium);
+  --text-label-line-height: 1.1;
+  --text-label-letter-spacing: var(--letter-spacing-normal);
+
+  /* Brand colors */
+  --color-brand-primary-dark: #083b99;
+  --color-brand-primary: #0f62fe;
+  --color-brand-secondary: #cae4ff;
+
+  /* Success colors */
+  --color-status-success-dark: #007a34;
+  --color-status-success: #2ac96d;
+  --color-status-success-light: #e9f9ef;
+
+  /* Warning colors */
+  --color-status-warning-dark: #745b00;
+  --color-status-warning: #ffc803;
+  --color-status-warning-light: #fff9e6;
+
+  /* Danger colors */
+  --color-status-danger-dark: #a72200;
+  --color-status-danger: #f97351;
+  --color-status-danger-light: #fff0ed;
+
+  /* Neutral colors */
+  --color-white: #ffffff;
+  --color-neutral-10: #f2f4f8;
+  --color-neutral-20: #dde1e6;
+  --color-neutral-30: #c1c7cd;
+  --color-neutral-40: #a2a9b0;
+  --color-neutral-50: #878d96;
+  --color-neutral-60: #697077;
+  --color-neutral-70: #4d5358;
+  --color-neutral-80: #343a3f;
+  --color-neutral-90: #21272a;
+  --color-neutral-100: #121619;
+
+  /* Semantic text colors */
+  --color-text-primary: var(--color-neutral-100);
+  --color-text-secondary: var(--color-neutral-60);
+  --color-text-tertiary: var(--color-neutral-50);
+  --color-text-disabled: var(--color-neutral-40);
+  --color-text-inverse: var(--color-white);
+  --color-text-link: var(--color-brand-primary);
+
+  /* Figma에는 등록 x , 그러나 반복 사용된 별도 색상 */
+  --color-text-strong: #000000;
+  --color-border-rental-card: #dbdbdb;
+  --color-background-auth: #f5f7fa;
+  --color-background-signup-section: #f9fafb;
+
+  /* Semantic background and surface colors */
+  --color-background-page: var(--color-white);
+  --color-background-subtle: var(--color-neutral-10);
+  --color-surface: var(--color-white);
+  --color-surface-disabled: var(--color-neutral-10);
+
+  /* Semantic border colors */
+  --color-border-default: var(--color-neutral-20);
+  --color-border-strong: var(--color-neutral-30);
+  --color-border-disabled: var(--color-neutral-20);
+
+  /* Semantic action colors */
+  --color-action-primary: var(--color-brand-primary);
+  --color-action-primary-hover: var(--color-brand-primary-dark);
+  --color-action-secondary: var(--color-brand-secondary);
+  --color-focus: var(--color-brand-primary);
+
+  /* Semantic feedback colors */
+  --color-success-text: var(--color-status-success-dark);
+  --color-success-fill: var(--color-status-success);
+  --color-success-background: var(--color-status-success-light);
+
+  --color-warning-text: var(--color-status-warning-dark);
+  --color-warning-fill: var(--color-status-warning);
+  --color-warning-background: var(--color-status-warning-light);
+
+  --color-danger-text: var(--color-status-danger-dark);
+  --color-danger-fill: var(--color-status-danger);
+  --color-danger-background: var(--color-status-danger-light);
+
+  /* Spacing */
+  --spacing-2: 2px;
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+
+  /* Radius */
+  --radius-2: 2px;
+  --radius-4: 4px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+  --radius-12: 12px;
+  --radius-full: 999px;
+
+  /* Border */
+  --border-width-thin: 0.5px;
+  --border-width-default: 1px;
+  --border-width-active: 2px;
+
+  /* Shadow */
+  --shadow-default: 0 1px 2px 1px rgb(0 0 0 / 20%);
+
+  /* src 속성에 /icons/icon24/ 가 포함된 모든 img 태그에 일괄 적용 */
+  img[src*="/icons/icon24/"] {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+
+  /* src 속성에 /icons/icon16/ 가 포함된 모든 img 태그에 일괄 적용 */
+  img[src*="/icons/icon16/"] {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+  }
+
+  /* src 속성에 /icons/icon60/ 가 포함된 모든 img 태그에 일괄 적용 */
+  img[src*="/icons/icon60/"] {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* CSS reset */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+html {
+  min-height: 100%;
+  font-family: var(--font-family-base);
+  -webkit-text-size-adjust: 100%;
+  /* scrollbar-gutter: stable; */
+  scrollbar-gutter: auto;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-1-size);
+  font-weight: var(--text-body-1-weight);
+  line-height: var(--text-body-1-line-height);
+  letter-spacing: var(--text-body-1-letter-spacing);
+  color: var(--color-text-primary);
+  background-color: var(--color-background-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+
+#root {
+  min-height: 100vh;
 }
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+img,
+picture,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+img,
+picture {
+  height: auto;
+}
+
+table {
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline: var(--border-width-active) solid var(--color-focus);
+  outline-offset: var(--spacing-2);
+}
+
+[hidden] {
+  display: none !important;
 }
