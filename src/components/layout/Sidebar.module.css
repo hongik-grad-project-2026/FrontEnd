@@ -168,12 +168,12 @@
     object-fit: cover;
 }
 
-.accountPanel[data-userRole='admin'] .profileimgCon {
+.accountPanel[data-userrole='admin'] .profileimgCon {
     background-color: var(--color-white);
 }
 
 
-.accountPanel[data-userRole='student'] .profileimgCon::before {
+.accountPanel[data-userrole='student'] .profileimgCon::before {
     content: "";
     background-color: var(--color-neutral-20);
     width: 32px;
@@ -187,7 +187,7 @@
     opacity: calc(5/9);
 }
 
-.accountPanel[data-userRole='student'] .profileimgCon[data-profile-image='true']::before {
+.accountPanel[data-userrole='student'] .profileimgCon[data-profile-image='true']::before {
     display: none;
 }
 

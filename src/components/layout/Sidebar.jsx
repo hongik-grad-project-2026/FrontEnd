@@ -51,7 +51,7 @@ function NavSubtitle({ titleName = "titleName", children }) {
 
 function AccountPanel({ userName, userRole, userId, profileImage }) {
   return (
-    <div className={styles.accountPanel} data-userRole={userRole}>
+    <div className={styles.accountPanel} data-userrole={userRole}>
       <div className={styles.buttonCon}>
         <IconTextButton icon="notification" text="알림" border={false} />
         <IconTextButton icon="logout" text="로그아웃" border={false} />
