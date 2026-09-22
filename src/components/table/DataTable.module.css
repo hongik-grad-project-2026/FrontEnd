@@ -56,7 +56,7 @@
   align-items: center;
 }
 
-.bulkAction>button[data-size="Default"] {
+.bulkAction > button[data-size="Default"] {
   width: 140px;
 }
 
@@ -98,6 +98,15 @@
   height: 64px;
 }
 
+.bodyRow[data-clickable="true"] {
+  cursor: pointer;
+}
+
+.bodyRow[data-clickable="true"]:focus-visible {
+  outline: var(--border-width-active) solid var(--color-focus);
+  outline-offset: calc(-1 * var(--border-width-active));
+}
+
 .headerCell,
 .bodyCell,
 .selectionCell {
@@ -120,7 +129,7 @@
   text-align: center;
 }
 
-.headerRow>.headerCell:first-child,
+.headerRow > .headerCell:first-child,
 .bodyCell:first-child {
   padding-left: var(--spacing-16);
 }
@@ -141,10 +150,10 @@
   letter-spacing: var(--text-body-3-letter-spacing);
 }
 
-.bodyRow:hover>.bodyCell,
-.bodyRow:hover>.selectionCell,
-.bodyRow[data-selected="true"]>.bodyCell,
-.bodyRow[data-selected="true"]>.selectionCell {
+.bodyRow:hover > .bodyCell,
+.bodyRow:hover > .selectionCell,
+.bodyRow[data-selected="true"] > .bodyCell,
+.bodyRow[data-selected="true"] > .selectionCell {
   background-color: var(--color-neutral-10);
 }
 

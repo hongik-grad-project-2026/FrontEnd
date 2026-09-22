@@ -59,6 +59,10 @@
   border-radius: var(--radius-8);
 }
 
+.dataTable tbody tr {
+  cursor: pointer;
+}
+
 .imageCell {
   display: flex;
   align-items: center;

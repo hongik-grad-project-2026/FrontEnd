@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Button from "../../components/common/Button";
 import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/common/SearchBar";
+import ConfirmModal from "../../components/modal/ConfirmModal";
+import RentalRejectModal from "../../components/modal/RentalRejectModal";
 import DataTable from "../../components/table/DataTable";
 import styles from "./AdminRentalApprovalPage.module.css";
 
@@ -137,6 +139,20 @@ function AdminRentalApprovalPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
 
+  const approvalButtonRef = useRef(null);
+
+  const rejectButtonRef = useRef(null);
+
+  const [approvalTargetRequestIds, setApprovalTargetRequestIds] = useState([]);
+
+  const [rejectTargetRequest, setRejectTargetRequest] = useState(null);
+
+  const [rejectionReason, setRejectionReason] = useState("out-of-stock");
+
+  const isApprovalModalOpen = approvalTargetRequestIds.length > 0;
+
+  const isRejectModalOpen = rejectTargetRequest !== null;
+
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
   const filteredRequests = INITIAL_APPROVAL_REQUESTS.filter((request) => {
@@ -167,6 +183,40 @@ function AdminRentalApprovalPage() {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
     setSelectedRequestIds([]);
+  };
+
+  const handleOpenApprovalModal = () => {
+    if (selectedRequestIds.length === 0) {
+      return;
+    }
+
+    setApprovalTargetRequestIds([...selectedRequestIds]);
+  };
+
+  const handleCloseApprovalModal = () => {
+    setApprovalTargetRequestIds([]);
+  };
+
+  const handleConfirmApproval = () => {
+    // 실제 승인 API와 목록 상태 변경은 아직 연결하지 않는다.
+    // 현재 단계에서는 기존 선택 상태를 유지하고 모달만 닫는다.
+    setApprovalTargetRequestIds([]);
+  };
+
+  const handleOpenRejectModal = (request, event) => {
+    rejectButtonRef.current = event.currentTarget;
+    setRejectionReason("out-of-stock");
+    setRejectTargetRequest(request);
+  };
+
+  const handleCloseRejectModal = () => {
+    setRejectTargetRequest(null);
+  };
+
+  const handleConfirmReject = () => {
+    // 실제 반려 API, 목록 상태 변경, 완료 표시는 아직 연결하지 않는다.
+    // 현재 단계에서는 체크 선택 상태를 유지하고 모달만 닫는다.
+    setRejectTargetRequest(null);
   };
 
   const columns = [
@@ -226,6 +276,7 @@ function AdminRentalApprovalPage() {
           status="Default"
           text="반려"
           aria-label={`${request.studentName}님의 ${request.equipmentName} 대여 신청 반려`}
+          onClick={(event) => handleOpenRejectModal(request, event)}
         />
       ),
     },
@@ -234,6 +285,7 @@ function AdminRentalApprovalPage() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>대여신청 승인</h1>
+
       <div
         className={styles.contentViewport}
         role="region"
@@ -255,12 +307,14 @@ function AdminRentalApprovalPage() {
             emptyMessage="검색 조건에 해당하는 대여 신청이 없습니다."
             bulkAction={
               <Button
+                ref={approvalButtonRef}
                 kind="fill"
                 size="Default"
                 color="Primary"
                 status="Default"
                 text="신청 승인"
                 disabled={selectedRequestIds.length === 0}
+                onClick={handleOpenApprovalModal}
               />
             }
             search={
@@ -284,6 +338,37 @@ function AdminRentalApprovalPage() {
           />
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isApprovalModalOpen}
+        icon="help"
+        title={
+          <>
+            선택한{" "}
+            <span className={styles.approvalCount}>
+              {approvalTargetRequestIds.length}건
+            </span>
+            을 승인처리하시겠습니까?
+          </>
+        }
+        description="승인 후에는 ‘수령 대기’ 상태로 전환됩니다."
+        cancelText="취소"
+        confirmText="확인"
+        confirmColor="Primary"
+        onClose={handleCloseApprovalModal}
+        onConfirm={handleConfirmApproval}
+        returnFocusRef={approvalButtonRef}
+      />
+
+      <RentalRejectModal
+        isOpen={isRejectModalOpen}
+        request={rejectTargetRequest}
+        rejectionReason={rejectionReason}
+        onRejectionReasonChange={setRejectionReason}
+        onClose={handleCloseRejectModal}
+        onConfirm={handleConfirmReject}
+        returnFocusRef={rejectButtonRef}
+      />
     </div>
   );
 }
