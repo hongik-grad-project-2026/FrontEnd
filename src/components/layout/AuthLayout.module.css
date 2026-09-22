@@ -40,6 +40,16 @@
     height: 18px;
 }
 
+.header {
+    color: var(--color-neutral-100);
+    font-size: var(--text-head-1-size);
+    font-weight: var(--text-head-1-weight);
+    line-height: var(--text-head-1-line-height);
+    letter-spacing: var(--text-head-1-letter-spacing);
+    text-align: center;
+    padding: var(--spacing-24) 0;
+}
+
 
 /* inputLayout */
 .inputSection {

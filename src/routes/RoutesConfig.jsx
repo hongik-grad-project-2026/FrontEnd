@@ -3,7 +3,6 @@ import { Navigate, Outlet } from 'react-router-dom'
 import PageLayout from '../components/layout/PageLayout'
 import AuthLayout from '../components/layout/AuthLayout'
 import NotFoundPage from '../pages/error/NotFoundPage'
-import LoginPage from '../pages/auth/LoginPage'
 
 // ------ 관리자모드 ------
 // // 1차 페이지
@@ -31,6 +30,11 @@ import StudentMyPage from '../pages/student/StudentMyPage'
 import StudentNoticeListPage from '../pages/student/StudentNoticeListPage'
 
 
+// ------ 로그인/회원가입 ------
+import LoginPage from '../pages/auth/LoginPage'
+import SignUpPage from '../pages/auth/SignUpPage'
+import SignUpCompletePage from '../pages/auth/SignUpCompletePage'
+
 // 공동 라우트
 const commonRoutes = {
     path: '/',
@@ -38,17 +42,27 @@ const commonRoutes = {
 };
 
 const authRoutes = {
-    path: '/login',
     element: <AuthLayout />,
-    // handle: {
-    //     title: "로그인",
-    // },
     children: [
         {
-            index: true,
+            path: '/login',
             element: <LoginPage />,
             handle: {
                 title: "로그인",
+            },
+        },
+        {
+            path: '/signup',
+            element: <SignUpPage />,
+            handle: {
+                title: "회원가입",
+            },
+        },
+        {
+            path: '/signup/complete',
+            element: <SignUpCompletePage />,
+            handle: {
+                title: "회원가입 완료",
             },
         },
     ]

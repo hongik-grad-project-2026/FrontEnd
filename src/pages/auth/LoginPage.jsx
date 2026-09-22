@@ -95,7 +95,7 @@ function LoginPage() {
                 size="Default"
                 status="Default"
                 type="submit"
-                text={isSubmitting ? "로그인 중..." : "로그인"}
+                text="로그인"
                 disabled={!canSubmit}
             />
         </form>

@@ -36,3 +36,36 @@ export async function login({ id, password }) {
 
     return user;
 }
+
+
+// 임시 API : 회원가입
+// 성공 시 생성된 user 객체 반환, 실패 시 에러를 throw
+export async function signup({ name, id, password, email, tel, college, department, }) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // 학번 중복 검사 — 실제 API에서는 서버가 처리할 몫
+    const isDuplicated = MOCK_ACCOUNTS.some((item) => item.id === id);
+
+    if (isDuplicated) {
+        throw new Error("이미 가입된 학번입니다.");
+    }
+
+    const newAccount = {
+        id,
+        password,
+        name,
+        role: "student", // 회원가입으로 만들어지는 계정은 항상 학생
+        profile_image_url: null,
+        email,
+        tel,
+        college,
+        department,
+    };
+
+    // 임시 저장 — 새로고침하면 사라짐. (메모리에만 존재)
+    MOCK_ACCOUNTS.push(newAccount);
+
+    const { password: _password, ...user } = newAccount;
+
+    return user;
+}
