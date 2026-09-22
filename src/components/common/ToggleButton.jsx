@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import styles from "./ToggleButton.module.css";
 
 function Toggle({ isActive }) {
@@ -15,19 +13,22 @@ function Toggle({ isActive }) {
     );
 }
 
-export default function ToggleButton({ text = 'ToggleButton', status = false }) {
-    const [isActive, setIsActive] = useState(status);
+export default function ToggleButton({
+    text = '중요 공지 설정',
+    status = false,
+    onChange }) {
+
     return (
         <button
             className={styles.toggleButton}
             type="button"
-            data-active={isActive}
-            onClick={() => setIsActive((prev) => !prev)}
+            data-active={status}
+            onClick={() => onChange?.(!status)}
         >
 
             <div className={styles.pinIcon}></div>
             <span className={styles.toggleText}>{text}</span>
-            <Toggle isActive={isActive} />
+            <Toggle isActive={status} />
         </button >
     );
 }

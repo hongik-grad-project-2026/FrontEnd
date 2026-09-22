@@ -2,8 +2,7 @@
   display: block;
   min-width: 0;
   min-height: 41px;
-  padding: var(--spacing-12) var(--spacing-8) var(--spacing-12)
-    var(--spacing-16);
+  padding: var(--spacing-12) var(--spacing-8) var(--spacing-12) var(--spacing-16);
   overflow-x: hidden;
   overflow-y: auto;
   resize: none;
@@ -27,9 +26,12 @@
   opacity: 1;
 }
 
-.textarea:focus-visible {
-  outline: var(--border-width-active) solid var(--color-focus);
-  outline-offset: calc(var(--border-width-active) * -1);
+.textarea:focus-visible,
+.textarea:focus {
+  /* outline: var(--border-width-active) solid var(--color-focus);
+  outline-offset: calc(var(--border-width-active) * -1); */
+  outline: var(--border-width-default) solid var(--color-neutral-40);
+  outline-offset: calc(var(--border-width-default) * -1);
 }
 
 .textarea[aria-invalid="true"] {

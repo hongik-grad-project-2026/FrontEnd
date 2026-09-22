@@ -24,10 +24,17 @@ function Button({
     size === "Default" &&
     (kind === "border" || (kind === "fill" && color === "Neutral"));
 
-  const leftIconClassName =
-    kind === "border" && color === "Primary"
-      ? styles.editIcon
-      : styles.trashIcon;
+  // const leftIconClassName =
+  //   kind === "border" && color === "Primary"
+  //     ? styles.editIcon
+  //     : styles.trashIcon;
+  const leftIconClassName = () => {
+    if (kind === "border") {
+      if (color === "Primary") { return styles.editIcon; }
+      else if (color === "Neutral") { return styles.paperclipIcon; }
+      else { return styles.trashIcon; }
+    }
+  }
 
   const shouldShowRightIcon =
     kind === "fill" && size === "Default" && color === "Neutral";
@@ -45,7 +52,7 @@ function Button({
     >
       {shouldShowLeftIcon ? (
         <span
-          className={joinClassNames(styles.leftIcon, leftIconClassName)}
+          className={joinClassNames(styles.leftIcon, leftIconClassName())}
           aria-hidden="true"
         />
       ) : null}

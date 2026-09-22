@@ -8,17 +8,15 @@ import styles from "./AdminDashboardPage.module.css";
 import PageHeader from "../../components/layout/PageHeader";
 import AccordionItem from "../../components/common/AccordionItem";
 
-import InputBar from "../../components/common/Input";
-
 function CurruntStateBox({ title, count, ...props }) {
-  return (
-    <div className={styles.curruntStateBox} data-title={title} {...props}>
-      <p>{title}</p>
-      <p>
-        <span>{count}</span>건
-      </p>
-    </div>
-  );
+    return (
+        <div className={styles.curruntStateBox} data-title={title} {...props}>
+            <p>{title}</p>
+            <p>
+                <span>{count}</span>건
+            </p>
+        </div>
+    );
 }
 
 function NoticeArea() {

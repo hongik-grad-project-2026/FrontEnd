@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import styles from "./AdminNoticeDetailPage.module.css";
 import paginationStyles from "../../components/common/Pagination.module.css";
@@ -55,18 +55,30 @@ function NoticeNavigation({ previousNotice, nextNotice }) {
 }
 
 function AdminNoticeDetailPage() {
+    const navigate = useNavigate();
     const noticeData = useLoaderData();
-    console.log('noticeData', noticeData);
+    // console.log('noticeData', noticeData);
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+    const [isImportant, setIsImportnat] = useState(noticeData.isImportant);
+    const [viewCount, setViewCount] = useState(noticeData.viewCount);
+
+
+    useEffect(() => {
+        setViewCount((prev) => prev + 1);
+    }, []);
 
     return (
         <div className={styles.noticeDetailPage}>
 
             <div className={styles.toolsCon}>
-                <ToggleButton text="중요 공지 설정" status={noticeData.important} />
+                <ToggleButton text="중요 공지 설정" status={isImportant} onChange={() => setIsImportnat((prev) => !prev)} />
                 <div className={styles.btnWrap}>
 
-                    <Button color='Primary' kind='border' showLeftIcon={true} size='Default' status='Default' text="공지 수정" />
+                    <Button
+                        color='Primary' kind='border' showLeftIcon={true} size='Default' status='Default'
+                        text="공지 수정"
+                        onClick={() => navigate(`/admin/notices/edit/${noticeData.noticeId}`)}
+                    />
                     <Button color='Danger' kind='border' showLeftIcon={true} size='Default' status='Default' text="공지 삭제" />
                 </div>
             </div>
@@ -86,7 +98,7 @@ function AdminNoticeDetailPage() {
                     </div>
                     <div className={styles.noticeMetaItem}>
                         <span>조회수</span>
-                        <span>{noticeData.viewCount}</span>
+                        <span>{viewCount}</span>
                     </div>
                 </div>
                 {noticeData.attachments.length === 0 ? '' : (

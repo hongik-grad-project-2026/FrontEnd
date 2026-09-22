@@ -1,10 +1,12 @@
 // 목록용 요약
 function toNoticeSummary(notice) {
+    const attachments = notice.attachments ?? [];
+
     return {
         noticeId: notice.noticeId,
         title: notice.title,
         summary: (notice.content ?? "").trim().slice(0, 220), // 220자까지만 가져오기
-        hasAttachment: notice.attachments.length > 0, // 개수가 아닌 boolean으로
+        hasAttachment: attachments.length > 0, // 개수가 아닌 boolean으로
         viewCount: notice.viewCount,
         important: notice.important,                  // '중요공지' 표시에 필요
         createdAt: notice.createdAt,
@@ -71,6 +73,35 @@ export async function fetchNoticeDetail(noticeId) {
 
     // 상세는 원본 그대로
     return { ...notice };
+}
+
+
+// 임시 API 3 : 게시글 생성용
+export async function createNotice({ title, content, important, attachments = [] }) {
+    // 실제 서버 통신처럼 약간의 지연을 넣어서 로딩 상태를 테스트할 수 있도록
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // 새 게시글 객체를 직접 생성
+    // 지금은 Mock 데이터 배열에 push
+    const newNotice = {
+        noticeId: Date.now(),
+        authorId: 101,
+        title,
+        content,
+        viewCount: 0,
+        important,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        deletedAt: null,
+        attachments,
+    };
+
+    // 새 공지사항을 배열 맨 앞에 추가
+    MOCK_NOTICES.unshift(newNotice);
+
+    // 실제 API는 생성된 데이터를 돌려주므로,
+    // 여기에서도 생성된 공지 객체를 반환
+    return newNotice;
 }
 
 

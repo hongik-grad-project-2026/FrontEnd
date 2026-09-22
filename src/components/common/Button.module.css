@@ -41,6 +41,10 @@
   border-radius: var(--radius-8);
 }
 
+.button[data-size="Default"]:has(span.paperclipIcon) {
+  width: 100px;
+}
+
 /* Size=small */
 
 .button[data-size="small"][data-kind="border"] {
@@ -150,6 +154,12 @@
   color: var(--color-white);
   background-color: #0c51d1;
   border-color: var(--color-brand-primary);
+}
+
+.button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Disabled"] {
+  color: var(--color-neutral-30);
+  background-color: var(--color-neutral-10);
+  border-color: var(--color-neutral-30);
 }
 
 /* Kind=border / Color=Danger */
@@ -330,6 +340,10 @@
 
 .trashIcon {
   --button-left-icon: url("/icons/icon16/trash.png");
+}
+
+.paperclipIcon {
+  --button-left-icon: url("/icons/icon16/paperclip.png");
 }
 
 .bookmarkPlusIcon {

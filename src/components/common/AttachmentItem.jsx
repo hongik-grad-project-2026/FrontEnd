@@ -1,7 +1,13 @@
 import styles from "./AttachmentItem.module.css";
 import IconButton from "./IconButton";
 
-function AttachmentItem({ attachment }) {
+function AttachmentItem({ attachment = {
+    originalFileName: 'originalFileName',
+    fileSize: 'fileSize',
+},
+    icon = 'download',
+    onClick
+}) {
     return (
         <div className={styles.attachmentItem} key={attachment.attachmentId}>
             <span className={styles.fileName}>
@@ -10,7 +16,7 @@ function AttachmentItem({ attachment }) {
             <span className={styles.fileSize}>
                 {attachment.fileSize} B
             </span>
-            <IconButton icon={'download'} />
+            <IconButton icon={icon} onClick={onClick} />
         </div>
     );
 }
