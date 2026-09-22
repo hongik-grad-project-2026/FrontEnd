@@ -2,13 +2,13 @@ import { useNavigate } from "react-router-dom";
 import styles from "./AccordionItem.module.css"
 
 
-function AccordionItem({ noticeId, isImportant, title, hasAttachments, createdAt, content }) {
+function AccordionItem({ key, noticeId, isImportant, title, hasAttachments, createdAt, content }) {
     const navigate = useNavigate();
 
     return (
         <div
             className={styles.accordionItem}
-            key={noticeId}
+            key={key ?? noticeId}
             onClick={() =>
                 navigate(`/admin/notices/${noticeId}`)
             }

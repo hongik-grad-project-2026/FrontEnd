@@ -93,7 +93,7 @@
     align-items: center;
 }
 
-.equipmentCard[data-stockOut='true'] .rentalInfoCon {
+.equipmentCard[data-stockout='true'] .rentalInfoCon {
     color: var(--color-neutral-50);
 }
 
