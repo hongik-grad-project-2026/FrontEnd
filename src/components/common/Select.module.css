@@ -100,35 +100,23 @@
   mask-image: url("/icons/icon24/up.png");
 }
 
-.calendarIcon::before {
-  content: "";
-  position: absolute;
-  top: 4px;
-  right: 3px;
-  bottom: 3px;
-  left: 3px;
-  border: 2px solid currentColor;
-  border-radius: var(--radius-2);
-}
-
-.calendarIcon::after {
-  content: "";
-  position: absolute;
-  top: 8px;
-  right: 3px;
-  left: 3px;
-  height: 2px;
+.calendarIcon {
   background-color: currentColor;
-  box-shadow:
-    5px -6px 0 -0.5px currentColor,
-    11px -6px 0 -0.5px currentColor;
+  -webkit-mask-image: url("/icons/icon24/status.png");
+  mask-image: url("/icons/icon24/status.png");
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 
 /* 열림/닫힘 애니메이션 */
 
 .popup {
   display: grid;
-  grid-template-rows: 0fr;
+  grid-template-rows: minmax(0, 0fr);
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
@@ -142,7 +130,7 @@
 }
 
 .popup[data-open="true"] {
-  grid-template-rows: 1fr;
+  grid-template-rows: minmax(0, 1fr);
   opacity: 1;
   visibility: visible;
   pointer-events: auto;

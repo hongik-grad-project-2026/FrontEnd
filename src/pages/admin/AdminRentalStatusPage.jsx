@@ -1,20 +1,41 @@
-import { useState } from "react";
-import styles from "./AdminRentalStatusPage.module.css";
-
+import { useRef, useState } from "react";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
-
-import PageHeader from "../../components/layout/PageHeader";
+import { useUser } from "../../context/UserContext";
 import RentalCard from "../../components/card/RentalCard";
 import RentalCardInfo from "../../components/card/RentalCardInfo";
 import Button from "../../components/common/Button";
 import SearchBar from "../../components/common/SearchBar";
 import StatusBadge from "../../components/common/StatusBadge";
 import Tabs from "../../components/common/Tabs";
+import PageHeader from "../../components/layout/PageHeader";
+import ConfirmModal from "../../components/modal/ConfirmModal";
+import RentalDetailModal from "../../components/modal/RentalDetailModal";
+import styles from "./AdminRentalStatusPage.module.css";
 
 const previewEquipmentInfo = {
   category: "노트북",
   equipmentName: "HP Elite x360 1040 G10 2-in-1",
   rentalId: "123456789",
+};
+
+// 상세 모달 화면 확인용 임시 데이터
+// 실제 서버 API 응답 구조를 의미하지 않음
+const previewRentalDetail = {
+  studentName: "김홍익",
+  studentId: "C000000",
+  studentEmail: "example@g.hongik.ac.kr",
+  studentPhone: "010-0000-0000",
+  department: "컴퓨터공학과",
+  description: "기자재 설명이 들어갑니다.",
+  accessories: "본체, 파우치, 충전선",
+  rentalType: "장기",
+  requestedAt: "2026.03.06. 09:00:00",
+  expectedPickupAt: "2026.03.04. 19:00",
+  expectedReturnAt: "2026.05.06. 17:00",
+  reason:
+    "대여 사유가 들어갑니다. 대여 사유가 들어갑니다. 대여 사유가 들어갑니다. 대여 사유가 들어갑니다.",
+  approvedAt: "2026.03.03. 18:00:00",
+  assetNumber: "000000",
 };
 
 // 카드 배치 확인용 임시 데이터
@@ -25,6 +46,8 @@ const temporaryRentals = [
     status: "waiting",
     ariaLabel: "수령대기 대여 카드",
     ...previewEquipmentInfo,
+    ...previewRentalDetail,
+    actualPickupAt: null,
     infoFields: [
       {
         id: "student",
@@ -54,6 +77,8 @@ const temporaryRentals = [
     status: "renting",
     ariaLabel: "대여중 대여 카드",
     ...previewEquipmentInfo,
+    ...previewRentalDetail,
+    actualPickupAt: "2026.03.04. 19:00",
     infoFields: [
       {
         id: "student",
@@ -83,6 +108,8 @@ const temporaryRentals = [
     status: "overdue",
     ariaLabel: "연체 대여 카드",
     ...previewEquipmentInfo,
+    ...previewRentalDetail,
+    actualPickupAt: "2026.03.04. 19:00",
     infoFields: [
       {
         id: "student",
@@ -168,8 +195,13 @@ function isVisibleInTab(rental, activeTab) {
 }
 
 function AdminRentalStatusPage() {
+  const modalTriggerRef = useRef(null);
+  const { user } = useUser();
+
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [detailModalState, setDetailModalState] = useState(null);
+  const [feedbackType, setFeedbackType] = useState(null);
 
   const {
     items: rentalItems,
@@ -223,14 +255,6 @@ function AdminRentalStatusPage() {
     return matchesTab && matchesSearch;
   });
 
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleSearchSubmit = (inputText) => {
-    setSearchTerm(inputText);
-  };
-
   const visibleRentals =
     activeTab === "renting"
       ? [...filteredRentals].sort((firstRental, secondRental) => {
@@ -240,6 +264,49 @@ function AdminRentalStatusPage() {
           return Number(secondIsOverdue) - Number(firstIsOverdue);
         })
       : filteredRentals;
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearchSubmit = (inputText) => {
+    setSearchTerm(inputText);
+  };
+
+  const handleOpenDetailModal = (rental, event) => {
+    modalTriggerRef.current = event.currentTarget;
+
+    setDetailModalState({
+      initialMode: "detail",
+      rental,
+    });
+  };
+
+  const handleOpenProcessModal = (rental, event) => {
+    modalTriggerRef.current = event.currentTarget;
+
+    setDetailModalState({
+      initialMode: "process",
+      rental,
+    });
+  };
+
+  const handleCloseDetailModal = () => {
+    setDetailModalState(null);
+  };
+
+  const handleCompleteRentalProcess = ({ processType }) => {
+    // 실제 수령·반납 API와 목록 상태 변경은 아직 연결하지 않음
+    setDetailModalState(null);
+
+    setFeedbackType(
+      processType === "pickup" ? "pickup-success" : "return-success",
+    );
+  };
+
+  const handleCloseFeedback = () => {
+    setFeedbackType(null);
+  };
 
   return (
     <div className={styles.adminRentalStatusPage}>
@@ -274,11 +341,11 @@ function AdminRentalStatusPage() {
           </div>
 
           <section className={styles.cardListContainer} aria-label="대여 목록">
-            {isError && <p>대여 목록을 불러오지 못했습니다.</p>}
+            {isError ? <p>대여 목록을 불러오지 못했습니다.</p> : null}
 
-            {!isLoading && !isError && visibleRentals.length === 0 && (
+            {!isLoading && !isError && visibleRentals.length === 0 ? (
               <p>검색 조건에 해당하는 대여 현황이 없습니다.</p>
-            )}
+            ) : null}
 
             {visibleRentals.map((rental) => {
               const primaryButton = primaryButtonByStatus[rental.status];
@@ -298,6 +365,10 @@ function AdminRentalStatusPage() {
                         color={primaryButton.color}
                         showLeftIcon={false}
                         text={primaryButton.text}
+                        type="button"
+                        onClick={(event) =>
+                          handleOpenProcessModal(rental, event)
+                        }
                       />
 
                       <Button
@@ -307,6 +378,10 @@ function AdminRentalStatusPage() {
                         color="Primary"
                         showLeftIcon={false}
                         text="상세 보기"
+                        type="button"
+                        onClick={(event) =>
+                          handleOpenDetailModal(rental, event)
+                        }
                       />
                     </>
                   }
@@ -323,12 +398,49 @@ function AdminRentalStatusPage() {
 
             <div ref={loadMoreRef} aria-hidden="true" />
 
-            {isFetchingNextPage && <p>더 불러오는 중...</p>}
+            {isFetchingNextPage ? <p>더 불러오는 중...</p> : null}
 
-            {!hasNextPage && !isLoading && <p>마지막 목록입니다.</p>}
+            {!hasNextPage && !isLoading ? <p>마지막 목록입니다.</p> : null}
           </section>
         </div>
       </div>
+
+      {detailModalState ? (
+        <RentalDetailModal
+          key={`${detailModalState.rental.id}-${detailModalState.initialMode}`}
+          isOpen
+          initialMode={detailModalState.initialMode}
+          rental={detailModalState.rental}
+          workerName={user?.name ?? ""}
+          onClose={handleCloseDetailModal}
+          onComplete={handleCompleteRentalProcess}
+          returnFocusRef={modalTriggerRef}
+        />
+      ) : null}
+
+      <ConfirmModal
+        isOpen={feedbackType === "pickup-success"}
+        icon="checkmark"
+        title="수령 처리되었습니다."
+        description="대여중 상태에서 확인 가능합니다."
+        confirmText="확인"
+        showCancel={false}
+        onClose={handleCloseFeedback}
+        onConfirm={handleCloseFeedback}
+        returnFocusRef={modalTriggerRef}
+      />
+
+      <ConfirmModal
+        isOpen={feedbackType === "return-success"}
+        icon="checkmark"
+        title="반납 처리되었습니다."
+        description="대여기록 페이지에서 확인 가능합니다."
+        confirmText="확인"
+        showCancel={false}
+        onClose={handleCloseFeedback}
+        onConfirm={handleCloseFeedback}
+        returnFocusRef={modalTriggerRef}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { WishIconButton } from "../common/IconButton";
 
 function EquipmentCard({
     modelImageUrl,
-    categoryId = '카테고리',
+    category = '카테고리',
     modelName = '모델명',
     specification = "간단한 사양 설명이 들어갑니다.",
     components = "간단한 구성 설명이 들어갑니다.",
@@ -20,7 +20,7 @@ function EquipmentCard({
     return (
         <div
             className={styles.equipmentCard}
-            data-stockOut={isStockOut}>
+            data-stockout={isStockOut}>
             <div className={styles.imageCon} data-img={Boolean(modelImageUrl)}>
                 {modelImageUrl ?
                     <img src={modelImageUrl} alt={`${modelName}-image`} />
@@ -31,7 +31,7 @@ function EquipmentCard({
             </div>
             <div className={styles.equipmentInfoCon}>
                 <div className={styles.mainInfo}>
-                    <span>{categoryId}</span>
+                    <span>{category}</span>
                     <p>{modelName}</p>
                 </div>
                 <div className={styles.detailInfo}>

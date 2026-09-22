@@ -107,11 +107,11 @@
     flex-wrap: nowrap;
 }
 
-.rentalsLi[data-rantalStatus='수령대기'] .liDateInfo {
+.rentalsLi[data-rantalstatus='수령대기'] .liDateInfo {
     color: var(--color-brand-primary);
 }
 
-.rentalsLi[data-rantalStatus='대여중'] .liDateInfo {
+.rentalsLi[data-rantalstatus='대여중'] .liDateInfo {
     color: var(--color-status-danger);
 }
 

@@ -1,0 +1,188 @@
+.noticeDetailPage {
+    /* 48px: 상단 breadcrumbs 높이, 32px: contentWrap padding-top */
+    height: calc(100vh - 48px - 32px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-24);
+    padding-bottom: var(--spacing-32);
+}
+
+.noticeDetail {
+    background-color: var(--color-white);
+    border-radius: var(--radius-8);
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    line-height: var(--text-body-2-line-height);
+    letter-spacing: var(--text-body-2-letter-spacing);
+
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+
+.headerCon {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.importantText {
+    color: var(--color-status-danger);
+    font-size: var(--text-head-1-size);
+    font-weight: var(--text-head-1-weight);
+    line-height: var(--text-head-1-line-height);
+    letter-spacing: var(--text-head-1-letter-spacing);
+}
+
+/* 자식1 .noticeMetaCon  */
+.noticeMetaCon {
+    color: var(--color-neutral-80);
+    border-bottom: var(--border-width-default) solid var(--color-neutral-20);
+    height: var(--spacing-48);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-24);
+    padding: 0 var(--spacing-24)
+}
+
+.noticeMetaItem {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+
+}
+
+.noticeMetaItem span:first-child {
+    color: var(--color-neutral-50);
+}
+
+
+
+.noticeAttachmentsAccordion {
+    /* border: 1px solid darkorange; */
+    color: var(--color-neutral-80);
+    border-bottom: var(--border-width-default) solid var(--color-neutral-20);
+    min-height: var(--spacing-48);
+    padding: var(--spacing-12) 0;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s ease;
+    justify-content: center;
+}
+
+.attachmentsSummary {
+    /* border: 1px solid magenta; */
+    color: var(--color-neutral-80);
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    /* line-height: var(--text-body-2-line-height); */
+    letter-spacing: var(--text-body-2-letter-spacing);
+    padding: 0 var(--spacing-24);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.accordionTriggerBtn {
+    height: var(--spacing-24);
+    cursor: pointer;
+    display: inline-flex;
+    gap: var(--spacing-8);
+    align-items: center;
+}
+
+.accordionTriggerBtn:hover {
+    text-decoration: underline;
+}
+
+
+.attachmentsIcon {
+    width: var(--spacing-24);
+    height: var(--spacing-24);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.attachmentsCon {
+    display: grid;
+    overflow: hidden;
+    transition: 0.3s ease;
+}
+
+
+.attachmentsWrap {
+    padding: 0 var(--spacing-24) 0 var(--spacing-32);
+    display: flex;
+    gap: var(--spacing-4);
+    flex-wrap: wrap;
+
+    min-height: 0;
+    overflow: hidden;
+}
+
+.noticeAttachmentsAccordion[data-open="false"] .attachmentsCon {
+    grid-template-rows: 0fr;
+    padding-top: 0;
+}
+
+.noticeAttachmentsAccordion[data-open="false"] .attachmentsIcon {
+    background-image: url('/icons/icon24/down.png');
+}
+
+.noticeAttachmentsAccordion[data-open="true"] {
+    background-color: var(--color-neutral-10);
+}
+
+.noticeAttachmentsAccordion[data-open="true"] .attachmentsCon {
+    grid-template-rows: 1fr;
+    padding-top: var(--spacing-6);
+}
+
+.noticeAttachmentsAccordion[data-open="true"] .attachmentsIcon {
+    background-image: url('/icons/icon24/up.png');
+}
+
+
+
+
+/* noticeContentCon   */
+.noticeContentCon {
+    padding: 0 var(--spacing-24);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.noticeContentWrap {
+    color: var(--color-neutral-90);
+    padding: var(--spacing-24) 0;
+}
+
+.PagenationCon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* border: 1px solid red; */
+}
+
+
+.noticePagination {
+    /* border: 1px solid goldenrod; */
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+}
+
+.noticePagination>button:nth-child(2) {
+    border: var(--border-width-default) solid var(--color-neutral-20);
+}
+
+.noticePagination button {
+    /* border: 1px solid navy; */
+    width: auto !important;
+}
