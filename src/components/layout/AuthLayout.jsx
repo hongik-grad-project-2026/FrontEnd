@@ -18,7 +18,13 @@ function AuthLayout() {
 
     return (
         <main className={styles.authLayout}>
-            <section className={styles.contentSection}>
+            {titleConfig === '회원가입' ? (
+                <div className={styles.bgLogo}>
+                    <img src="/images/h1.png" alt="logo" />
+                    <span>멀티미디어실</span>
+                </div>
+            ) : ''}
+            <section className={`${styles.contentSection} ${titleConfig === '회원가입' ? styles.signupSection : ''}`}>
                 {titleConfig === '로그인' ? (
                     <h1 className={styles.logoArea}>
                         <img src="/images/h1.png" alt="홍익대학교" />

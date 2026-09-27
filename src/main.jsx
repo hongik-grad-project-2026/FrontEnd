@@ -16,6 +16,17 @@ import {
 } from "./routes/RoutesConfig.jsx";
 import { UserProvider } from "./context/UserProvider.jsx";
 
+
+async function enableMocking() {
+  if (!import.meta.env.DEV) return;
+
+  const { worker } = await import("./mocks/browser");
+  return worker.start({
+    onUnhandledRequest: "bypass",
+  });
+}
+
+
 const queryClient = new QueryClient(/*{
   defaultOptions: {
     queries: {
@@ -38,18 +49,17 @@ const router = createBrowserRouter([
   // 학생모드 라우트
   studentRoutes,
 ]);
-
-createRoot(document.getElementById("root")).render(
-  // <>
-  <StrictMode>
-    {/* <App /> */}
-    <QueryClientProvider client={queryClient}>
-      <UserProvider>
-        <RouterProvider router={router} />
-      </UserProvider>
-      <ReactQueryDevtools initialIsOpen={false} />{" "}
-      {/*Devtools : 개발용 패널, 프로덕션 빌드 시 자동 비활성화됨 */}
-    </QueryClientProvider>
-  </StrictMode>
-  // </>
-);
+enableMocking().then(() => {
+  createRoot(document.getElementById("root")).render(
+    <StrictMode>
+      {/* <App /> */}
+      <QueryClientProvider client={queryClient}>
+        <UserProvider>
+          <RouterProvider router={router} />
+        </UserProvider>
+        <ReactQueryDevtools initialIsOpen={false} />{" "}
+        {/*Devtools : 개발용 패널, 프로덕션 빌드 시 자동 비활성화됨 */}
+      </QueryClientProvider>
+    </StrictMode>
+  );
+});

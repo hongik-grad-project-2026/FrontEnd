@@ -17,24 +17,179 @@ const TEL_PATTERN = /^010[0-9]{8}$/;
 
 // 단과대학 목록
 const COLLEGE_OPTIONS = [
+    // 서울캠퍼스
     { value: "engineering", label: "공과대학" },
-    { value: "design", label: "미술대학" },
+    { value: "architecture", label: "건축도시대학" },
     { value: "business", label: "경영대학" },
+    { value: "liberalArts", label: "문과대학" },
+    { value: "law", label: "법과대학" },
+    { value: "education", label: "사범대학" },
+    { value: "fineArts", label: "미술대학" },
+    { value: "economics", label: "경제학부" },
+    { value: "designArtManagement", label: "디자인·예술경영학부" },
+    { value: "performingArts", label: "공연예술학부" },
+    { value: "undeclaredSeoul", label: "캠퍼스자율전공(서울)" },
+    { value: "convergenceSeoul", label: "융합전공(서울)" },
+    { value: "bioHealth", label: "바이오헬스융합학부" },
+    { value: "generalStudiesSeoul", label: "교양과(서울)" },
+    // 세종캠퍼스
+    { value: "scienceTech", label: "과학기술대학" },
+    { value: "aidScienceTech", label: "AID융합과학기술대학" },
+    { value: "game", label: "게임학부" },
+    { value: "commerce", label: "상경대학" },
+    { value: "formativeArts", label: "조형대학" },
+    { value: "advertisingPR", label: "광고홍보학부" },
+    { value: "industrialSports", label: "산업스포츠학과" },
+    { value: "sportsCoaching", label: "스포츠지도학과" },
+    { value: "undeclaredSejong", label: "캠퍼스자율전공(세종)" },
+    { value: "convergenceSejong", label: "융합전공(세종)" },
+    { value: "generalStudiesSejong", label: "교양과(세종)" },
 ];
 
 // 단과대학별 학과 목록 — key는 위 COLLEGE_OPTIONS의 value와 일치시킴
 const DEPARTMENT_OPTIONS = {
+    // ─── 서울캠퍼스 ───
     engineering: [
+        { value: "electronicElectrical", label: "전자전기공학부" },
+        { value: "materials", label: "신소재공학전공" },
+        { value: "chemicalEngineering", label: "화학공학전공" },
         { value: "computer", label: "컴퓨터공학과" },
-        { value: "electronic", label: "전자전기공학부" },
-        { value: "mechanical", label: "기계시스템디자인공학과" },
+        { value: "industrialData", label: "산업·데이터공학과" },
+        { value: "mechanicalSystemDesign", label: "기계·시스템디자인공학과" },
+        { value: "civilEnvironmental", label: "건설환경공학과" },
+        { value: "basicScience", label: "기초과학과" },
     ],
-    design: [
-        { value: "visual", label: "시각디자인전공" },
-        { value: "industrial", label: "산업디자인전공" },
+    architecture: [
+        { value: "architectureMajor", label: "건축학전공(5년제)" },
+        { value: "interiorArchitecture", label: "실내건축학전공" },
+        { value: "urbanEngineering", label: "도시공학과" },
     ],
     business: [
-        { value: "management", label: "경영학부" },
+        { value: "management", label: "경영학전공" },
+        { value: "trade", label: "무역학전공" },
+    ],
+    liberalArts: [
+        { value: "englishLiterature", label: "영어영문학과" },
+        { value: "germanLiterature", label: "독어독문학과" },
+        { value: "frenchLiterature", label: "불어불문학과" },
+        { value: "koreanLiterature", label: "국어국문학과" },
+    ],
+    law: [
+        { value: "lawMajor", label: "법학부" },
+    ],
+    education: [
+        { value: "mathEducation", label: "수학교육과" },
+        { value: "koreanEducation", label: "국어교육과" },
+        { value: "englishEducation", label: "영어교육과" },
+        { value: "historyEducation", label: "역사교육과" },
+        { value: "pedagogy", label: "교육학과" },
+    ],
+    fineArts: [
+        { value: "undeclared", label: "자율전공" },
+        { value: "orientalPainting", label: "동양화과" },
+        { value: "painting", label: "회화과" },
+        { value: "printmaking", label: "판화과" },
+        { value: "sculpture", label: "조소과" },
+        { value: "visualDesign", label: "시각디자인전공" },
+        { value: "industrialDesign", label: "산업디자인전공" },
+        { value: "metalArtDesign", label: "금속조형디자인과" },
+        { value: "ceramicsGlass", label: "도예유리과" },
+        { value: "woodFurniture", label: "목조형가구학과" },
+        { value: "textileFashion", label: "섬유미술패션디자인과" },
+        { value: "artStudies", label: "예술학과" },
+    ],
+    economics: [
+        { value: "economicsMajor", label: "경제학전공" },
+    ],
+    designArtManagement: [
+        { value: "designManagement", label: "디자인경영전공" },
+        { value: "artManagement", label: "예술경영전공" },
+    ],
+    performingArts: [
+        { value: "musical", label: "뮤지컬전공" },
+        { value: "appliedMusic", label: "실용음악전공" },
+    ],
+    undeclaredSeoul: [
+        { value: "undeclared", label: "캠퍼스자율전공" },
+    ],
+    convergenceSeoul: [
+        { value: "performingArtsConv", label: "공연예술전공" },
+        { value: "cultureArtManagement", label: "문화예술경영전공" },
+        { value: "architecturalSpaceArt", label: "건축공간예술전공" },
+        { value: "iot", label: "사물인터넷공학전공" },
+        { value: "intelligentRobot", label: "지능로봇공학전공" },
+        { value: "smartCityDataScience", label: "스마트도시데이터사이언스전공" },
+        { value: "designEngineering", label: "디자인엔지니어링전공" },
+        { value: "dataScience", label: "데이터사이언스전공" },
+        { value: "medicalHealthcareAI", label: "의료헬스케어AI전공" },
+        { value: "healthcareService", label: "헬스케어서비스전공" },
+    ],
+    bioHealth: [
+        { value: "bioHealthDesign", label: "바이오헬스디자인전공" },
+        { value: "bioHealthDevice", label: "바이오헬스디바이스전공" },
+        { value: "bioHealthData", label: "바이오헬스데이터전공" },
+        { value: "advancedBiotech", label: "첨단바이오테크전공" },
+        { value: "bioHealthAI", label: "바이오헬스인공지능전공" },
+    ],
+    generalStudiesSeoul: [
+        { value: "generalStudies", label: "교양과" },
+    ],
+
+    // ─── 세종캠퍼스 ───
+    scienceTech: [
+        { value: "undeclared", label: "자율전공" },
+        { value: "electronicConvergence", label: "전자전기융합공학과" },
+        { value: "softwareConvergence", label: "소프트웨어융합학과" },
+        { value: "nanoMaterials", label: "나노신소재학과" },
+        { value: "architecturalEngineering", label: "건축공학전공" },
+        { value: "architecturalDesign", label: "건축디자인전공(5년제)" },
+        { value: "mechanicalInfo", label: "기계정보공학과" },
+        { value: "navalArchitecture", label: "조선해양공학과" },
+        { value: "bioChemical", label: "바이오화학공학과" },
+    ],
+    aidScienceTech: [
+        { value: "nanoSemiconductor", label: "나노반도체공학과" },
+        { value: "navalMobility", label: "조선해양모빌리티공학과" },
+        { value: "aiMechanical", label: "AI기계융합공학과" },
+        { value: "undeclared", label: "자율전공(AID융합과기대)" },
+        { value: "electronicConvergence", label: "전자전기융합공학과" },
+        { value: "softwareConvergence", label: "소프트웨어융합학과" },
+        { value: "architecturalEngineering", label: "건축공학전공(4년제)" },
+        { value: "architecturalDesign", label: "건축디자인전공(5년제)" },
+        { value: "bioChemicalConvergence", label: "바이오화학융합공학과" },
+    ],
+    game: [
+        { value: "gameSoftware", label: "게임소프트웨어전공" },
+        { value: "gameGraphicDesign", label: "게임그래픽디자인전공" },
+    ],
+    commerce: [
+        { value: "globalBusiness", label: "글로벌경영전공" },
+        { value: "accounting", label: "회계학전공" },
+        { value: "financeInsurance", label: "금융보험학전공" },
+    ],
+    formativeArts: [
+        { value: "designConvergence", label: "디자인컨버전스학부" },
+        { value: "filmAnimation", label: "영상·애니메이션학부" },
+    ],
+    advertisingPR: [
+        { value: "advertisingPRMajor", label: "광고홍보학부" },
+    ],
+    industrialSports: [
+        { value: "industrialSportsMajor", label: "산업스포츠학과" },
+    ],
+    sportsCoaching: [
+        { value: "sportsCoachingMajor", label: "스포츠지도학과" },
+    ],
+    undeclaredSejong: [
+        { value: "undeclared", label: "캠퍼스자율전공" },
+    ],
+    convergenceSejong: [
+        { value: "landscapeDesign", label: "환경조경디자인전공" },
+        { value: "bigDataBusiness", label: "빅데이터비즈니스전공" },
+        { value: "futureMobility", label: "미래모빌리티전공" },
+    ],
+    generalStudiesSejong: [
+        { value: "generalStudies", label: "교양과" },
     ],
 };
 
@@ -116,6 +271,10 @@ function SignUpPage() {
     const isEmailValid = EMAIL_PATTERN.test(email.trim());
     const isTelValid = TEL_PATTERN.test(tel.trim());
 
+    // 모달 구현 전 에러메세지 콘솔 확인
+    if (errorMessage) {
+        console.log('* * * * * * * * * * * * * * \n', errorMessage, '\n* * * * * * * * * * * * * *');
+    }
 
 
     // 안내 문구는 "입력이 시작된 뒤"에만 띄움
@@ -184,6 +343,7 @@ function SignUpPage() {
                 department,
             });
 
+
             // 가입 완료 페이지로 이동
             // replace: 뒤로가기로 가입 폼에 돌아오지 못하도록
             // state: 가입을 거쳐서 왔다는 표시 (완료 페이지에서 확인용으로 쓸 수 있음)
@@ -193,8 +353,8 @@ function SignUpPage() {
                     name: name.trim(),
                     id: id.trim(),
                     email: email.trim(),
-                    college,
-                    department,
+                    college: COLLEGE_OPTIONS.find((option) => option.value === college)?.label ?? college,
+                    department: departmentOptions.find((option) => option.value === department)?.label ?? department,
                 },
             });
         } catch (error) {
@@ -214,7 +374,6 @@ function SignUpPage() {
     return (
         <form
             className={styles.signupPage}
-            // onSubmit={lastStep === false ? handleNextStep : handleSubmit}
             onSubmit={handleSubmit}
         >
             {lastStep === false ? (<div className={styles.innerPage}>
