@@ -10,9 +10,11 @@ function PageLayout() {
             <div className={styles.mainWrap}>
 
                 <Sidebar />
-                <div className={styles.contentWrap}>
-                    <Breadcrumbs />
-                    <Outlet />
+                <div className={styles.scrollContainer}>
+                    <div className={styles.contentWrap}>
+                        <Breadcrumbs />
+                        <Outlet />
+                    </div>
                 </div>
             </div>
         </main>
