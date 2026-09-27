@@ -2,8 +2,9 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchNotices } from '../../api/noticeApi';
+import { useInfiniteScroll } from "../../hooks/useInfiniteScroll"
 
-import { getEquipmentList } from "../../api/equipmentApi"
+import { getMyWishlistedEquipmentModels } from "../../api/equipmentApi"
 
 import StatusBadge from "../../components/common/StatusBadge";
 import EquipmentCard from "../../components/card/EquipmentCard"
@@ -123,8 +124,7 @@ function RentalsLi({ rental }) {
 
 function StudentDashboardPage() {
   const navigate = useNavigate();
-
-  const [equipmentList, setEquipmentList] = useState(() => getEquipmentList())
+  const [wishOverrides, setWishOverrides] = useState({});
   const rentalGroups = {
     "승인대기": mockRentalList.filter((rental) => rental.status === "승인대기"),
     "수령대기": mockRentalList.filter((rental) => rental.status === "수령대기"),
@@ -132,14 +132,29 @@ function StudentDashboardPage() {
   };
 
   function handleWishChange(equipmentId, nextIsWish) {
-    setEquipmentList((currentList) =>
-      currentList.map((equipment) =>
-        equipment.id === equipmentId
-          ? { ...equipment, isWish: nextIsWish }
-          : equipment
-      )
-    )
+    setWishOverrides((current) => ({
+      ...current,
+      [equipmentId]: nextIsWish,
+    }));
   }
+
+  const {
+    items,
+    loadMoreRef,
+    isLoading,
+    isError,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteScroll({
+    queryKey: ["equipment-models", "my-wishlist"],
+    queryFn: ({ pageParam }) =>
+      getMyWishlistedEquipmentModels({ page: pageParam, size: 12 }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.page + 1;
+      return nextPage < lastPage.totalPages ? nextPage : undefined;
+    },
+  });
 
   return (
     <main className={styles.dashboardPage}>
@@ -198,15 +213,31 @@ function StudentDashboardPage() {
       <section className={styles.section} >
         <h3>찜목록</h3>
         <div className={styles.wishListGrid}>
-          {equipmentList.map((equipment) => (
-            <EquipmentCard
-              key={equipment.id}
-              {...equipment}
-              onWishChange={(nextIsWish) =>
-                handleWishChange(equipment.id, nextIsWish)
-              }
-            />
-          ))}
+
+          {isLoading ? <p>찜 목록을 불러오는 중입니다.</p> : null}
+          {isError ? <p role="alert">찜 목록을 불러오지 못했습니다.</p> : null}
+
+          {items
+            .map((equipment) => ({
+              ...equipment,
+              // 클릭으로 바꾼 임시 상태가 있으면 API 응답의 isWish보다 우선
+              isWish: wishOverrides[equipment.id] ?? equipment.isWish,
+            }))
+            // 찜 해제 버튼을 누른 항목은 서버 변경 API 연결 전까지 현재 화면에서만 숨김
+            .filter((equipment) => equipment.isWish)
+            .map((equipment) => (
+              <EquipmentCard
+                key={equipment.id}
+                {...equipment}
+                onWishChange={(nextIsWish) =>
+                  handleWishChange(equipment.id, nextIsWish)
+                }
+              />
+            ))}
+
+          <div ref={loadMoreRef} aria-hidden="true" />
+          {isFetchingNextPage ? <p>찜 목록을 더 불러오는 중입니다.</p> : null}
+          {!hasNextPage && items.length > 0 ? <p>마지막 찜 항목입니다.</p> : null}
         </div>
       </section>
 
