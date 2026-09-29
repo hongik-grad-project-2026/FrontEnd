@@ -3,7 +3,7 @@ import { useMatches } from "react-router-dom";
 import styles from "./PageHeader.module.css";
 
 function PageHeader({ customTitle }) {
-  const matches = useMatches()
+  const matches = useMatches();
 
   const currentMatch = [...matches]
     .reverse()
@@ -13,9 +13,9 @@ function PageHeader({ customTitle }) {
 
   const title =
     customTitle ??
-    (typeof titleConfig === 'function'
+    (typeof titleConfig === "function"
       ? titleConfig(currentMatch)
-      : (titleConfig ?? "제목 없음"))
+      : (titleConfig ?? "제목 없음"));
 
   return <h2 className={styles.pageHeader}>{title}</h2>;
 }

@@ -68,9 +68,9 @@ async function loadAdminMemberSummary({ params }) {
 
 // 공동 라우트
 const commonRoutes = {
-  path: '/',
+  path: "/",
   element: <Navigate to="/login" replace />,
-}
+};
 
 const authRoutes = {
   element: <AuthLayout />,
@@ -266,11 +266,11 @@ const studentRoutes = {
           element: <StudentNoticeListPage />,
         },
         {
-          path: ':noticeId',
+          path: ":noticeId",
           element: <StudentNoticeDetailPage />,
           loader: ({ params }) => fetchNoticeDetail(params.noticeId),
           handle: {
-            title: ({ data }) => data?.title ?? '공지사항 상세',
+            title: ({ data }) => data?.title ?? "공지사항 상세",
           },
         },
       ],
@@ -279,8 +279,8 @@ const studentRoutes = {
 }
 
 const notFoundRoute = {
-  path: '*',
+  path: "*",
   element: <NotFoundPage />,
-}
+};
 
-export { commonRoutes, authRoutes, adminRoutes, studentRoutes, notFoundRoute }
+export { commonRoutes, authRoutes, adminRoutes, studentRoutes, notFoundRoute };

@@ -128,9 +128,7 @@ const MOCK_MODEL_DEFINITIONS = [
     labelPrefix: "TL",
     itemCount: 1,
   },
-]
-  ;
-
+];
 function createMockEquipmentItems({ itemCount, labelPrefix, modelId }) {
   return Array.from({ length: itemCount }, (_, index) => {
     const status =
