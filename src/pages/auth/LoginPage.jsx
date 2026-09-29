@@ -36,8 +36,14 @@ function LoginPage() {
     const { login } = useUser();
     const navigate = useNavigate();
 
+    // 모달 구현 전 에러메세지 콘솔 확인
+    if (errorMessage) {
+        console.log('* * * * * * * * * * * * * * \n', errorMessage, '\n* * * * * * * * * * * * * *');
+    }
+
     // 둘 다 입력됐고 제출 중이 아닐 때만 활성화
     const canSubmit = id.trim() !== "" && password !== "" && !isSubmitting;
+
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -56,13 +62,14 @@ function LoginPage() {
 
             navigate(user.role === "admin" ? "/admin" : "/student", { replace: true });
         } catch (error) {
-            setErrorMessage(error.message);
+            setErrorMessage(error.message || "로그인에 실패했습니다. 입력 정보를 확인해 주세요.");
         } finally {
             setIsSubmitting(false);
         }
     }
 
     return (
+
         <form className={styles.loginPage} onSubmit={handleSubmit}>
             <InputTextSection
                 title='학번' placeholder='학번을 입력하세요'
@@ -85,9 +92,11 @@ function LoginPage() {
                     />
                     <span className={styles.labelText}> 학번 기억하기</span>
                 </label>
-                <span className={styles.findPassword}>비밀번호를 잊으셨나요?</span>
+                <div >
+                    <span className={styles.gotoText}>비밀번호 찾기</span>
+                    <span className={styles.gotoText} onClick={() => navigate('/signup')}>회원가입</span>
+                </div>
             </div>
-
             <Button
                 className={styles.submitButton}
                 color="Primary"

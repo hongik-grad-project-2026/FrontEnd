@@ -9,7 +9,7 @@ function PageHeader({ customTitle }) {
     .reverse()
     .find((match) => match.handle?.title);
 
-  const titleConfig = currentMatch?.handle?.title;
+  const titleConfig = currentMatch?.handle?.title
 
   const title =
     customTitle ??

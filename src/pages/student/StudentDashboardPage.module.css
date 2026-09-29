@@ -132,21 +132,3 @@
     grid-template-columns: 1fr 1fr 1fr 1fr;
 
 }
-
-@media (max-width: 1280px) {
-    .likesGrid {
-        grid-template-columns: 1fr 1fr 1fr;
-    }
-}
-
-@media (max-width: 1040px) {
-    .likesGrid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media (max-width: 800px) {
-    .likesGrid {
-        grid-template-columns: 1fr;
-    }
-}

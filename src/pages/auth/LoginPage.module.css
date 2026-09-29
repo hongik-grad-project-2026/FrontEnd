@@ -3,6 +3,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative;
 }
 
 .loginOptions {
@@ -18,7 +19,6 @@
 }
 
 .checkBox {
-    /* border: 1px solid darkcyan; */
     width: 18px;
 }
 
@@ -30,21 +30,33 @@
 }
 
 .labelText,
-.findPassword {
+.gotoText {
     cursor: pointer;
     border: var(--border-width-default) solid var(--color-white);
 }
 
 
-.findPassword {
+.gotoText {
     color: var(--color-brand-primary);
+    margin: 0 var(--spacing-8);
+    position: relative;
+}
+
+.gotoText:first-of-type::after {
+    content: '';
+    position: absolute;
+    height: 12px;
+    right: -9px;
+    width: var(--border-width-default);
+    top: calc(50% - 6px);
+    background-color: var(--color-neutral-20);
 }
 
 .checkBoxLabel:hover .labelText {
     border-bottom: var(--border-width-default) solid var(--color-neutral-60);
 }
 
-.findPassword:hover {
+.gotoText:hover {
     border-bottom: var(--border-width-default) solid var(--color-brand-primary);
 }
 
