@@ -92,12 +92,18 @@ function Sidebar() {
   const userId = user.id;
   const accountMode = user.role;
   const profileImage = user.profile_image_url;
+  const isAdmin = accountMode === "admin";
+  const isStudent = accountMode === "student";
 
 
   function handleLogout() {
     logout();
     // replace: 뒤로가기로 로그인 이전 페이지에 돌아가지 못하도록
     navigate("/login", { replace: true });
+  }
+
+  if (!isAdmin && !isStudent) {
+    return null;
   }
 
   return (
@@ -118,7 +124,7 @@ function Sidebar() {
         </NavSubtitle>
 
 
-        {user.role === 'admin' ? (
+        {isAdmin ? (
           <>
             <NavSubtitle titleName="Management">
               <NavItem

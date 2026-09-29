@@ -1,19 +1,17 @@
 // ------ 공용 ------
-import { Navigate, Outlet } from 'react-router-dom'
-import PageLayout from '../components/layout/PageLayout'
-import AuthLayout from '../components/layout/AuthLayout'
-import NotFoundPage from '../pages/error/NotFoundPage'
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+
+import PageLayout from "../components/layout/PageLayout";
+import AuthLayout from "../components/layout/AuthLayout";
+import NotFoundPage from "../pages/error/NotFoundPage";
+import { useUser } from "../context/UserContext.jsx";
 
 import { getAdminEquipmentModelSummary } from "../api/equipmentApi";
 import { getAdminMemberSummary } from "../api/memberApi";
 import { fetchNoticeDetail } from "../api/noticeApi";
 
-import PageLayout from "../components/layout/PageLayout";
-import NotFoundPage from "../pages/error/NotFoundPage";
-
 // ------ 관리자모드 ------
-// // 1차 페이지
+// 1차 페이지
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import AdminEquipmentListPage from "../pages/admin/AdminEquipmentListPage";
 import AdminMemberListPage from "../pages/admin/AdminMemberListPage";
@@ -21,27 +19,44 @@ import AdminRentalApprovalPage from "../pages/admin/AdminRentalApprovalPage";
 import AdminRentalHistoryPage from "../pages/admin/AdminRentalHistoryPage";
 import AdminRentalStatusPage from "../pages/admin/AdminRentalStatusPage";
 
-// // 2차 페이지
-import AdminAssetListPage from '../pages/admin/AdminAssetListPage'
-import AdminNoticeListPage from '../pages/admin/AdminNoticeListPage'
-import AdminNoticeDetailPage from '../pages/admin/AdminNoticeDetailPage'
-import { fetchNoticeDetail } from '../api/noticeApi'
-import AdminNoticeCreatePage from '../pages/admin/AdminNoticeCreatePage'
-import AdminNoticeEditPage from '../pages/admin/AdminNoticeEditPage'
-
-// ------ 학생모드 ------
-// // 1차 페이지
-import StudentDashboardPage from '../pages/student/StudentDashboardPage'
-import StudentEquipmentListPage from '../pages/student/StudentEquipmentListPage'
-import StudentRentalHistoryPage from '../pages/student/StudentRentalHistoryPage'
-import StudentMyPage from '../pages/student/StudentMyPage'
-// // 2차 페이지
-import StudentNoticeListPage from '../pages/student/StudentNoticeListPage'
-import StudentNoticeDetailPage from '../pages/student/StudentNoticeDetailPage'
+// 2차 페이지
 import AdminAssetListPage from "../pages/admin/AdminAssetListPage";
 import AdminMemberDetailPage from "../pages/admin/AdminMemberDetailPage";
-import AdminNoticeDetailPage from "../pages/admin/AdminNoticeDetailPage";
 import AdminNoticeListPage from "../pages/admin/AdminNoticeListPage";
+import AdminNoticeDetailPage from "../pages/admin/AdminNoticeDetailPage";
+import AdminNoticeCreatePage from "../pages/admin/AdminNoticeCreatePage";
+import AdminNoticeEditPage from "../pages/admin/AdminNoticeEditPage";
+
+// ------ 학생모드 ------
+// 1차 페이지
+import StudentDashboardPage from "../pages/student/StudentDashboardPage";
+import StudentEquipmentListPage from "../pages/student/StudentEquipmentListPage";
+import StudentRentalHistoryPage from "../pages/student/StudentRentalHistoryPage";
+import StudentMyPage from "../pages/student/StudentMyPage";
+
+// 2차 페이지
+import StudentNoticeListPage from "../pages/student/StudentNoticeListPage";
+import StudentNoticeDetailPage from "../pages/student/StudentNoticeDetailPage";
+
+// ------ 로그인/회원가입 ------
+import LoginPage from "../pages/auth/LoginPage";
+import SignUpPage from "../pages/auth/SignUpPage";
+import SignUpCompletePage from "../pages/auth/SignUpCompletePage";
+
+function RoleGuard({ allowedRole, children }) {
+  const { user } = useUser();
+  const role = user?.role;
+
+  if (role !== "admin" && role !== "student") {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role !== allowedRole) {
+    return <Navigate to={role === "admin" ? "/admin" : "/student"} replace />;
+  }
+
+  return children;
+}
 
 async function loadAdminEquipmentModel({ params }) {
   try {
@@ -66,48 +81,47 @@ async function loadAdminMemberSummary({ params }) {
   }
 }
 
-// ------ 로그인/회원가입 ------
-import LoginPage from '../pages/auth/LoginPage'
-import SignUpPage from '../pages/auth/SignUpPage'
-import SignUpCompletePage from '../pages/auth/SignUpCompletePage'
-
 // 공동 라우트
 const commonRoutes = {
-    path: '/',
-    element: <Navigate to="/login" replace />,
+  path: "/",
+  element: <Navigate to="/login" replace />,
 };
 
 const authRoutes = {
-    element: <AuthLayout />,
-    children: [
-        {
-            path: '/login',
-            element: <LoginPage />,
-            handle: {
-                title: "로그인",
-            },
-        },
-        {
-            path: '/signup',
-            element: <SignUpPage />,
-            handle: {
-                title: "회원가입",
-            },
-        },
-        {
-            path: '/signup/complete',
-            element: <SignUpCompletePage />,
-            handle: {
-                title: "회원가입 완료",
-            },
-        },
-    ]
+  element: <AuthLayout />,
+  children: [
+    {
+      path: "/login",
+      element: <LoginPage />,
+      handle: {
+        title: "로그인",
+      },
+    },
+    {
+      path: "/signup",
+      element: <SignUpPage />,
+      handle: {
+        title: "회원가입",
+      },
+    },
+    {
+      path: "/signup/complete",
+      element: <SignUpCompletePage />,
+      handle: {
+        title: "회원가입 완료",
+      },
+    },
+  ],
 };
 
 // 관리자모드 라우트 그룹
 const adminRoutes = {
   path: "/admin",
-  element: <PageLayout />,
+  element: (
+    <RoleGuard allowedRole="admin">
+      <PageLayout />
+    </RoleGuard>
+  ),
   handle: {
     title: "관리자모드",
   },
@@ -194,116 +208,100 @@ const adminRoutes = {
           element: <AdminNoticeListPage />,
         },
         {
-            path: 'notices',
-            element: <Outlet />,
-            handle: {
-                title: "공지사항",
-            },
-            children: [
-                {
-                    index: true,
-                    element: <AdminNoticeListPage />,
-                    // handle: {
-                    //     title: "공지사항",
-                    // },
-                },
-                {
-                    path: ':noticeId',
-                    element: <AdminNoticeDetailPage />,
-                    loader: ({ params }) => fetchNoticeDetail(params.noticeId),
-                    handle: {
-                        title: ({ data }) => data?.title ?? "공지사항 상세",
-                    },
-                },
-                {
-                    path: 'create',
-                    element: <AdminNoticeCreatePage />,
-                    handle: {
-                        title: "공지사항 작성",
-                    },
-                },
-                {
-                    path: 'edit/:noticeId',
-                    element: <AdminNoticeEditPage />,
-                    loader: ({ params }) => fetchNoticeDetail(params.noticeId),
-                    handle: {
-                        title: "공지사항 수정",
-                    },
-                },
-            ],
-        },
-    ]
-};
-
-
-// 학생모드 라우트 그룹
-const studentRoutes = {
-    path: '/student',
-    element: <PageLayout />,
-    handle: {
-        title: "학생모드",
-    },
-    children: [
-        {
-            index: true,
-            // path: '/dashboard',
-            element: <StudentDashboardPage />,
-            handle: {
-                title: "대시보드",
-            },
+          path: ":noticeId",
+          element: <AdminNoticeDetailPage />,
+          loader: ({ params }) => fetchNoticeDetail(params.noticeId),
+          handle: {
+            title: ({ data }) => data?.title ?? "공지사항 상세",
+          },
         },
         {
-            path: 'equipment',
-            element: <StudentEquipmentListPage />,
-            handle: {
-                title: "기자재 조회&신청",
-            }
+          path: "create",
+          element: <AdminNoticeCreatePage />,
+          handle: {
+            title: "공지사항 작성",
+          },
         },
         {
-            path: 'history',
-            element: <StudentRentalHistoryPage />,
-            handle: {
-                title: "내 대여내역",
-            }
-        },
-        {
-            path: 'mypage',
-            element: <StudentMyPage />,
-            handle: {
-                title: "마이페이지",
-            }
-        },
-        {
-            path: 'notices',
-            element: <Outlet />,
-            handle: {
-                title: "공지사항",
-            },
-            children: [
-                {
-                    index: true,
-                    element: <StudentNoticeListPage />,
-
-                },
-                {
-                    path: ':noticeId',
-                    element: <StudentNoticeDetailPage />,
-                    loader: ({ params }) => fetchNoticeDetail(params.noticeId),
-                    handle: {
-                        title: ({ data }) => data?.title ?? "공지사항 상세",
-                    },
-                },
-
-            ],
+          path: "edit/:noticeId",
+          element: <AdminNoticeEditPage />,
+          loader: ({ params }) => fetchNoticeDetail(params.noticeId),
+          handle: {
+            title: "공지사항 수정",
+          },
         },
       ],
-    },
-    {
-      path: "*",
-      element: <NotFoundPage />,
     },
   ],
 };
 
+// 학생모드 라우트 그룹
+const studentRoutes = {
+  path: "/student",
+  element: (
+    <RoleGuard allowedRole="student">
+      <PageLayout />
+    </RoleGuard>
+  ),
+  handle: {
+    title: "학생모드",
+  },
+  children: [
+    {
+      index: true,
+      element: <StudentDashboardPage />,
+      handle: {
+        title: "대시보드",
+      },
+    },
+    {
+      path: "equipment",
+      element: <StudentEquipmentListPage />,
+      handle: {
+        title: "기자재 조회&신청",
+      },
+    },
+    {
+      path: "history",
+      element: <StudentRentalHistoryPage />,
+      handle: {
+        title: "내 대여내역",
+      },
+    },
+    {
+      path: "mypage",
+      element: <StudentMyPage />,
+      handle: {
+        title: "마이페이지",
+      },
+    },
+    {
+      path: "notices",
+      element: <Outlet />,
+      handle: {
+        title: "공지사항",
+      },
+      children: [
+        {
+          index: true,
+          element: <StudentNoticeListPage />,
+        },
+        {
+          path: ":noticeId",
+          element: <StudentNoticeDetailPage />,
+          loader: ({ params }) => fetchNoticeDetail(params.noticeId),
+          handle: {
+            title: ({ data }) => data?.title ?? "공지사항 상세",
+          },
+        },
+      ],
+    },
+  ],
+};
 
-export { commonRoutes, authRoutes, adminRoutes, studentRoutes }
+const notFoundRoute = {
+  path: "*",
+  element: <NotFoundPage />,
+};
+
+export { commonRoutes, authRoutes, adminRoutes, studentRoutes, notFoundRoute };
