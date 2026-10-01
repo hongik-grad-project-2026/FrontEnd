@@ -9,6 +9,8 @@ if (mockMode !== "true" && mockMode !== "false") {
 
 const USE_MOCK = import.meta.env.DEV && mockMode === "true";
 
+export const isMockMode = USE_MOCK;
+
 function normalizeBaseUrl(value, environmentName) {
   const normalizedValue = value?.trim().replace(/\/+$/, "");
 

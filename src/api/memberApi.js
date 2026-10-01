@@ -1,3 +1,5 @@
+import { api, isMockMode } from "./client";
+
 // 화면 확인용 임시 데이터
 // 실제 서버 응답 구조 아님
 //
@@ -5,9 +7,9 @@
 // studentId: 화면 표시 및 검색용 학번
 // listGroup: 목업 전용 상호 배타적 탭 분류
 // membershipStatus: 회원 배지 표시용 상태
-const MOCK_MEMBERS = [
+export const MOCK_MEMBERS = [
   {
-    id: "mock-member-001",
+    id: 1,
     name: "가상학생가",
     studentId: "C000001",
     department: "컴퓨터공학과",
@@ -17,7 +19,7 @@ const MOCK_MEMBERS = [
     email: "student01@example.com",
   },
   {
-    id: "mock-member-002",
+    id: 2,
     name: "가상학생나",
     studentId: "C000002",
     department: "기계·시스템디자인공학과",
@@ -27,7 +29,7 @@ const MOCK_MEMBERS = [
     email: "student02@example.com",
   },
   {
-    id: "mock-member-003",
+    id: 3,
     name: "가상학생다",
     studentId: "C000003",
     department: "컴퓨터공학과",
@@ -37,7 +39,7 @@ const MOCK_MEMBERS = [
     email: "student03@example.com",
   },
   {
-    id: "mock-member-004",
+    id: 4,
     name: "가상학생라",
     studentId: "C000004",
     department: "시각디자인과",
@@ -47,7 +49,7 @@ const MOCK_MEMBERS = [
     email: "student04@example.com",
   },
   {
-    id: "mock-member-005",
+    id: 5,
     name: "가상학생마",
     studentId: "C000005",
     department: "컴퓨터공학과",
@@ -57,7 +59,7 @@ const MOCK_MEMBERS = [
     email: "student05@example.com",
   },
   {
-    id: "mock-member-006",
+    id: 6,
     name: "가상학생바",
     studentId: "C000006",
     department: "컴퓨터공학과",
@@ -67,7 +69,7 @@ const MOCK_MEMBERS = [
     email: "student06@example.com",
   },
   {
-    id: "mock-member-007",
+    id: 7,
     name: "가상학생사",
     studentId: "C000007",
     department: "컴퓨터공학과",
@@ -77,7 +79,7 @@ const MOCK_MEMBERS = [
     email: "student07@example.com",
   },
   {
-    id: "mock-member-008",
+    id: 8,
     name: "가상학생아",
     studentId: "C000008",
     department: "경영학과",
@@ -87,7 +89,7 @@ const MOCK_MEMBERS = [
     email: "student08@example.com",
   },
   {
-    id: "mock-member-009",
+    id: 9,
     name: "가상학생자",
     studentId: "C000009",
     department: "컴퓨터공학과",
@@ -97,7 +99,7 @@ const MOCK_MEMBERS = [
     email: "student09@example.com",
   },
   {
-    id: "mock-member-010",
+    id: 10,
     name: "가상학생차",
     studentId: "C000010",
     department: "컴퓨터공학과",
@@ -107,7 +109,7 @@ const MOCK_MEMBERS = [
     email: "student10@example.com",
   },
   {
-    id: "mock-member-011",
+    id: 11,
     name: "긴이름표시확인용가상학생",
     studentId: "C000011",
     department: "긴 학과명 표시 확인용 가상 학과 및 융합전공",
@@ -121,7 +123,7 @@ const MOCK_MEMBERS = [
 // 화면 확인용 블랙리스트 기록
 // 실제 서버 상태·기간 규칙 아님
 const MOCK_BLACKLIST_HISTORY_BY_MEMBER_ID = {
-  "mock-member-001": [
+  1: [
     {
       id: "mock-blacklist-001",
       startDate: "2026.08.01",
@@ -159,7 +161,7 @@ const MOCK_BLACKLIST_HISTORY_BY_MEMBER_ID = {
       reason: "화면 확인용 연체 기록",
     },
   ],
-  "mock-member-002": [
+  2: [
     {
       id: "mock-blacklist-007",
       startDate: "2026.09.01",
@@ -172,7 +174,7 @@ const MOCK_BLACKLIST_HISTORY_BY_MEMBER_ID = {
 // 화면 확인용 회원별 대여 내역
 // 실제 서버 응답·업무 상태 코드 아님
 const MOCK_MEMBER_RENTALS_BY_MEMBER_ID = {
-  "mock-member-001": [
+  1: [
     {
       id: "mock-member-rental-001",
       imageSrc: null,
@@ -328,7 +330,7 @@ const MOCK_MEMBER_RENTALS_BY_MEMBER_ID = {
       status: "returned",
     },
   ],
-  "mock-member-002": [
+  2: [
     {
       id: "mock-member-rental-012",
       imageSrc: null,
@@ -371,7 +373,7 @@ function getMemberRentals(memberId) {
 }
 
 function findMember(memberId) {
-  return MOCK_MEMBERS.find((member) => member.id === memberId);
+  return MOCK_MEMBERS.find((member) => String(member.id) === String(memberId));
 }
 
 function createMemberNotFoundError(memberId) {
@@ -391,6 +393,16 @@ function requireMember(memberId) {
   }
 
   return member;
+}
+
+function requireMockOnlyFeature() {
+  if (isMockMode) {
+    return;
+  }
+
+  const error = new Error("현재 백엔드에서 제공하지 않는 회원 기능입니다.");
+  error.code = "API_NOT_SUPPORTED";
+  throw error;
 }
 
 function resolvePage(page, totalPages) {
@@ -418,112 +430,139 @@ function createPage(content, page, size) {
   };
 }
 
-// 목업 데이터를 화면용 회원 목록 항목으로 변환
-// 실제 연동 시 확정된 서버 필드·상태값에 맞춰 수정
+function toMembershipStatus(status) {
+  if (status === "ACTIVE") {
+    return "active";
+  }
+
+  if (status === "SUSPENDED") {
+    return "suspended";
+  }
+
+  if (status === "WITHDRAWN") {
+    return "withdrawn";
+  }
+
+  return "unknown";
+}
+
 function toMemberListItem(member) {
   return {
-    id: member.id,
+    id: member.userId,
+    userId: member.userId,
+    loginId: member.loginId ?? null,
     name: member.name,
     studentId: member.studentId,
+    college: member.college,
     department: member.department,
-    membershipStatus: member.membershipStatus,
-    phone: member.phone,
+    status: member.status,
+    membershipStatus: toMembershipStatus(member.status),
+    phone: member.phoneNumber,
     email: member.email,
+    createdAt: member.createdAt ?? null,
   };
 }
 
 function toMemberDetail(member) {
   return {
-    id: member.id,
+    id: member.userId,
+    userId: member.userId,
+    loginId: member.loginId,
     name: member.name,
     studentId: member.studentId,
+    college: member.college,
     department: member.department,
-    membershipStatus: member.membershipStatus,
-    phone: member.phone,
+    status: member.status,
+    membershipStatus: toMembershipStatus(member.status),
+    phone: member.phoneNumber,
     email: member.email,
-    profileImageSrc: "/images/hongikLogo-circle.png",
-    rentalCount: getMemberRentals(member.id).length,
+    profileImageSrc:
+      member.profileImageUrl || "/images/hongikLogo-circle.png",
+    createdAt: member.createdAt ?? null,
+    updatedAt: member.updatedAt ?? null,
+    rentalCount: isMockMode ? getMemberRentals(member.userId).length : null,
   };
 }
 
-// 프론트 내부 목록 조회 함수
-// group, search: 실제 서버 요청 파라미터명 미확정
-// page: 0부터 시작
 export async function getAdminMembers({
-  group = "all",
-  search = "",
+  keyword = "",
+  status = "",
+  college = "",
+  department = "",
   page = 0,
   size = 10,
+  signal,
 } = {}) {
-  const resolvedSize = resolveSize(size, 10);
-  const normalizedSearch = normalizeSearch(search);
-
-  const filteredMembers = MOCK_MEMBERS.filter((member) => {
-    const matchesGroup = group === "all" || member.listGroup === group;
-
-    const matchesSearch =
-      normalizedSearch === "" ||
-      normalizeSearch(member.name).includes(normalizedSearch) ||
-      normalizeSearch(member.studentId).includes(normalizedSearch);
-
-    return matchesGroup && matchesSearch;
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
   });
 
-  const memberPage = createPage(filteredMembers, page, resolvedSize);
+  const optionalParams = { keyword, status, college, department };
 
-  return {
-    ...memberPage,
-    content: memberPage.content.map(toMemberListItem),
-  };
-}
+  for (const [key, value] of Object.entries(optionalParams)) {
+    const normalizedValue = value?.trim();
 
-// 검색어·선택 탭·현재 페이지와 무관한 전체 기준 개수
-export async function getAdminMemberCounts() {
-  const counts = {
-    all: MOCK_MEMBERS.length,
-    normal: 0,
-    blacklist: 0,
-    other: 0,
-  };
-
-  for (const member of MOCK_MEMBERS) {
-    switch (member.listGroup) {
-      case "normal":
-        counts.normal += 1;
-        break;
-
-      case "blacklist":
-        counts.blacklist += 1;
-        break;
-
-      case "other":
-        counts.other += 1;
-        break;
-
-      default:
-        break;
+    if (normalizedValue) {
+      params.set(key, normalizedValue);
     }
   }
 
-  return counts;
-}
-
-// Breadcrumbs와 상세 라우트 제목용 임시 요약 조회
-// 실제 연동 시 요약 API 존재 여부에 따라 상세 조회와 통합 가능
-export async function getAdminMemberSummary(memberId) {
-  const member = requireMember(memberId);
+  const result = await api.get(`/admin/users?${params.toString()}`, { signal });
 
   return {
-    id: member.id,
-    name: member.name,
+    content: (result?.users ?? []).map(toMemberListItem),
+    page: result?.page ?? page,
+    size: result?.size ?? size,
+    totalElements: result?.totalElements ?? 0,
+    totalPages: result?.totalPages ?? 0,
+    hasNext: result?.hasNext ?? false,
   };
 }
 
-// 회원 상세 임시 조회
-export async function getAdminMemberDetail(memberId) {
-  const member = requireMember(memberId);
+export async function getAdminStaffMembers(options) {
+  const result = await api.get("/admin/users/staff", options);
 
-  return toMemberDetail(member);
+  return (result ?? []).map((staff) => ({
+    id: staff.userId,
+    userId: staff.userId,
+    loginId: staff.loginId,
+    name: staff.name,
+  }));
+}
+
+export async function getAdminMemberDetail(userId, options) {
+  const result = await api.get(
+    `/admin/users/${encodeURIComponent(userId)}`,
+    options,
+  );
+
+  return toMemberDetail(result);
+}
+
+export async function updateAdminMember(userId, fields, options) {
+  const allowedFields = [
+    "name",
+    "email",
+    "phoneNumber",
+    "college",
+    "department",
+  ];
+  const body = {};
+
+  for (const field of allowedFields) {
+    if (Object.hasOwn(fields, field)) {
+      body[field] = fields[field];
+    }
+  }
+
+  const result = await api.patch(
+    `/admin/users/${encodeURIComponent(userId)}`,
+    body,
+    options,
+  );
+
+  return toMemberDetail(result);
 }
 
 // 회원별 블랙리스트 기록 임시 조회
@@ -532,6 +571,7 @@ export async function getAdminMemberBlacklistHistory({
   page = 0,
   size = 5,
 } = {}) {
+  requireMockOnlyFeature();
   requireMember(memberId);
 
   const resolvedSize = resolveSize(size, 5);
@@ -556,6 +596,7 @@ export async function getAdminMemberRentalHistory({
   size = 10,
   keyword = "",
 } = {}) {
+  requireMockOnlyFeature();
   requireMember(memberId);
 
   const resolvedSize = resolveSize(size, 10);

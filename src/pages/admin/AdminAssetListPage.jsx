@@ -349,8 +349,7 @@ function AdminAssetListPage() {
         <div
           className={styles.contentViewport}
           role="region"
-          aria-label="개별 기자재 목록 가로 스크롤 영역"
-          tabIndex={0}
+          aria-label="개별 기자재 목록 영역"
         >
           <div className={styles.content}>
             <div className={styles.toolbar}>

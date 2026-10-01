@@ -10,6 +10,7 @@ import {
     // equipment
     equipmentModels,
 } from "./db";
+import { MOCK_MEMBERS } from "../api/memberApi";
 
 const MOCK_API_BASE_URL = import.meta.env.VITE_MOCK_API_BASE_URL?.trim().replace(/\/+$/, "");
 
@@ -19,7 +20,157 @@ if (!MOCK_API_BASE_URL) {
 
 const mockApiUrl = (path) => `${MOCK_API_BASE_URL}${path}`;
 
+function getMockMemberStatus(member) {
+    if (member.listGroup === "blacklist") {
+        return "SUSPENDED";
+    }
+
+    return "ACTIVE";
+}
+
+function toMockMemberResponse(member) {
+    return {
+        userId: member.id,
+        loginId: member.studentId,
+        name: member.name,
+        studentId: member.studentId,
+        email: member.email,
+        phoneNumber: member.phone,
+        college: member.college ?? "공과대학",
+        department: member.department,
+        profileImageUrl: null,
+        status: getMockMemberStatus(member),
+        createdAt: "2026-03-01T09:00:00",
+        updatedAt: "2026-03-01T09:00:00",
+    };
+}
+
 export const handlers = [
+
+    // -- 관리자 회원 목록 --
+    http.get(mockApiUrl("/admin/users"), async ({ request }) => {
+        await delay(250);
+
+        const searchParams = new URL(request.url).searchParams;
+        const page = Number(searchParams.get("page") ?? 0);
+        const size = Number(searchParams.get("size") ?? 20);
+        const keyword = searchParams.get("keyword")?.trim().toLowerCase() ?? "";
+        const status = searchParams.get("status") ?? "";
+        const college = searchParams.get("college")?.trim() ?? "";
+        const department = searchParams.get("department")?.trim() ?? "";
+
+        const filteredMembers = MOCK_MEMBERS.map(toMockMemberResponse).filter((member) => {
+            const matchesKeyword =
+                !keyword ||
+                member.name.toLowerCase().includes(keyword) ||
+                member.studentId.toLowerCase().includes(keyword);
+            const matchesStatus = !status || member.status === status;
+            const matchesCollege = !college || member.college === college;
+            const matchesDepartment = !department || member.department === department;
+
+            return matchesKeyword && matchesStatus && matchesCollege && matchesDepartment;
+        });
+
+        const totalElements = filteredMembers.length;
+        const totalPages = Math.ceil(totalElements / size);
+        const usersPage = filteredMembers.slice(page * size, (page + 1) * size);
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: {
+                users: usersPage,
+                page,
+                size,
+                totalElements,
+                totalPages,
+                hasNext: page + 1 < totalPages,
+            },
+        });
+    }),
+
+    // -- 관리자 근로생 목록 --
+    http.get(mockApiUrl("/admin/users/staff"), async () => {
+        await delay(200);
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: [
+                {
+                    userId: 1001,
+                    loginId: "worker01",
+                    name: "가상근로생",
+                },
+            ],
+        });
+    }),
+
+    // -- 관리자 회원 상세 --
+    http.get(mockApiUrl("/admin/users/:userId"), async ({ params }) => {
+        await delay(200);
+
+        const member = MOCK_MEMBERS.find(
+            (candidate) => String(candidate.id) === String(params.userId),
+        );
+
+        if (!member) {
+            return HttpResponse.json(
+                {
+                    isSuccess: false,
+                    code: "MEMBER_NOT_FOUND",
+                    message: "회원을 찾을 수 없습니다.",
+                    result: null,
+                },
+                { status: 404 },
+            );
+        }
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: toMockMemberResponse(member),
+        });
+    }),
+
+    // -- 관리자 회원 수정 --
+    http.patch(mockApiUrl("/admin/users/:userId"), async ({ params, request }) => {
+        await delay(300);
+
+        const member = MOCK_MEMBERS.find(
+            (candidate) => String(candidate.id) === String(params.userId),
+        );
+
+        if (!member) {
+            return HttpResponse.json(
+                {
+                    isSuccess: false,
+                    code: "MEMBER_NOT_FOUND",
+                    message: "회원을 찾을 수 없습니다.",
+                    result: null,
+                },
+                { status: 404 },
+            );
+        }
+
+        const body = await request.json();
+
+        if (Object.hasOwn(body, "name")) member.name = body.name;
+        if (Object.hasOwn(body, "email")) member.email = body.email;
+        if (Object.hasOwn(body, "phoneNumber")) member.phone = body.phoneNumber;
+        if (Object.hasOwn(body, "college")) member.college = body.college;
+        if (Object.hasOwn(body, "department")) member.department = body.department;
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: toMockMemberResponse(member),
+        });
+    }),
 
     // -- 임시 내 찜 기자재 목록 --
     // 백엔드의 찜 목록 경로가 확정되기 전까지 getMyWishlistedEquipmentModels() 요청을 응답합니다.

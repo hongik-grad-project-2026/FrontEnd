@@ -1,14 +1,16 @@
 import { useId, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
 import {
   getAdminMemberBlacklistHistory,
   getAdminMemberDetail,
   getAdminMemberRentalHistory,
+  updateAdminMember,
 } from "../../api/memberApi";
 
 import MemberInfoCard from "../../components/card/MemberInfoCard";
+import MemberEditModal from "../../components/modal/MemberEditModal";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/common/SearchBar";
@@ -23,8 +25,13 @@ const BLACKLIST_PAGE_SIZE = 5;
 const RENTAL_PAGE_SIZE = 10;
 
 const MEMBER_BADGE_STATUS = {
-  normal: "회원-일반",
-  blacklist: "회원-블랙",
+  active: "회원-일반",
+};
+
+const MEMBER_STATUS_LABEL = {
+  suspended: "정지회원",
+  withdrawn: "탈퇴회원",
+  unknown: "상태 미확인",
 };
 
 const RENTAL_BADGE_STATUS = {
@@ -243,26 +250,45 @@ const RENTAL_COLUMNS = [
 
 function AdminMemberDetailPage() {
   const panelId = useId();
-  const { memberId } = useParams();
+  const { userId } = useParams();
+  const queryClient = useQueryClient();
 
   const [selectedTab, setSelectedTab] = useState("info");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [blacklistPage, setBlacklistPage] = useState(1);
   const [rentalKeyword, setRentalKeyword] = useState("");
   const [rentalPage, setRentalPage] = useState(1);
 
   const memberQuery = useQuery({
-    queryKey: ["admin", "members", "detail", memberId],
-    queryFn: () => getAdminMemberDetail(memberId),
-    enabled: Boolean(memberId),
+    queryKey: ["admin", "members", "detail", userId],
+    queryFn: ({ signal }) => getAdminMemberDetail(userId, { signal }),
+    enabled: Boolean(userId),
     retry: false,
     refetchOnWindowFocus: false,
+  });
+
+  const updateMemberMutation = useMutation({
+    mutationFn: (fields) => updateAdminMember(userId, fields),
+    onSuccess: (updatedMember) => {
+      queryClient.setQueryData(
+        ["admin", "members", "detail", userId],
+        updatedMember,
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "members", "list"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "members", "detail", userId],
+      });
+      setIsEditModalOpen(false);
+    },
   });
 
   const blacklistQuery = useQuery({
     queryKey: [
       "admin",
       "members",
-      memberId,
+      userId,
       "blacklist-history",
       {
         page: blacklistPage - 1,
@@ -271,12 +297,12 @@ function AdminMemberDetailPage() {
     ],
     queryFn: () =>
       getAdminMemberBlacklistHistory({
-        memberId,
+        memberId: userId,
         page: blacklistPage - 1,
         size: BLACKLIST_PAGE_SIZE,
       }),
     enabled:
-      Boolean(memberId) && Boolean(memberQuery.data) && selectedTab === "info",
+      Boolean(userId) && Boolean(memberQuery.data) && selectedTab === "info",
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -285,7 +311,7 @@ function AdminMemberDetailPage() {
     queryKey: [
       "admin",
       "members",
-      memberId,
+      userId,
       "rental-history",
       {
         page: rentalPage - 1,
@@ -295,20 +321,20 @@ function AdminMemberDetailPage() {
     ],
     queryFn: () =>
       getAdminMemberRentalHistory({
-        memberId,
+        memberId: userId,
         page: rentalPage - 1,
         size: RENTAL_PAGE_SIZE,
         keyword: rentalKeyword,
       }),
     enabled:
-      Boolean(memberId) &&
+      Boolean(userId) &&
       Boolean(memberQuery.data) &&
       selectedTab === "rentals",
     retry: false,
     refetchOnWindowFocus: false,
   });
 
-  if (!memberId) {
+  if (!userId) {
     return (
       <div className={styles.page}>
         <PageHeader />
@@ -377,15 +403,25 @@ function AdminMemberDetailPage() {
     setRentalPage(1);
   };
 
+  const handleOpenEditModal = () => {
+    updateMemberMutation.reset();
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    if (!updateMemberMutation.isPending) {
+      setIsEditModalOpen(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
-      <PageHeader />
+      <PageHeader customTitle={member.name} />
 
       <div
         className={styles.contentViewport}
         role="region"
         aria-label={`${member.name} 회원 상세 영역`}
-        tabIndex={0}
       >
         <div className={styles.content}>
           <div className={styles.tabToolbar}>
@@ -424,9 +460,16 @@ function AdminMemberDetailPage() {
 
                 <MemberInfoCard
                   member={member}
-                  badgeStatus={
-                    MEMBER_BADGE_STATUS[member.membershipStatus] ?? "회원-일반"
+                  badgeStatus={MEMBER_BADGE_STATUS[member.membershipStatus]}
+                  statusLabel={
+                    MEMBER_STATUS_LABEL[member.membershipStatus] ??
+                    (member.membershipStatus === "active"
+                      ? null
+                      : "상태 미확인")
                   }
+                  onEditMember={handleOpenEditModal}
+                  onEditPhone={handleOpenEditModal}
+                  onEditEmail={handleOpenEditModal}
                 />
               </section>
 
@@ -442,7 +485,9 @@ function AdminMemberDetailPage() {
                     className={`${styles.state} ${styles.stateError}`}
                     role="alert"
                   >
-                    블랙리스트 기록을 불러오지 못했습니다.
+                    {blacklistQuery.error?.code === "API_NOT_SUPPORTED"
+                      ? "블랙리스트 기록 API가 아직 제공되지 않았습니다."
+                      : "블랙리스트 기록을 불러오지 못했습니다."}
                   </p>
                 ) : (
                   <>
@@ -491,7 +536,9 @@ function AdminMemberDetailPage() {
                   className={`${styles.state} ${styles.stateError}`}
                   role="alert"
                 >
-                  대여 내역을 불러오지 못했습니다.
+                  {rentalQuery.error?.code === "API_NOT_SUPPORTED"
+                    ? "회원별 대여 기록 API가 아직 제공되지 않았습니다."
+                    : "대여 내역을 불러오지 못했습니다."}
                 </p>
               ) : (
                 <>
@@ -530,6 +577,18 @@ function AdminMemberDetailPage() {
           )}
         </div>
       </div>
+
+      {isEditModalOpen ? (
+        <MemberEditModal
+          key={member.userId}
+          isOpen
+          member={member}
+          isPending={updateMemberMutation.isPending}
+          error={updateMemberMutation.error}
+          onClose={handleCloseEditModal}
+          onSubmit={(fields) => updateMemberMutation.mutate(fields)}
+        />
+      ) : null}
     </div>
   );
 }

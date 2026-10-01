@@ -7,7 +7,6 @@ import NotFoundPage from '../pages/error/NotFoundPage'
 import ProtectedRoute from './ProtectedRoute'
 
 import { getAdminEquipmentModelSummary } from '../api/equipmentApi'
-import { getAdminMemberSummary } from '../api/memberApi'
 import { fetchNoticeDetail } from '../api/noticeApi'
 
 // ------ 관리자모드 ------
@@ -51,17 +50,6 @@ async function loadAdminEquipmentModel({ params }) {
       modelId: params.modelId,
       name: '개별 기자재',
       labelPrefix: '',
-    }
-  }
-}
-
-async function loadAdminMemberSummary({ params }) {
-  try {
-    return await getAdminMemberSummary(params.memberId)
-  } catch {
-    return {
-      id: params.memberId,
-      name: '회원 상세',
     }
   }
 }
@@ -169,11 +157,10 @@ const adminRoutes = {
           element: <AdminMemberListPage />,
         },
         {
-          path: ':memberId',
+          path: ':userId',
           element: <AdminMemberDetailPage />,
-          loader: loadAdminMemberSummary,
           handle: {
-            title: ({ data }) => data?.name ?? '회원 상세',
+            title: '회원 상세',
           },
         },
       ],

@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { getAdminMemberCounts, getAdminMembers } from "../../api/memberApi";
+import { getAdminMembers } from "../../api/memberApi";
 
 import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
@@ -17,14 +17,19 @@ const PAGE_SIZE = 10;
 
 const MEMBER_TABS = [
   { value: "all", label: "전체" },
-  { value: "normal", label: "일반" },
-  { value: "blacklist", label: "블랙리스트" },
-  { value: "other", label: "타과생" },
+  { value: "ACTIVE", label: "활성" },
+  { value: "SUSPENDED", label: "정지" },
+  { value: "WITHDRAWN", label: "탈퇴" },
 ];
 
 const MEMBER_BADGE_STATUS = {
-  normal: "회원-일반",
-  blacklist: "회원-블랙",
+  active: "회원-일반",
+};
+
+const MEMBER_STATUS_LABEL = {
+  suspended: "정지회원",
+  withdrawn: "탈퇴회원",
+  unknown: "상태 미확인",
 };
 
 function MemberNameCell({ member }) {
@@ -70,14 +75,19 @@ const MEMBER_COLUMNS = [
   },
   {
     key: "membershipStatus",
-    header: "분류",
+    header: "상태",
     width: 116,
-    render: (member) => (
-      <StatusBadge
-        status={MEMBER_BADGE_STATUS[member.membershipStatus]}
-        size="md"
-      />
-    ),
+    render: (member) => {
+      const badgeStatus = MEMBER_BADGE_STATUS[member.membershipStatus];
+
+      return badgeStatus ? (
+        <StatusBadge status={badgeStatus} size="md" />
+      ) : (
+        <TextCell
+          text={MEMBER_STATUS_LABEL[member.membershipStatus] ?? "상태 미확인"}
+        />
+      );
+    },
   },
   {
     key: "phone",
@@ -97,8 +107,10 @@ function AdminMemberListPage() {
   const panelId = useId();
   const navigate = useNavigate();
 
-  const [selectedGroup, setSelectedGroup] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const college = "";
+  const department = "";
 
   // 화면 페이지 번호: 1부터 시작
   // 조회 함수 전달 시 0부터 시작하는 번호로 변환
@@ -115,38 +127,36 @@ function AdminMemberListPage() {
       "members",
       "list",
       {
-        group: selectedGroup,
-        search: searchTerm,
+        keyword: searchTerm,
+        status: selectedStatus === "all" ? "" : selectedStatus,
+        college,
+        department,
         page: currentPage - 1,
         size: PAGE_SIZE,
       },
     ],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       getAdminMembers({
-        group: selectedGroup,
-        search: searchTerm,
+        keyword: searchTerm,
+        status: selectedStatus === "all" ? "" : selectedStatus,
+        college,
+        department,
         page: currentPage - 1,
         size: PAGE_SIZE,
+        signal,
       }),
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
-  // 검색 조건과 무관한 탭 개수 별도 조회
-  const { data: memberCounts, isError: isCountsError } = useQuery({
-    queryKey: ["admin", "members", "counts"],
-    queryFn: getAdminMemberCounts,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
   const tabItems = MEMBER_TABS.map((tab) => ({
     ...tab,
-    count: memberCounts?.[tab.value],
+    count:
+      tab.value === selectedStatus ? memberPage?.totalElements : undefined,
     controlsId: panelId,
   }));
 
-  const selectedTab = tabItems.find((tab) => tab.value === selectedGroup);
+  const selectedTab = tabItems.find((tab) => tab.value === selectedStatus);
 
   // 검색·필터·페이지 분할이 완료된 현재 페이지 데이터
   const visibleMembers = memberPage?.content ?? [];
@@ -166,8 +176,8 @@ function AdminMemberListPage() {
     emptyMessage = "회원 목록을 불러오지 못했습니다.";
   }
 
-  const handleGroupChange = (nextGroup) => {
-    setSelectedGroup(nextGroup);
+  const handleStatusChange = (nextStatus) => {
+    setSelectedStatus(nextStatus);
     setCurrentPage(1);
   };
 
@@ -195,17 +205,16 @@ function AdminMemberListPage() {
       <div
         className={styles.contentViewport}
         role="region"
-        aria-label="회원 목록 가로 스크롤 영역"
-        tabIndex={0}
+        aria-label="회원 목록 영역"
       >
         <div className={styles.content}>
           <div className={styles.toolbar}>
             <Tabs
               className={styles.memberTabs}
               items={tabItems}
-              value={selectedGroup}
-              onChange={handleGroupChange}
-              ariaLabel="회원 분류"
+              value={selectedStatus}
+              onChange={handleStatusChange}
+              ariaLabel="회원 상태"
             />
 
             <SearchBar
@@ -226,10 +235,6 @@ function AdminMemberListPage() {
             aria-label={`${selectedTab?.label ?? "전체"} 회원 목록`}
             aria-busy={isMembersFetching}
           >
-            {isCountsError && (
-              <p role="alert">회원 분류별 개수를 불러오지 못했습니다.</p>
-            )}
-
             {isMembersError && memberPage && (
               <p role="alert">
                 회원 목록을 새로 불러오지 못했습니다. 이전 조회 결과를

@@ -290,7 +290,6 @@ function AdminRentalApprovalPage() {
         className={styles.contentViewport}
         role="region"
         aria-label="대여 신청 승인 목록 영역"
-        tabIndex={0}
       >
         <div className={styles.content}>
           <DataTable

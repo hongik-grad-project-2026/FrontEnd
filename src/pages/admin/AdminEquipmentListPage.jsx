@@ -549,7 +549,6 @@ function AdminEquipmentListPage() {
         className={styles.contentViewport}
         role="region"
         aria-label="기자재 목록 영역"
-        tabIndex={0}
       >
         <div className={styles.content}>
           <div className={styles.toolbar}>

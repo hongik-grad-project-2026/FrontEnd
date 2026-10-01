@@ -39,6 +39,7 @@ function InfoField({ label, value, onEdit }) {
 function MemberInfoCard({
   member,
   badgeStatus,
+  statusLabel,
   onEditMember,
   onEditPhone,
   onEditEmail,
@@ -59,12 +60,14 @@ function MemberInfoCard({
         <div className={styles.headingRow}>
           <h3 className={styles.name}>{member.name}</h3>
 
-          <StatusBadge status={badgeStatus} size="lg" />
+          {badgeStatus ? <StatusBadge status={badgeStatus} size="lg" /> : null}
+          {statusLabel ? <span className={styles.statusLabel}>{statusLabel}</span> : null}
 
           <EditButton label="회원 기본 정보" onClick={onEditMember} />
         </div>
 
         <div className={styles.detailsGrid}>
+          <InfoField label="단과대" value={member.college} />
           <InfoField label="학과" value={member.department} />
           <InfoField label="연락처" value={member.phone} onEdit={onEditPhone} />
           <InfoField label="학번" value={member.studentId} />
