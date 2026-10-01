@@ -18,12 +18,16 @@ import { UserProvider } from "./context/UserProvider.jsx";
 
 
 async function enableMocking() {
-  if (!import.meta.env.DEV) return;
+  const mockMode = import.meta.env.VITE_USE_MOCK;
 
-  const { worker } = await import("./mocks/browser");
-  return worker.start({
-    onUnhandledRequest: "bypass",
-  });
+  if (mockMode !== "true" && mockMode !== "false") {
+    throw new Error("VITE_USE_MOCK은 true 또는 false로 설정해 주세요.");
+  }
+
+  if (!import.meta.env.DEV || mockMode === "false") return;
+
+  const { startMockWorker } = await import("./mocks/browser");
+  return startMockWorker();
 }
 
 

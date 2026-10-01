@@ -11,12 +11,20 @@ import {
     equipmentModels,
 } from "./db";
 
+const MOCK_API_BASE_URL = import.meta.env.VITE_MOCK_API_BASE_URL?.trim().replace(/\/+$/, "");
+
+if (!MOCK_API_BASE_URL) {
+    throw new Error("VITE_MOCK_API_BASE_URL 환경변수를 설정해 주세요.");
+}
+
+const mockApiUrl = (path) => `${MOCK_API_BASE_URL}${path}`;
+
 export const handlers = [
 
     // -- 임시 내 찜 기자재 목록 --
     // 백엔드의 찜 목록 경로가 확정되기 전까지 getMyWishlistedEquipmentModels() 요청을 응답합니다.
     // mock DB의 isWish가 true인 모델만 고른 뒤, 일반 목록과 같은 page/size 응답 규격으로 반환합니다.
-    http.get("/api/users/me/wishlists/equipment-models", async ({ request }) => {
+    http.get(mockApiUrl("/users/me/wishlists/equipment-models"), async ({ request }) => {
         await delay(300);
 
         const searchParams = new URL(request.url).searchParams;
@@ -55,7 +63,7 @@ export const handlers = [
     }),
 
     // -- 공통 기자재 모델 목록 --
-    http.get("/api/equipment-models", async ({ request }) => {
+    http.get(mockApiUrl("/equipment-models"), async ({ request }) => {
         await delay(300);
 
         const searchParams = new URL(request.url).searchParams;
@@ -104,7 +112,7 @@ export const handlers = [
     }),
 
     // -- 로그인 --
-    http.post("/api/login", async ({ request }) => {
+    http.post(mockApiUrl("/login"), async ({ request }) => {
         await delay(400); // 로딩 스피너·버튼 disabled 상태 확인 위한 의도적 지연
 
         const { id, password } = await request.json();
@@ -142,7 +150,7 @@ export const handlers = [
     }),
 
     // -- 회원가입 --
-    http.post("/api/users", async ({ request }) => {
+    http.post(mockApiUrl("/users"), async ({ request }) => {
         await delay(400);
 
         const body = await request.json();
@@ -185,7 +193,7 @@ export const handlers = [
     }),
 
     // -- 내정보 --
-    http.get("/api/users/me", async ({ request }) => {
+    http.get(mockApiUrl("/users/me"), async ({ request }) => {
         await delay(200);
 
         // 헤더를 실제로 읽음 → client.js가 토큰을 제대로 붙이는지 검증됨

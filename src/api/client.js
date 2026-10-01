@@ -1,80 +1,217 @@
-// 모든 fetch 요청이 거쳐가는 공통 API Client 함수
-// 헤더 세팅, JSON 변환, 에러 처리 같은 반복 작업
+// 모든 fetch 요청이 거쳐가는 공통 API client입니다.
+// mock/실제 모드 선택, 헤더 구성, 응답 파싱과 공통 오류 변환을 담당합니다.
 
-// 백엔드 노션 기준
-// 에러 판정 : res.ok + isSuccess
-// 분기 기준 : code (200, 400 같은 숫자 문자열 대신 클라이언트가 분기할 수 있는 업무 오류 코드를 사용)
-// 에러 메시지 : data.message
-// 필드 에러 정보 : result.errors
-// Ex) {
-//   "isSuccess": true,
-//   "code": "200",
-//   "message": "성공",
-//   "result": {}
-// }
+const mockMode = import.meta.env.VITE_USE_MOCK;
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-
-// status를 담은 에러 객체.
-// 페이지에서 각 에러코드들를 분기하려면 필요함
-export class ApiError extends Error {
-    constructor(status, data) {
-        super(data?.message ?? "요청에 실패했습니다."); //"기본문구"
-
-        this.name = "ApiError"; // Error와 구분 위함
-        this.status = status; //catch에서 코드 분기 위함
-        this.code = data?.code ?? null;    // 업무 오류 코드. 분기 기준
-        this.errors = data?.result?.errors ?? null;  // 필드별 검증 오류
-        this.data = data; // 원본 전체
-    }
+if (mockMode !== "true" && mockMode !== "false") {
+  throw new Error("VITE_USE_MOCK은 true 또는 false로 설정해 주세요.");
 }
 
+const USE_MOCK = import.meta.env.DEV && mockMode === "true";
+
+function normalizeBaseUrl(value, environmentName) {
+  const normalizedValue = value?.trim().replace(/\/+$/, "");
+
+  if (!normalizedValue) {
+    throw new Error(`${environmentName} 환경변수를 설정해 주세요.`);
+  }
+
+  return normalizedValue;
+}
+
+const BASE_URL = normalizeBaseUrl(
+  USE_MOCK
+    ? import.meta.env.VITE_MOCK_API_BASE_URL
+    : import.meta.env.VITE_API_BASE_URL,
+  USE_MOCK ? "VITE_MOCK_API_BASE_URL" : "VITE_API_BASE_URL",
+);
+
+function createRequestUrl(path) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${BASE_URL}${normalizedPath}`;
+}
+
+function isJsonContentType(contentType) {
+  return contentType.includes("application/json") || contentType.includes("+json");
+}
+
+async function parseResponseBody(response, responseType) {
+  if (response.status === 204 || response.status === 205) {
+    return null;
+  }
+
+  if (responseType === "blob") {
+    const blob = await response.blob();
+    return blob.size === 0 ? null : blob;
+  }
+
+  if (responseType === "text") {
+    const text = await response.text();
+    return text === "" ? null : text;
+  }
+
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+
+  if (!isJsonContentType(contentType)) {
+    const contentLength = response.headers.get("content-length");
+
+    if (contentLength === "0") {
+      return null;
+    }
+
+    if (contentType.startsWith("text/")) {
+      const text = await response.text();
+      return text === "" ? null : text;
+    }
+
+    const blob = await response.blob();
+    return blob.size === 0 ? null : blob;
+  }
+
+  const text = await response.text();
+
+  if (text === "") {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (cause) {
+    throw new ApiError({
+      status: response.status,
+      code: "INVALID_JSON_RESPONSE",
+      message: "서버 응답을 해석할 수 없습니다.",
+      data: text,
+      response,
+      cause,
+      errorType: "PARSE_ERROR",
+    });
+  }
+}
+
+export class ApiError extends Error {
+  constructor({
+    status,
+    code = null,
+    message = "요청에 실패했습니다.",
+    errors = null,
+    data = null,
+    response = null,
+    cause,
+    errorType = "HTTP_ERROR",
+    hasAuthToken = false,
+  }) {
+    super(message, cause ? { cause } : undefined);
+
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.errors = errors;
+    this.data = data;
+    this.response = response;
+    this.errorType = errorType;
+    this.isHttpError = errorType === "HTTP_ERROR";
+    this.isBusinessError = errorType === "BUSINESS_ERROR";
+    this.isNetworkError = errorType === "NETWORK_ERROR";
+    this.isUnauthorized = status === 401;
+    this.isSessionExpired = status === 401 && hasAuthToken;
+  }
+}
 
 export async function request(
-    path,
-    { method = "GET", body, headers, ...options } = {}
+  path,
+  {
+    method = "GET",
+    body,
+    headers,
+    responseType = "auto",
+    auth = true,
+    ...fetchOptions
+  } = {},
 ) {
-    //로컬스토리지에서 토큰 추출
-    const token = localStorage.getItem("accessToken");
+  const token = auth ? localStorage.getItem("accessToken") : null;
+  const requestHeaders = new Headers(headers);
+  const hasBody = body !== undefined && body !== null;
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
-    // FormData는 브라우저가 boundary 포함 Content-Type을 자동 생성해야 하므로 직접 지정하면 안 됨
-    const isFormData = body instanceof FormData;
+  if (hasBody && !isFormData && !requestHeaders.has("Content-Type")) {
+    requestHeaders.set("Content-Type", "application/json");
+  }
 
-    //API 요청 처리
-    const res = await fetch(`${BASE_URL}${path}`, {
-        method,
-        headers: {
-            ...(body && !isFormData && { "Content-Type": "application/json" }),
-            ...(token && { Authorization: `Bearer ${token}` }),
-            ...headers,
-        },
-        ...(body && { body: isFormData ? body : JSON.stringify(body) }),
-        ...options,
-    })
+  // 인증 형식은 기존 동작을 유지합니다. Swagger에 security scheme이 없어 변경하지 않습니다.
+  if (token && !requestHeaders.has("Authorization")) {
+    requestHeaders.set("Authorization", `Bearer ${token}`);
+  }
 
-    // 응답 파싱
-    const envelope = res.status === 204 ? null : await res.json().catch(() => null);
+  let response;
 
-
-    // 판정을 두 겹으로. HTTP는 200인데 isSuccess가 false인 경우를 만날 수 있어서 둘 다 확인
-    if (!res.ok || envelope?.isSuccess === false) {
-        if (res.status === 401 && token) {
-            localStorage.removeItem("accessToken");
-            window.location.href = "/login";
-        }
-        throw new ApiError(res.status, envelope);
+  try {
+    response = await fetch(createRequestUrl(path), {
+      ...fetchOptions,
+      method,
+      headers: requestHeaders,
+      ...(hasBody && { body: isFormData ? body : JSON.stringify(body) }),
+    });
+  } catch (cause) {
+    // 사용자가 취소했거나 AbortSignal이 중단한 요청은 호출한 쪽에서 구분할 수 있게 그대로 전달합니다.
+    if (cause?.name === "AbortError") {
+      throw cause;
     }
 
-    // 벗겨서 result만 반환 -> 페이지는 엔벨로프를 모르도록
-    return envelope?.result ?? null;
+    // 브라우저 fetch는 CORS, 서버 단절, DNS 등의 네트워크 실패를 TypeError로 알립니다.
+    if (cause instanceof TypeError) {
+      throw new ApiError({
+        status: null,
+        code: "NETWORK_ERROR",
+        message: "서버에 연결할 수 없습니다. 네트워크 상태를 확인해 주세요.",
+        cause,
+        errorType: "NETWORK_ERROR",
+      });
+    }
+
+    throw cause;
+  }
+
+  const responseData = await parseResponseBody(response, responseType);
+
+  const isEnvelope =
+    responseData !== null &&
+    typeof responseData === "object" &&
+    !(responseData instanceof Blob) &&
+    ("isSuccess" in responseData || "result" in responseData);
+
+  const isBusinessFailure = isEnvelope && responseData.isSuccess === false;
+
+  if (!response.ok || isBusinessFailure) {
+    const errorData =
+      responseData !== null &&
+      typeof responseData === "object" &&
+      !(responseData instanceof Blob)
+        ? responseData
+        : null;
+
+    throw new ApiError({
+      status: response.status,
+      code: errorData?.code ?? null,
+      message:
+        errorData?.message ??
+        (typeof responseData === "string" ? responseData : null) ??
+        "요청에 실패했습니다.",
+      errors: errorData?.result?.errors ?? errorData?.errors ?? null,
+      data: responseData,
+      response,
+      errorType: response.ok ? "BUSINESS_ERROR" : "HTTP_ERROR",
+      hasAuthToken: Boolean(token),
+    });
+  }
+
+  return isEnvelope ? responseData.result ?? null : responseData;
 }
 
-
 export const api = {
-    get: (path, options) => request(path, { ...options, method: "GET" }),
-    post: (path, body, options) => request(path, { ...options, method: "POST", body }),
-    patch: (path, body, options) => request(path, { ...options, method: "PATCH", body }),
-    put: (path, body, options) => request(path, { ...options, method: "PUT", body }),
-    del: (path, options) => request(path, { ...options, method: "DELETE" }),
+  get: (path, options) => request(path, { ...options, method: "GET" }),
+  post: (path, body, options) => request(path, { ...options, method: "POST", body }),
+  patch: (path, body, options) => request(path, { ...options, method: "PATCH", body }),
+  put: (path, body, options) => request(path, { ...options, method: "PUT", body }),
+  del: (path, options) => request(path, { ...options, method: "DELETE" }),
 };
