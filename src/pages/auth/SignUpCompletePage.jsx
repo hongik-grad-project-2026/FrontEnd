@@ -7,7 +7,6 @@ function SignUpCompletePage() {
 
     const navigate = useNavigate();
     const location = useLocation();
-    console.log(location.state);
     // 가입 폼에서 넘겨준 값. 직접 주소로 들어오면 null이므로 ?. 로 접근
     const name = location.state?.name;
     const id = location.state?.id;

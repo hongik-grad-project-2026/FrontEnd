@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InputBar from "../../components/common/Input";
 import Button from "../../components/common/Button";
@@ -194,22 +194,25 @@ const DEPARTMENT_OPTIONS = {
 };
 
 
-function SelectSection({ title, placeholder, id, options, value, onChange, disabled }) {
+function SelectSection({ title, placeholder, helperText, id, options, value, onChange, disabled }) {
     return (
         <InputLayout
             id={id}
             title={title}
             children={
-                <Select
-                    id={id}
-                    ariaLabel={title}
-                    options={options}
-                    value={value}
-                    onChange={onChange}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    width={'100%'}
-                />
+                <div className={styles.controlWithHelper}>
+                    <Select
+                        id={id}
+                        ariaLabel={title}
+                        options={options}
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        width={'100%'}
+                    />
+                    {helperText ? <p className={styles.helperText}>{helperText}</p> : null}
+                </div>
             }
         />
     )
@@ -242,6 +245,7 @@ function SignUpPage() {
     const [college, setCollege] = useState("");
     const [department, setDepartment] = useState("");
     const [termsAgree, setTermsAgree] = useState(false);
+    const submitGuardRef = useRef(false);
 
     const departmentOptions = DEPARTMENT_OPTIONS[college] ?? [];//// 선택된 단과대학에 딸린 학과 목록. 미선택이면 빈 배열
 
@@ -256,8 +260,9 @@ function SignUpPage() {
 
     // 제출 중 여부
     const [isSubmitting, setIsSubmitting] = useState(false);
-    // 서버가 돌려준 에러 문구 
+    // 서버가 돌려준 에러 문구와 필드별 오류를 따로 보여줘.
     const [errorMessage, setErrorMessage] = useState("");
+    const [fieldErrors, setFieldErrors] = useState({});
 
     // ----- 유효성 검사 -----
     const isNameValid = name.trim() !== "";
@@ -271,22 +276,16 @@ function SignUpPage() {
     const isEmailValid = EMAIL_PATTERN.test(email.trim());
     const isTelValid = TEL_PATTERN.test(tel.trim());
 
-    // 모달 구현 전 에러메세지 콘솔 확인
-    if (errorMessage) {
-        console.log('* * * * * * * * * * * * * * \n', errorMessage, '\n* * * * * * * * * * * * * *');
-    }
-
-
     // 안내 문구는 "입력이 시작된 뒤"에만 띄움
     const idHelperText =
-        id !== "" && !isIdValid
+        fieldErrors.id || (id !== "" && !isIdValid
             ? "학번 형식이 올바르지 않습니다. (예: C123456)"
-            : "";
+            : "");
 
     const passwordHelperText =
-        password !== "" && !isPasswordValid
+        fieldErrors.password || (password !== "" && !isPasswordValid
             ? `비밀번호는 ${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자리로 입력해 주세요.`
-            : "";
+            : "");
 
     const passwordConfirmHelperText =
         passwordConfirm !== "" && !isPasswordMatched
@@ -294,14 +293,61 @@ function SignUpPage() {
             : "";
 
     const emailHelperText =
-        email !== "" && !isEmailValid
+        fieldErrors.email || (email !== "" && !isEmailValid
             ? "이메일 형식이 올바르지 않습니다. (예: hongik@g.hongik.ac.kr)"
-            : "";
+            : "");
 
     const telHelperText =
-        tel !== "" && !isTelValid
+        fieldErrors.tel || (tel !== "" && !isTelValid
             ? "전화번호는 '-' 없이 숫자 11자리로 입력해 주세요."
-            : "";
+            : "");
+
+    function clearFieldError(field) {
+        setErrorMessage("");
+        setFieldErrors((currentErrors) => {
+            if (!currentErrors[field]) {
+                return currentErrors;
+            }
+
+            const nextErrors = { ...currentErrors };
+            delete nextErrors[field];
+            return nextErrors;
+        });
+    }
+
+    function readServerFieldErrors(errors) {
+        if (!errors || typeof errors !== "object") {
+            return {};
+        }
+
+        const serverToFormField = {
+            name: "name",
+            studentId: "id",
+            password: "password",
+            email: "email",
+            phoneNumber: "tel",
+            college: "college",
+            department: "department",
+        };
+
+        const entries = Array.isArray(errors)
+            ? errors.map((item) => [
+                item?.field,
+                item?.message ?? item?.defaultMessage,
+            ])
+            : Object.entries(errors);
+
+        return Object.fromEntries(
+            entries
+                .map(([serverField, message]) => [
+                    serverToFormField[serverField],
+                    Array.isArray(message)
+                        ? message[0]
+                        : (message?.message ?? message),
+                ])
+                .filter(([field, message]) => field && typeof message === "string"),
+        );
+    }
 
 
 
@@ -325,22 +371,28 @@ function SignUpPage() {
         event.preventDefault(); // 폼 기본 동작(페이지 새로고침) 차단
 
         // 버튼이 비활성이어도 Enter 키로 제출될 수 있어 한 번 더 막음
-        if (!canSubmit) {
+        if (!canSubmit || submitGuardRef.current) {
             return;
         }
 
+        submitGuardRef.current = true;
         setErrorMessage("");
+        setFieldErrors({});
         setIsSubmitting(true);
 
         try {
-            await signup({
+            const selectedCollege =
+                COLLEGE_OPTIONS.find((option) => option.value === college)?.label ?? college;
+            const selectedDepartment =
+                departmentOptions.find((option) => option.value === department)?.label ?? department;
+            const signupResult = await signup({
                 name: name.trim(),
                 id: id.trim(),
                 password,
                 email: email.trim(),
                 tel: tel.trim(),
-                college,
-                department,
+                college: selectedCollege,
+                department: selectedDepartment,
             });
 
 
@@ -350,18 +402,23 @@ function SignUpPage() {
             navigate("/signup/complete", {
                 replace: true,
                 state: {
-                    name: name.trim(),
-                    id: id.trim(),
-                    email: email.trim(),
-                    college: COLLEGE_OPTIONS.find((option) => option.value === college)?.label ?? college,
-                    department: departmentOptions.find((option) => option.value === department)?.label ?? department,
+                    name: signupResult?.name ?? name.trim(),
+                    id: signupResult?.loginId ?? id.trim(),
+                    email: signupResult?.email ?? email.trim(),
+                    college: signupResult?.college ?? selectedCollege,
+                    department: signupResult?.department ?? selectedDepartment,
                 },
             });
         } catch (error) {
-            // signup에서 throw한 에러 문구를 그대로 화면에 표시
-            setErrorMessage(error.message);
+            const nextFieldErrors = readServerFieldErrors(error?.errors);
+            setFieldErrors(nextFieldErrors);
+            setErrorMessage(error?.message || "회원가입에 실패했습니다.");
+
+            if (nextFieldErrors.name || nextFieldErrors.id || nextFieldErrors.password) {
+                setLastStep(false);
+            }
         } finally {
-            // 성공하든 실패하든 제출 상태는 반드시 해제
+            submitGuardRef.current = false;
             setIsSubmitting(false);
         }
     }
@@ -380,19 +437,29 @@ function SignUpPage() {
                 <InputTextSection
                     title='이름' placeholder='이름을 입력하세요.'
                     inputName='name' id='name'
-                    value={name} onChange={(event) => setName(event.target.value)}
+                    helperText={fieldErrors.name}
+                    value={name} onChange={(event) => {
+                        setName(event.target.value);
+                        clearFieldError("name");
+                    }}
                 />
                 <InputTextSection
                     title='학번' placeholder='학번을 입력하세요 (학번은 대문자로 시작합니다)'
                     helperText={idHelperText}
                     inputName='id' id='id'
-                    value={id} onChange={(event) => setId(event.target.value)}
+                    value={id} onChange={(event) => {
+                        setId(event.target.value);
+                        clearFieldError("id");
+                    }}
                 />
                 <InputTextSection
                     title='비밀번호' placeholder='비밀번호를 입력하세요 (8~16자리)'
                     inputName='password' type='password' id='password'
                     helperText={passwordHelperText}
-                    value={password} onChange={(event) => setPassword(event.target.value)}
+                    value={password} onChange={(event) => {
+                        setPassword(event.target.value);
+                        clearFieldError("password");
+                    }}
                 />
                 <InputTextSection
                     title='비밀번호 확인' placeholder='비밀번호를 다시 입력하세요'
@@ -419,13 +486,19 @@ function SignUpPage() {
                         title='이메일' placeholder='이메일을 입력하세요.'
                         inputName='email' id='email'
                         helperText={emailHelperText}
-                        value={email} onChange={(event) => setEmail(event.target.value)}
+                        value={email} onChange={(event) => {
+                            setEmail(event.target.value);
+                            clearFieldError("email");
+                        }}
                     />
                     <InputTextSection
                         title='전화번호' placeholder='전화번호를 입력하세요 (‘-’ 제외하고 숫자만 입력)'
                         helperText={telHelperText}
                         inputName='tel' id='tel'
-                        value={tel} onChange={(event) => setTel(event.target.value)}
+                        value={tel} onChange={(event) => {
+                            setTel(event.target.value);
+                            clearFieldError("tel");
+                        }}
                     />
 
                     <SelectSection
@@ -434,7 +507,13 @@ function SignUpPage() {
                         id="college"
                         options={COLLEGE_OPTIONS}
                         value={college}
-                        onChange={handleCollegeChange}
+                        helperText={fieldErrors.college}
+                        onChange={(nextCollege) => {
+                            handleCollegeChange(nextCollege);
+                            clearFieldError("college");
+                            clearFieldError("department");
+                        }}
+                        disabled={isSubmitting}
                     />
 
                     <SelectSection
@@ -443,8 +522,12 @@ function SignUpPage() {
                         id="department"
                         options={departmentOptions}
                         value={department}
-                        onChange={(nextDepartment) => setDepartment(nextDepartment)}
-                        disabled={college === ""}
+                        helperText={fieldErrors.department}
+                        onChange={(nextDepartment) => {
+                            setDepartment(nextDepartment);
+                            clearFieldError("department");
+                        }}
+                        disabled={college === "" || isSubmitting}
                     />
 
 
@@ -464,7 +547,6 @@ function SignUpPage() {
                     </div>
 
 
-
                     <div className={styles.buttonCon}>
                         <Button
                             className={styles.backButton}
@@ -473,7 +555,7 @@ function SignUpPage() {
                             size="Default"
                             status="Default"
                             text="이전 단계"
-                            disabled={false}
+                            disabled={isSubmitting}
                             onClick={() => { setLastStep(false); }}
                         />
                         <Button
@@ -488,6 +570,12 @@ function SignUpPage() {
                         />
                     </div>
                 </div>)}
+
+            {errorMessage ? (
+                <p className={styles.submitError} role="alert">
+                    {errorMessage}
+                </p>
+            ) : null}
 
             <p className={styles.returnToLogin} onClick={() => navigate('/')}>로그인 화면으로 돌아가기</p>
         </form>

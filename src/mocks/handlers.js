@@ -5,7 +5,7 @@
 import { http, HttpResponse, delay } from "msw";
 import {
     // auth
-    users, toPublicUser, makeToken, parseToken,
+    users, makeToken, parseToken,
 
     // equipment
     equipmentModels,
@@ -42,6 +42,22 @@ function toMockMemberResponse(member) {
         status: getMockMemberStatus(member),
         createdAt: "2026-03-01T09:00:00",
         updatedAt: "2026-03-01T09:00:00",
+    };
+}
+
+function toMockMyInfoResponse(user) {
+    return {
+        userId: user.userId ?? user.id,
+        loginId: user.id,
+        name: user.name,
+        studentId: user.studentId ?? user.id,
+        email: user.email ?? "",
+        phoneNumber: user.phoneNumber ?? "",
+        college: user.college ?? "",
+        department: user.department ?? "",
+        profileImageUrl: user.profile_image_url ?? null,
+        role: user.role === "admin" ? "ASSISTANT" : "STUDENT",
+        status: user.status ?? "ACTIVE",
     };
 }
 
@@ -291,7 +307,7 @@ export const handlers = [
             code: "200",
             message: "성공",
             result: {
-                userId: user.id,
+                userId: user.userId,
                 loginId: user.id,
                 name: user.name,
                 role: user.role,
@@ -327,42 +343,70 @@ export const handlers = [
         await delay(400);
 
         const body = await request.json();
-        // const { name, id, email, password, tel, college, department } = await request.json();
 
-        // 400: 필드별 결과를 errors 객체로 모음.
+        // 실제 SignupRequestDTO 기준으로 필드별 오류를 만들어.
         const errors = {};
         if (!body.email?.includes("@")) errors.email = "올바른 이메일 형식이 아닙니다.";
-        if (!body.password || (body.password.length < 8 && body.password.length > 16))
+        if (!body.password || body.password.length < 8 || body.password.length > 16)
             errors.password = "비밀번호는 8자 이상 16자 이하여야 합니다.";
         if (!body.name) errors.name = "이름을 입력해 주세요.";
-        if (!body.tel) errors.tel = "전화번호를 입력해 주세요.";
+        if (!/^[A-Z][0-9]{6}$/.test(body.studentId ?? ""))
+            errors.studentId = "학번 형식을 확인해 주세요.";
+        if (!body.phoneNumber) errors.phoneNumber = "전화번호를 입력해 주세요.";
         if (!body.college) errors.college = "단과대학을 입력해 주세요.";
         if (!body.department) errors.department = "학과를 입력해 주세요.";
 
         if (Object.keys(errors).length > 0) {
             return HttpResponse.json(
-                { message: "입력값을 확인해 주세요.", errors },
+                {
+                    isSuccess: false,
+                    code: "INVALID_SIGNUP_REQUEST",
+                    message: "입력값을 확인해 주세요.",
+                    result: { errors },
+                },
                 { status: 400 }
             );
         }
 
-        // 중복 id 409 재현 — 회원가입 에러 처리를 백엔드 없이 테스트 가능
-        if (users.some((u) => u.id === body.id)) {
+        // 중복 학번 응답도 같은 서버 필드명으로 돌려줘.
+        if (users.some((u) => u.id === body.studentId)) {
             return HttpResponse.json(
-                { message: "이미 가입된 id입니다." },
+                {
+                    isSuccess: false,
+                    code: "DUPLICATE_STUDENT_ID",
+                    message: "이미 가입된 학번입니다.",
+                    result: { errors: { studentId: "이미 가입된 학번입니다." } },
+                },
                 { status: 409 }
             );
         }
 
         const user = {
-            id: users.length + 1,
+            id: body.studentId,
+            userId: users.length + 1,
             ...body,
-            role: body.role ?? "student",
-            profile_image_url: null
+            role: "student",
+            status: "ACTIVE",
+            profile_image_url: null,
         };
-        users.push(user); // 임시 저장소에 추가
+        users.push(user);
 
-        return HttpResponse.json(toPublicUser(user), { status: 201 });
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: {
+                userId: user.userId,
+                loginId: user.id,
+                name: user.name,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                college: user.college,
+                department: user.department,
+                role: "STUDENT",
+                status: user.status,
+            },
+        });
     }),
 
     // -- 내정보 --
@@ -390,12 +434,113 @@ export const handlers = [
             isSuccess: true,
             code: "200",
             message: "성공",
-            result: {
-                ...toPublicUser(user),
-                userId: user.id,
-                loginId: user.id,
-                status: "ACTIVE",
-            },
+            result: toMockMyInfoResponse(user),
+        });
+    }),
+
+    // -- 내정보 수정 --
+    http.patch(mockApiUrl("/users/me"), async ({ request }) => {
+        await delay(300);
+
+        const id = parseToken(request.headers.get("Authorization"));
+        const user = users.find((candidate) => candidate.id === id);
+
+        if (!user) {
+            return HttpResponse.json(
+                { message: "로그인이 필요합니다." },
+                { status: 401 },
+            );
+        }
+
+        const body = await request.json();
+        const errors = {};
+
+        if (!body.email?.includes("@")) {
+            errors.email = "올바른 이메일 형식이 아닙니다.";
+        }
+
+        if (!/^01[016789][0-9]{7,8}$/.test(body.phoneNumber ?? "")) {
+            errors.phoneNumber = "전화번호 형식을 확인해 주세요.";
+        }
+
+        if (Object.keys(errors).length > 0) {
+            return HttpResponse.json(
+                {
+                    isSuccess: false,
+                    code: "INVALID_MY_INFO_REQUEST",
+                    message: "입력값을 확인해 주세요.",
+                    result: { errors },
+                },
+                { status: 400 },
+            );
+        }
+
+        user.email = body.email;
+        user.phoneNumber = body.phoneNumber;
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: toMockMyInfoResponse(user),
+        });
+    }),
+
+    // -- 프로필 사진 수정 --
+    http.patch(mockApiUrl("/users/me/profile-image"), async ({ request }) => {
+        await delay(300);
+
+        const id = parseToken(request.headers.get("Authorization"));
+        const user = users.find((candidate) => candidate.id === id);
+
+        if (!user) {
+            return HttpResponse.json(
+                { message: "로그인이 필요합니다." },
+                { status: 401 },
+            );
+        }
+
+        const formData = await request.formData();
+        const image = formData.get("image");
+
+        if (!image || typeof image === "string") {
+            return HttpResponse.json(
+                { message: "프로필 이미지를 선택해 주세요." },
+                { status: 400 },
+            );
+        }
+
+        user.profile_image_url = `/images/hongikLogo-circle.png?mock=${Date.now()}`;
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: toMockMyInfoResponse(user),
+        });
+    }),
+
+    // -- 회원탈퇴 --
+    http.delete(mockApiUrl("/users/me"), async ({ request }) => {
+        await delay(300);
+
+        const id = parseToken(request.headers.get("Authorization"));
+        const userIndex = users.findIndex((candidate) => candidate.id === id);
+
+        if (userIndex < 0) {
+            return HttpResponse.json(
+                { message: "로그인이 필요합니다." },
+                { status: 401 },
+            );
+        }
+
+        users.splice(userIndex, 1);
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: null,
         });
     }),
 ];

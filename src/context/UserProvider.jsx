@@ -3,6 +3,9 @@ import {
   getCurrentUser,
   login as loginRequest,
   logout as logoutRequest,
+  updateMyInfo as updateMyInfoRequest,
+  updateMyProfileImage as updateMyProfileImageRequest,
+  withdrawCurrentUser as withdrawCurrentUserRequest,
 } from "../api/authApi.js";
 import {
   clearAccessToken,
@@ -120,6 +123,37 @@ export function UserProvider({ children }) {
     return { serverError };
   }
 
+  async function updateMyInfo(fields) {
+    const updatedUser = await updateMyInfoRequest(fields);
+    setUser(updatedUser);
+
+    return updatedUser;
+  }
+
+  async function refreshCurrentUser(options) {
+    const currentUser = await getCurrentUser(options);
+    setUser(currentUser);
+
+    return currentUser;
+  }
+
+  async function updateMyProfileImage(image) {
+    const updatedUser = await updateMyProfileImageRequest(image);
+    setUser(updatedUser);
+
+    return updatedUser;
+  }
+
+  async function withdrawCurrentUser() {
+    await withdrawCurrentUserRequest();
+
+    // 서버에서 탈퇴가 완료된 뒤에만 이 브라우저의 로그인 정보를 지워.
+    clearAccessToken();
+    setUser(null);
+    setAuthError(null);
+    setAuthStatus(AUTH_STATUS.UNAUTHENTICATED);
+  }
+
   const value = {
     user,
     authStatus,
@@ -127,6 +161,10 @@ export function UserProvider({ children }) {
     isAuthenticated,
     login,
     logout,
+    refreshCurrentUser,
+    updateMyInfo,
+    updateMyProfileImage,
+    withdrawCurrentUser,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

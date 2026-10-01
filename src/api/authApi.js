@@ -97,8 +97,57 @@ export async function getCurrentUser(options) {
   return normalizeUser(result);
 }
 
+export async function signup({
+  name,
+  id,
+  password,
+  email,
+  tel,
+  college,
+  department,
+}) {
+  return api.post(
+    "/users",
+    {
+      name,
+      studentId: id,
+      password,
+      email,
+      phoneNumber: tel,
+      college,
+      department,
+    },
+    { auth: false },
+  );
+}
+
+export async function updateMyInfo({ email, phoneNumber }, options) {
+  const result = await api.patch(
+    "/users/me",
+    { email, phoneNumber },
+    options,
+  );
+
+  return normalizeUser(result);
+}
+
+export async function updateMyProfileImage(image, options) {
+  const formData = new FormData();
+  formData.append("image", image);
+
+  const result = await api.patch(
+    "/users/me/profile-image",
+    formData,
+    options,
+  );
+
+  return normalizeUser(result);
+}
+
+export function withdrawCurrentUser(options) {
+  return api.del("/users/me", options);
+}
+
 export function logout() {
   return api.post("/logout");
 }
-
-export const signup = (form) => api.post("/users", form, { auth: false });
