@@ -84,21 +84,20 @@ function AccountPanel({ userName, userRole, userId, profileImage, onLogout }) {
 // ----- Sidebar ----- //
 
 function Sidebar() {
-  // Context에서 사용자 정보 읽어옴
   const { user, logout } = useUser();
   const navigate = useNavigate();
 
   const userName = user.name;
-  const userId = user.id;
+  const userId = user.loginId || user.id;
   const accountMode = user.role;
-  const profileImage = user.profile_image_url;
+  const profileImage = user.profileImageUrl;
   const isAdmin = accountMode === "admin";
   const isStudent = accountMode === "student";
 
 
-  function handleLogout() {
-    logout();
-    // replace: 뒤로가기로 로그인 이전 페이지에 돌아가지 못하도록
+  async function handleLogout() {
+    await logout();
+    // 뒤로가기로 로그인 이전 페이지에 돌아가지 못하게 해.
     navigate("/login", { replace: true });
   }
 

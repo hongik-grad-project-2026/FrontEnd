@@ -9,7 +9,11 @@ import Checkbox from "../../components/common/Checkbox";
 
 import styles from "./LoginPage.module.css";
 
-const SAVED_ID_KEY = "savedId";
+const isMockMode =
+    import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === "true";
+const SAVED_ID_KEY = isMockMode
+    ? "mulmi.mock.savedLoginId"
+    : "mulmi.api.savedLoginId";
 
 function InputTextSection({ title, placeholder, helperText, inputName, type = 'text', id, value, onChange }) {
     return (
@@ -27,22 +31,18 @@ function InputTextSection({ title, placeholder, helperText, inputName, type = 't
 function LoginPage() {
     const savedId = localStorage.getItem(SAVED_ID_KEY) ?? "";
 
-    const [id, setId] = useState(savedId);
+    const [loginId, setLoginId] = useState(savedId);
     const [password, setPassword] = useState("");
     const [rememberId, setRememberId] = useState(Boolean(savedId));
     const [errorMessage, setErrorMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { login } = useUser();
+    const { login, authError } = useUser();
     const navigate = useNavigate();
 
-    // 모달 구현 전 에러메세지 콘솔 확인
-    if (errorMessage) {
-        console.log('* * * * * * * * * * * * * * \n', errorMessage, '\n* * * * * * * * * * * * * *');
-    }
-
-    // 둘 다 입력됐고 제출 중이 아닐 때만 활성화
-    const canSubmit = id.trim() !== "" && password !== "" && !isSubmitting;
+    // 둘 다 입력됐고 제출 중이 아닐 때만 활성화해.
+    const canSubmit = loginId.trim() !== "" && password !== "" && !isSubmitting;
+    const displayedErrorMessage = errorMessage || authError?.message || "";
 
 
     async function handleSubmit(event) {
@@ -52,10 +52,10 @@ function LoginPage() {
         setIsSubmitting(true);
 
         try {
-            const user = await login({ id: id.trim(), password });
+            const user = await login({ loginId: loginId.trim(), password });
 
             if (rememberId) {
-                localStorage.setItem(SAVED_ID_KEY, id.trim());
+                localStorage.setItem(SAVED_ID_KEY, loginId.trim());
             } else {
                 localStorage.removeItem(SAVED_ID_KEY);
             }
@@ -73,12 +73,13 @@ function LoginPage() {
         <form className={styles.loginPage} onSubmit={handleSubmit}>
             <InputTextSection
                 title='학번' placeholder='학번을 입력하세요'
-                inputName='id' id='id'
-                value={id} onChange={(event) => setId(event.target.value)}
+                inputName='loginId' id='loginId'
+                value={loginId} onChange={(event) => setLoginId(event.target.value)}
             />
             <InputTextSection
                 title='비밀번호' placeholder='비밀번호를 입력하세요'
                 inputName='password' type='password' id='password'
+                helperText={displayedErrorMessage}
                 value={password} onChange={(event) => setPassword(event.target.value)}
             />
 

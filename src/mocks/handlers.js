@@ -113,12 +113,11 @@ export const handlers = [
 
     // -- 로그인 --
     http.post(mockApiUrl("/login"), async ({ request }) => {
-        await delay(400); // 로딩 스피너·버튼 disabled 상태 확인 위한 의도적 지연
+        await delay(400); // 로딩 스피너와 버튼 비활성 상태를 확인하려고 지연시켜.
 
-        const { id, password } = await request.json();
+        const { loginId, password } = await request.json();
 
-        // 400: 필드 자체가 비어서 온 경우
-        if (!id || !password) {
+        if (!loginId || !password) {
             return HttpResponse.json(
                 { message: "아이디와 비밀번호를 모두 입력해 주세요." },
                 { status: 400 }
@@ -126,10 +125,9 @@ export const handlers = [
         }
 
         const user = users.find(
-            (u) => u.id === id && u.password === password
+            (u) => u.id === loginId && u.password === password
         );
 
-        // 401: 이메일이 없는 건지 비번이 틀린 건지 구분해 주지 않음.
         if (!user) {
             return HttpResponse.json(
                 { message: "이메일 또는 비밀번호를 확인해 주세요." },
@@ -137,15 +135,39 @@ export const handlers = [
             );
         }
 
-        // 200. client.js가 result를 반환하므로 응답도 API 엔벨로프를 따른다.
         return HttpResponse.json({
             isSuccess: true,
             code: "200",
             message: "성공",
             result: {
-                token: makeToken(user.id),
-                user: toPublicUser(user),
+                userId: user.id,
+                loginId: user.id,
+                name: user.name,
+                role: user.role,
+                status: "ACTIVE",
+                accessToken: makeToken(user.id),
             },
+        });
+    }),
+
+    // -- 로그아웃 --
+    http.post(mockApiUrl("/logout"), async ({ request }) => {
+        await delay(200);
+
+        const id = parseToken(request.headers.get("Authorization"));
+
+        if (!id) {
+            return HttpResponse.json(
+                { message: "로그인이 필요합니다." },
+                { status: 401 }
+            );
+        }
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: null,
         });
     }),
 
@@ -213,6 +235,16 @@ export const handlers = [
             );
         }
 
-        return HttpResponse.json(toPublicUser(user));
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: {
+                ...toPublicUser(user),
+                userId: user.id,
+                loginId: user.id,
+                status: "ACTIVE",
+            },
+        });
     }),
 ];

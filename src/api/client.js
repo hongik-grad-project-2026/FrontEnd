@@ -26,6 +26,22 @@ const BASE_URL = normalizeBaseUrl(
   USE_MOCK ? "VITE_MOCK_API_BASE_URL" : "VITE_API_BASE_URL",
 );
 
+const TOKEN_STORAGE_KEY = USE_MOCK
+  ? "mulmi.mock.accessToken"
+  : "mulmi.api.accessToken";
+
+export function getAccessToken() {
+  return localStorage.getItem(TOKEN_STORAGE_KEY);
+}
+
+export function setAccessToken(token) {
+  localStorage.setItem(TOKEN_STORAGE_KEY, token);
+}
+
+export function clearAccessToken() {
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
 function createRequestUrl(path) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${BASE_URL}${normalizedPath}`;
@@ -129,7 +145,7 @@ export async function request(
     ...fetchOptions
   } = {},
 ) {
-  const token = auth ? localStorage.getItem("accessToken") : null;
+  const token = auth ? getAccessToken() : null;
   const requestHeaders = new Headers(headers);
   const hasBody = body !== undefined && body !== null;
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
