@@ -14,6 +14,7 @@ function Toggle({ isActive }) {
 }
 
 export default function ToggleButton({
+    disabled = false,
     text = '중요 공지 설정',
     status = false,
     onChange }) {
@@ -23,6 +24,7 @@ export default function ToggleButton({
             className={styles.toggleButton}
             type="button"
             data-active={status}
+            disabled={disabled}
             onClick={() => onChange?.(!status)}
         >
 

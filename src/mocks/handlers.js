@@ -11,6 +11,11 @@ import {
     equipmentModels,
 } from "./db";
 import { MOCK_MEMBERS } from "../api/memberApi";
+import {
+    getNextMockAttachmentId,
+    getNextMockNoticeId,
+    mockNotices,
+} from "./noticeData";
 
 const MOCK_API_BASE_URL = import.meta.env.VITE_MOCK_API_BASE_URL?.trim().replace(/\/+$/, "");
 
@@ -61,7 +66,309 @@ function toMockMyInfoResponse(user) {
     };
 }
 
+function toMockNoticeSummary(notice) {
+    return {
+        noticeId: notice.noticeId,
+        title: notice.title,
+        important: notice.important,
+        authorId: notice.authorId,
+        authorName: notice.authorName,
+        createdAt: notice.createdAt,
+    };
+}
+
+function getMockNoticeValidationErrors(body) {
+    const errors = {};
+
+    if (typeof body.title !== "string" || body.title.length > 200) {
+        errors.title = "제목은 200자 이하로 입력해 주세요.";
+    }
+
+    if (typeof body.content !== "string" || body.content.trim() === "") {
+        errors.content = "내용을 입력해 주세요.";
+    }
+
+    if (typeof body.important !== "boolean") {
+        errors.important = "중요 공지 설정을 확인해 주세요.";
+    }
+
+    return errors;
+}
+
 export const handlers = [
+
+    // -- 공지사항 목록 --
+    http.get(mockApiUrl("/notices"), async ({ request }) => {
+        await delay(250);
+
+        const searchParams = new URL(request.url).searchParams;
+        const page = Number(searchParams.get("page") ?? 0);
+        const size = Number(searchParams.get("size") ?? 20);
+        const importantValue = searchParams.get("important");
+        const important = importantValue === null
+            ? null
+            : importantValue === "true";
+
+        if (!Number.isInteger(page) || page < 0 || !Number.isInteger(size) || size < 1 || size > 100) {
+            return HttpResponse.json(
+                {
+                    isSuccess: false,
+                    code: "INVALID_PAGE_REQUEST",
+                    message: "페이지 조건을 확인해 주세요.",
+                    result: null,
+                },
+                { status: 400 },
+            );
+        }
+
+        const filteredNotices = mockNotices
+            .filter((notice) => important === null || notice.important === important)
+            .sort((firstNotice, secondNotice) => {
+                const importantOrder = Number(secondNotice.important) - Number(firstNotice.important);
+
+                if (importantOrder !== 0) {
+                    return importantOrder;
+                }
+
+                return new Date(secondNotice.createdAt) - new Date(firstNotice.createdAt);
+            });
+        const totalElements = filteredNotices.length;
+        const totalPages = Math.ceil(totalElements / size);
+        const notices = filteredNotices
+            .slice(page * size, (page + 1) * size)
+            .map(toMockNoticeSummary);
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: {
+                notices,
+                page,
+                size,
+                totalElements,
+                totalPages,
+                hasNext: page + 1 < totalPages,
+            },
+        });
+    }),
+
+    // -- 공지사항 작성 --
+    http.post(mockApiUrl("/notices"), async ({ request }) => {
+        await delay(300);
+
+        const body = await request.json();
+        const errors = getMockNoticeValidationErrors(body);
+
+        if (Object.keys(errors).length > 0) {
+            return HttpResponse.json(
+                {
+                    isSuccess: false,
+                    code: "INVALID_NOTICE_REQUEST",
+                    message: "입력값을 확인해 주세요.",
+                    result: { errors },
+                },
+                { status: 400 },
+            );
+        }
+
+        const now = new Date().toISOString();
+        const notice = {
+            noticeId: getNextMockNoticeId(),
+            title: body.title,
+            content: body.content,
+            important: body.important,
+            authorId: 1,
+            authorName: "관리자",
+            createdAt: now,
+            updatedAt: now,
+            attachments: [],
+        };
+        mockNotices.unshift(notice);
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: notice,
+        });
+    }),
+
+    // -- 공지사항 상세 --
+    http.get(mockApiUrl("/notices/:noticeId"), async ({ params }) => {
+        await delay(200);
+
+        const notice = mockNotices.find(
+            (candidate) => String(candidate.noticeId) === String(params.noticeId),
+        );
+
+        if (!notice) {
+            return HttpResponse.json(
+                {
+                    isSuccess: false,
+                    code: "NOTICE_NOT_FOUND",
+                    message: "공지사항을 찾을 수 없습니다.",
+                    result: null,
+                },
+                { status: 404 },
+            );
+        }
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: notice,
+        });
+    }),
+
+    // -- 공지사항 수정 --
+    http.patch(mockApiUrl("/notices/:noticeId"), async ({ params, request }) => {
+        await delay(300);
+
+        const notice = mockNotices.find(
+            (candidate) => String(candidate.noticeId) === String(params.noticeId),
+        );
+
+        if (!notice) {
+            return HttpResponse.json(
+                { message: "공지사항을 찾을 수 없습니다." },
+                { status: 404 },
+            );
+        }
+
+        const body = await request.json();
+        const errors = getMockNoticeValidationErrors(body);
+
+        if (Object.keys(errors).length > 0) {
+            return HttpResponse.json(
+                {
+                    isSuccess: false,
+                    code: "INVALID_NOTICE_REQUEST",
+                    message: "입력값을 확인해 주세요.",
+                    result: { errors },
+                },
+                { status: 400 },
+            );
+        }
+
+        notice.title = body.title;
+        notice.content = body.content;
+        notice.important = body.important;
+        notice.updatedAt = new Date().toISOString();
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: notice,
+        });
+    }),
+
+    // -- 공지사항 삭제 --
+    http.delete(mockApiUrl("/notices/:noticeId"), async ({ params }) => {
+        await delay(300);
+
+        const noticeIndex = mockNotices.findIndex(
+            (candidate) => String(candidate.noticeId) === String(params.noticeId),
+        );
+
+        if (noticeIndex < 0) {
+            return HttpResponse.json(
+                { message: "공지사항을 찾을 수 없습니다." },
+                { status: 404 },
+            );
+        }
+
+        mockNotices.splice(noticeIndex, 1);
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: null,
+        });
+    }),
+
+    // -- 공지사항 첨부파일 업로드 --
+    http.post(mockApiUrl("/notices/:noticeId/attachments"), async ({ params, request }) => {
+        await delay(250);
+
+        const notice = mockNotices.find(
+            (candidate) => String(candidate.noticeId) === String(params.noticeId),
+        );
+
+        if (!notice) {
+            return HttpResponse.json(
+                { message: "공지사항을 찾을 수 없습니다." },
+                { status: 404 },
+            );
+        }
+
+        const formData = await request.formData();
+        const file = formData.get("file");
+
+        if (!file || typeof file === "string") {
+            return HttpResponse.json(
+                { message: "첨부파일을 선택해 주세요." },
+                { status: 400 },
+            );
+        }
+
+        const attachmentId = getNextMockAttachmentId();
+        const attachment = {
+            attachmentId,
+            originalFileName: file.name,
+            contentType: file.type || "application/octet-stream",
+            fileSize: file.size,
+            downloadUrl: `/notices/${notice.noticeId}/attachments/${attachmentId}/download`,
+            createdAt: new Date().toISOString(),
+        };
+        notice.attachments.push(attachment);
+        notice.updatedAt = new Date().toISOString();
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: attachment,
+        });
+    }),
+
+    // -- 공지사항 첨부파일 다운로드 --
+    http.get(
+        mockApiUrl("/notices/:noticeId/attachments/:attachmentId/download"),
+        async ({ params }) => {
+            await delay(150);
+
+            const notice = mockNotices.find(
+                (candidate) => String(candidate.noticeId) === String(params.noticeId),
+            );
+            const attachment = notice?.attachments.find(
+                (candidate) => String(candidate.attachmentId) === String(params.attachmentId),
+            );
+
+            if (!attachment) {
+                return HttpResponse.json(
+                    { message: "첨부파일을 찾을 수 없습니다." },
+                    { status: 404 },
+                );
+            }
+
+            return new HttpResponse(
+                new Blob([`${attachment.originalFileName} mock 파일`], {
+                    type: attachment.contentType,
+                }),
+                {
+                    status: 200,
+                    headers: {
+                        "Content-Type": attachment.contentType,
+                        "Content-Disposition": `attachment; filename="${encodeURIComponent(attachment.originalFileName)}"`,
+                    },
+                },
+            );
+        },
+    ),
 
     // -- 관리자 회원 목록 --
     http.get(mockApiUrl("/admin/users"), async ({ request }) => {

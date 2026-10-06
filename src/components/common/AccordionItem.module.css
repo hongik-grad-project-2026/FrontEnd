@@ -85,7 +85,7 @@
     line-clamp: 2;
 }
 
-.accordionItem:hover .content {
+.accordionItem[data-has-content="true"]:hover .content {
     grid-template-rows: 1fr;
     padding-bottom: var(--spacing-10);
 }
@@ -94,7 +94,7 @@
     background-color: var(--color-neutral-10);
 }
 
-.accordionItem:hover .updownIcon {
+.accordionItem[data-has-content="true"]:hover .updownIcon {
     background-image: url('/icons/icon24/up.png');
 }
 

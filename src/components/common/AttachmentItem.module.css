@@ -16,5 +16,13 @@
 }
 
 .fileSize {
+    flex: 0 0 auto;
     color: var(--color-neutral-60);
+}
+
+.fileName {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchNotices } from '../../api/noticeApi';
+import { fetchNotices, noticeKeys } from '../../api/noticeApi';
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll"
 
 import { getMyWishlistedEquipmentModels } from "../../api/equipmentApi"
@@ -71,8 +71,11 @@ function NoticeArea() {
     data,
     isLoading,
     isError,
+    isFetching,
+    error,
+    refetch,
   } = useQuery({
-    queryKey: ["latest-notices"],
+    queryKey: noticeKeys.list({ important: null, page: 0, size: 5 }),
     queryFn: () =>
       fetchNotices({
         page: 0,
@@ -82,15 +85,40 @@ function NoticeArea() {
 
   const notices = data?.content ?? [];
 
+  if (isLoading) {
+    return <p className={styles.noticeState}>공지사항을 불러오는 중입니다.</p>;
+  }
+
+  if (isError) {
+    return (
+      <div className={styles.noticeState} role="alert">
+        <p>{error?.message || "공지사항을 불러오지 못했습니다."}</p>
+        <IconTextButton
+          icon="rotate"
+          text={isFetching ? "다시 시도 중" : "다시 시도"}
+          disabled={isFetching}
+          onClick={() => refetch()}
+        />
+      </div>
+    );
+  }
+
+  if (notices.length === 0) {
+    return <p className={styles.noticeState}>등록된 공지사항이 없습니다.</p>;
+  }
+
   return (
     <div>
       {notices.map((notice) => {
         const hasAttachments = notice.hasAttachment ? true : false;
-        const formattedDate = notice.createdAt.split("T")[0].replace(/-/g, ".");
+        const formattedDate = notice.createdAt
+          ? notice.createdAt.split("T")[0].replace(/-/g, ".")
+          : "-";
 
         return (<AccordionItem
           key={notice.noticeId}
           noticeId={notice.noticeId}
+          detailPath={`/student/notices/${notice.noticeId}`}
           isImportant={notice.important}
           title={notice.title}
           hasAttachments={hasAttachments}

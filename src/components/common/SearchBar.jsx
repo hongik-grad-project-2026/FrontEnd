@@ -45,7 +45,12 @@ function SearchBar({
         aria-label={ariaLabel}
         onChange={onChange}
         rightElement={
-          <InputIconButton icon="search" ariaLabel="검색" type="submit" />
+          <InputIconButton
+            icon="search"
+            ariaLabel="검색"
+            type="submit"
+            disabled={inputProps.disabled}
+          />
         }
       />
     </form>

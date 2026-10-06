@@ -1,159 +1,260 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
-import { createNotice } from '../../api/noticeApi';
-import ToggleButton from "../../components/common/ToggleButton";
-import Textarea from "../../components/common/Textarea";
-import Input from "../../components/common/Input";
-import Button from "../../components/common/Button";
-import PageHeader from "../../components/layout/PageHeader";
+import {
+  createNotice,
+  noticeKeys,
+  updateNotice,
+  uploadNoticeAttachments,
+} from "../../api/noticeApi";
 import AttachmentItem from "../../components/common/AttachmentItem";
-
+import Button from "../../components/common/Button";
+import Input from "../../components/common/Input";
+import Textarea from "../../components/common/Textarea";
+import ToggleButton from "../../components/common/ToggleButton";
+import PageHeader from "../../components/layout/PageHeader";
 import styles from "./AdminNoticeCreatePage.module.css";
 
+function getFileKey(file) {
+  return `${file.name}-${file.size}-${file.lastModified}`;
+}
 
 function AdminNoticeCreatePage() {
-    const queryClient = useQueryClient();
-    const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const submitGuardRef = useRef(false);
+  const createdNoticeIdRef = useRef(null);
+  const [form, setForm] = useState({
+    title: "",
+    content: "",
+    important: false,
+  });
+  const [files, setFiles] = useState([]);
+  const isValid =
+    form.title.trim().length > 0 &&
+    form.title.trim().length <= 200 &&
+    form.content.trim().length > 0;
 
-    const [form, setForm] = useState({
-        title: '',
-        content: '',
-        isImportant: false,
-        attachments: [],
-    });
-    const isValid = form.title.trim().length > 0 && form.content.trim().length > 0;
+  const createNoticeMutation = useMutation({
+    mutationFn: async ({ noticePayload, attachmentFiles }) => {
+      const notice = createdNoticeIdRef.current
+        ? await updateNotice(createdNoticeIdRef.current, noticePayload)
+        : await createNotice(noticePayload);
 
-    // TanStack Query의 useMutation : 서버에 데이터를 보내는 create/update/delete 같은 쓰기 요청에 적합
-    const createNoticeMutation = useMutation({
-        // mutationFn : 실제 서버 요청을 수행하는 함수 (mock API인 createNotice를 호출)
-        mutationFn: (payload) => createNotice(payload),
+      try {
+        const uploadedAttachments = await uploadNoticeAttachments(
+          notice.noticeId,
+          attachmentFiles,
+        );
 
-        // 성공 시점에 실행 : 공지 목록의 캐시를 무효화해서 목록 페이지가 최신 데이터를 다시 불러오도록
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['list-notices'] });
-            navigate(-1);
-        },
-
-        // 실패 시점에 실행 : 현재는 콘솔에 에러만 남기지만, 추후 toast나 alert 등 처리 필요
-        onError: (error) => {
-            console.error('공지 작성 실패:', error);
-        },
-    });
-
-    const handleToggleImportant = () => {
-        setForm((prev) => ({
-            ...prev,
-            isImportant: !prev.isImportant,
-        }));
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
-
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-
-        if (!isValid || createNoticeMutation.isPending) { // 이미 보내는 중이거나 유효하지 않은 상태
-            return;
-        }
-
-        // 서버로 보낼 payload 정리
-        const payload = {
-            title: form.title.trim(), //앞뒤 공백 제거
-            content: form.content.trim(),
-            important: form.isImportant,
-            attachments: [], //첨부파일 기능이 아직 없음
+        return {
+          ...notice,
+          attachments: [...notice.attachments, ...uploadedAttachments],
         };
+      } catch (error) {
+        error.noticeId = notice.noticeId;
+        throw error;
+      }
+    },
+    onSuccess: (createdNotice) => {
+      queryClient.setQueryData(
+        noticeKeys.detail(createdNotice.noticeId),
+        createdNotice,
+      );
+      queryClient.invalidateQueries({ queryKey: noticeKeys.lists() });
+      navigate(`/admin/notices/${createdNotice.noticeId}`, { replace: true });
+    },
+    onError: (error) => {
+      if (error?.noticeId) {
+        createdNoticeIdRef.current = error.noticeId;
+        queryClient.invalidateQueries({ queryKey: noticeKeys.lists() });
+        queryClient.invalidateQueries({
+          queryKey: noticeKeys.detail(error.noticeId),
+        });
+      }
 
-        // mutate() : 서버 요청 실행
-        createNoticeMutation.mutate(payload);
-    };
+      if (error?.failedFiles) {
+        setFiles(error.failedFiles);
+      }
+    },
+  });
 
-    return (
-        <form className={styles.noticeCreatePage} onSubmit={handleSubmit}>
-            <PageHeader />
+  function handleToggleImportant() {
+    if (!createNoticeMutation.isPending) {
+      setForm((currentForm) => ({
+        ...currentForm,
+        important: !currentForm.important,
+      }));
+      createNoticeMutation.reset();
+    }
+  }
 
-            <div className={styles.noticeCreateArea} >
+  function handleChange(event) {
+    const { name, value } = event.target;
+    setForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+    createNoticeMutation.reset();
+  }
 
-                <div className={styles.createSection}>
-                    <p className={styles.sectionTitle}>공지 설정</p>
-                    <div>
-                        <ToggleButton
-                            status={form.isImportant}
-                            onChange={handleToggleImportant}
-                        />
-                    </div>
-                </div >
+  function handleFilesSelected(event) {
+    const selectedFiles = Array.from(event.target.files ?? []);
 
-                <div className={styles.createSection}>
-                    <p className={styles.sectionTitle}>제목 *</p>
-                    <Input
-                        height='lg' width='fill' placeholder='제목을 입력하세요.'
-                        id="title" name="title" value={form.title}
-                        onChange={handleChange} />
-                </div >
+    setFiles((currentFiles) => {
+      const fileKeys = new Set(currentFiles.map(getFileKey));
+      return [
+        ...currentFiles,
+        ...selectedFiles.filter((file) => !fileKeys.has(getFileKey(file))),
+      ];
+    });
+    createNoticeMutation.reset();
+    event.target.value = "";
+  }
 
-                <div className={styles.createSection}>
-                    <p className={styles.sectionTitle}>내용 *</p>
-                    <Textarea
-                        placeholder='내용을 입력하세요.' width='100%' height='auto'
-                        id="content" name="content" value={form.content}
-                        onChange={handleChange}
-                    />
-                </div >
+  function handleRemoveFile(fileToRemove) {
+    if (!createNoticeMutation.isPending) {
+      setFiles((currentFiles) =>
+        currentFiles.filter((file) => getFileKey(file) !== getFileKey(fileToRemove)),
+      );
+      createNoticeMutation.reset();
+    }
+  }
 
-                <div className={styles.createSection}>
-                    <p className={styles.sectionTitle}>첨부파일</p>
-                    <div className={styles.attachmentsArea}>
-                        <Button
-                            color="Neutral"
-                            kind="border"
-                            showLeftIcon={true}
-                            size="Default"
-                            status="Default"
-                            text="파일 선택"
-                        />
+  async function handleSubmit(event) {
+    event.preventDefault();
 
-                        <div className={styles.attachmentsWrapper}>
-                            <AttachmentItem icon='trash' onClick={() => { alert('삭제 버튼 Click') }} />
-                            <AttachmentItem icon='trash' onClick={() => { alert('삭제 버튼 Click') }} />
-                            <AttachmentItem icon='trash' onClick={() => { alert('삭제 버튼 Click') }} />
-                            <AttachmentItem icon='trash' onClick={() => { alert('삭제 버튼 Click') }} />
-                            <AttachmentItem icon='trash' onClick={() => { alert('삭제 버튼 Click') }} />
-                            <AttachmentItem icon='trash' onClick={() => { alert('삭제 버튼 Click') }} />
-                            <AttachmentItem icon='trash' onClick={() => { alert('삭제 버튼 Click') }} />
-                        </div>
+    if (!isValid || createNoticeMutation.isPending || submitGuardRef.current) {
+      return;
+    }
 
-                    </div>
-                </div >
+    submitGuardRef.current = true;
 
+    try {
+      await createNoticeMutation.mutateAsync({
+        noticePayload: {
+          title: form.title.trim(),
+          content: form.content.trim(),
+          important: form.important,
+        },
+        attachmentFiles: files,
+      });
+    } catch {
+      // 입력값과 업로드하지 못한 파일은 mutation 상태와 화면에 그대로 남겨.
+    } finally {
+      submitGuardRef.current = false;
+    }
+  }
 
-            </div>
-            <div className={styles.buttonWrapper}>
-                <Button
-                    color="Neutral" kind="border" size="Default"
-                    status="Default"
-                    text="돌아가기"
-                    onClick={() => navigate('/admin/notices')}
+  return (
+    <form className={styles.noticeCreatePage} onSubmit={handleSubmit}>
+      <PageHeader />
+
+      <div className={styles.noticeCreateArea}>
+        <div className={styles.createSection}>
+          <p className={styles.sectionTitle}>공지 설정</p>
+          <div>
+            <ToggleButton
+              status={form.important}
+              onChange={handleToggleImportant}
+            />
+          </div>
+        </div>
+
+        <div className={styles.createSection}>
+          <p className={styles.sectionTitle}>제목 *</p>
+          <Input
+            height="lg"
+            width="fill"
+            placeholder="제목을 입력하세요."
+            id="title"
+            name="title"
+            value={form.title}
+            disabled={createNoticeMutation.isPending}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className={styles.createSection}>
+          <p className={styles.sectionTitle}>내용 *</p>
+          <Textarea
+            placeholder="내용을 입력하세요."
+            width="100%"
+            height="auto"
+            id="content"
+            name="content"
+            value={form.content}
+            disabled={createNoticeMutation.isPending}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className={styles.createSection}>
+          <p className={styles.sectionTitle}>첨부파일</p>
+          <div className={styles.attachmentsArea}>
+            <input
+              ref={fileInputRef}
+              className={styles.hiddenFileInput}
+              type="file"
+              multiple
+              onChange={handleFilesSelected}
+            />
+            <Button
+              color="Neutral"
+              kind="border"
+              showLeftIcon
+              size="Default"
+              status="Default"
+              text="파일 선택"
+              disabled={createNoticeMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+            />
+
+            <div className={styles.attachmentsWrapper}>
+              {files.map((file) => (
+                <AttachmentItem
+                  key={getFileKey(file)}
+                  icon="trash"
+                  attachment={file}
+                  disabled={createNoticeMutation.isPending}
+                  onClick={() => handleRemoveFile(file)}
                 />
-
-                <Button
-                    color="Primary" kind="fill" size="Default"
-                    status={isValid && !createNoticeMutation.isPending ? 'Default' : 'Disabled'}
-                    text='작성 완료'
-                    type="submit"
-                />
+              ))}
             </div>
-        </form >
-    );
+          </div>
+        </div>
+      </div>
+
+      {createNoticeMutation.error ? (
+        <p className={styles.errorMessage} role="alert">
+          {createNoticeMutation.error.message || "공지사항을 작성하지 못했습니다."}
+        </p>
+      ) : null}
+
+      <div className={styles.buttonWrapper}>
+        <Button
+          color="Neutral"
+          kind="border"
+          size="Default"
+          status="Default"
+          text="돌아가기"
+          disabled={createNoticeMutation.isPending}
+          onClick={() => navigate("/admin/notices")}
+        />
+        <Button
+          color="Primary"
+          kind="fill"
+          size="Default"
+          status="Default"
+          text={createNoticeMutation.isPending ? "작성 중" : "작성 완료"}
+          type="submit"
+          disabled={!isValid || createNoticeMutation.isPending}
+        />
+      </div>
+    </form>
+  );
 }
 
 export default AdminNoticeCreatePage;

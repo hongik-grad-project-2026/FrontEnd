@@ -67,6 +67,16 @@
     flex-wrap: wrap;
 }
 
+.hiddenFileInput {
+    display: none;
+}
+
+.errorMessage {
+    margin: 0;
+    color: var(--color-danger-text);
+    text-align: center;
+}
+
 .buttonWrapper {
     display: flex;
     gap: var(--spacing-12);

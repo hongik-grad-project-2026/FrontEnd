@@ -40,11 +40,11 @@
 
 
 
-.toggleButton[data-active="false"]:hover .toggleCircle {
+.toggleButton[data-active="false"]:not(:disabled):hover .toggleCircle {
     left: 20px;
 }
 
-.toggleButton[data-active="true"]:hover .toggleCircle {
+.toggleButton[data-active="true"]:not(:disabled):hover .toggleCircle {
     left: 4px;
 }
 
@@ -95,7 +95,7 @@
     opacity: 1;
 }
 
-.toggleButton[data-active="true"]:hover .pinIcon {
+.toggleButton[data-active="true"]:not(:disabled):hover .pinIcon {
     opacity: calc(3/9);
 }
 
@@ -104,6 +104,11 @@
     opacity: calc(3/9);
 }
 
-.toggleButton[data-active="false"]:hover .pinIcon {
+.toggleButton[data-active="false"]:not(:disabled):hover .pinIcon {
     opacity: 1;
+}
+
+.toggleButton:disabled {
+    cursor: not-allowed;
+    opacity: calc(5/9);
 }
