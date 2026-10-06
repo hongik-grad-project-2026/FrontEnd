@@ -11,6 +11,7 @@ import {
     equipmentModels,
 } from "./db";
 import { MOCK_MEMBERS } from "../api/memberApi";
+import { MOCK_EQUIPMENT_CATEGORIES } from "../api/categories";
 import {
     getNextMockAttachmentId,
     getNextMockNoticeId,
@@ -96,6 +97,21 @@ function getMockNoticeValidationErrors(body) {
 }
 
 export const handlers = [
+
+    // -- 카테고리 목록 --
+    http.get(mockApiUrl("/categories"), async () => {
+        await delay(200);
+
+        return HttpResponse.json({
+            isSuccess: true,
+            code: "200",
+            message: "성공",
+            result: MOCK_EQUIPMENT_CATEGORIES.map((category) => ({
+                categoryId: category.categoryId,
+                name: category.label,
+            })),
+        });
+    }),
 
     // -- 공지사항 목록 --
     http.get(mockApiUrl("/notices"), async ({ request }) => {

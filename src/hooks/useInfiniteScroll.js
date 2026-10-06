@@ -13,6 +13,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
  */
 
 export function useInfiniteScroll({
+    enabled = true,
     queryKey,
     queryFn,
     getNextPageParam,
@@ -32,6 +33,7 @@ export function useInfiniteScroll({
         isFetchingNextPage,  // 다음 페이지를 로딩 중인지 여부 (boolean)
         ...queryState        // isLoading, isError 등 기타 쿼리 상태값들을 하나로 묶음
     } = useInfiniteQuery({
+        enabled,
         queryKey,
         queryFn,
         initialPageParam,
@@ -42,8 +44,9 @@ export function useInfiniteScroll({
     useEffect(() => {
         const loadMoreTarget = loadMoreRef.current;
 
-        // 예외 처리: Ref 요소가 없거나, 다음 페이지가 없거나, 이미 로딩 중이면 중단
+        // 사용하지 않거나 감지할 요소·다음 페이지가 없거나 이미 불러오는 중이면 observer를 만들지 않아.
         if (
+            !enabled ||
             !loadMoreTarget ||
             !hasNextPage ||
             isFetchingNextPage
@@ -54,8 +57,9 @@ export function useInfiniteScroll({
         // IntersectionObserver 인스턴스 생성 (화면 교차 감지기) / 주요 오소 - Root (감지 기준 영역), Target (관찰 대상), Intersection (교차:Target이 Root의 영역 안에 얼마나 들어왔는지 판단)
         const observer = new IntersectionObserver(
             ([entry]) => {
-                // 감지 요소가 영역 안에 들어왔고(isIntersecting), 다음 페이지가 있으며(hasNextPage), 현재 로딩 중이 아닐 때(isFetchingNextPage) => 실행
+                // 활성 상태에서 감지 요소가 보일 때만 다음 페이지를 불러와.
                 if (
+                    enabled &&
                     entry.isIntersecting &&
                     hasNextPage &&
                     !isFetchingNextPage
@@ -77,6 +81,7 @@ export function useInfiniteScroll({
             observer.disconnect();
         };
     }, [
+        enabled,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,

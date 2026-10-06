@@ -22,3 +22,23 @@
     gap: 16px;
     grid-template-columns: 1fr 1fr 1fr 1fr;
 }
+
+.categoryState,
+.equipmentState {
+    margin: 0;
+    color: var(--color-neutral-60);
+}
+
+.categoryState {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-8);
+}
+
+.equipmentState {
+    grid-column: 1 / -1;
+    padding: var(--spacing-24);
+    text-align: center;
+}

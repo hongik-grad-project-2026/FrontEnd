@@ -1,5 +1,13 @@
 import { useId, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import {
+  ALL_CATEGORY_OPTION,
+  categoryKeys,
+  fetchCategories,
+  toCategoryOption,
+} from "../../api/categories";
+import { isMockMode } from "../../api/client";
 import Button from "../../components/common/Button";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
@@ -15,19 +23,6 @@ import DataTable from "../../components/table/DataTable";
 import styles from "./AdminEquipmentListPage.module.css";
 
 const ROWS_PER_PAGE = 10;
-
-const EQUIPMENT_CATEGORIES = [
-  { value: "laptop", label: "노트북" },
-  { value: "tablet", label: "태블릿" },
-  { value: "keyboard-mouse", label: "키보드/마우스" },
-  { value: "power-bank", label: "보조배터리" },
-  { value: "laptop-stand", label: "노트북 거치대" },
-  { value: "book-stand", label: "독서대" },
-];
-
-const CATEGORY_LABELS = Object.fromEntries(
-  EQUIPMENT_CATEGORIES.map((category) => [category.value, category.label]),
-);
 
 const STATUS_BADGES = {
   active: "기자재-대여진행",
@@ -247,11 +242,11 @@ function EquipmentNameCell({ equipment }) {
   );
 }
 
-function CategoryCell({ equipment }) {
+function CategoryCell({ categoryLabel, equipment }) {
   return (
     <span className={styles.cellStack}>
       <span className={styles.singleLineText}>
-        {CATEGORY_LABELS[equipment.category]}
+        {categoryLabel}
       </span>
 
       {equipment.os ? (
@@ -334,7 +329,9 @@ function AdminEquipmentListPage() {
   const editButtonRef = useRef(null);
   const disposeButtonRef = useRef(null);
 
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState(
+    ALL_CATEGORY_OPTION.value,
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -342,31 +339,49 @@ function AdminEquipmentListPage() {
   const [disposeTargetEquipment, setDisposeTargetEquipment] = useState(null);
   const [feedbackType, setFeedbackType] = useState(null);
 
+  const categoryQuery = useQuery({
+    queryKey: categoryKeys.list(),
+    queryFn: ({ signal }) => fetchCategories({ signal }),
+  });
+  const categoryOptions = (categoryQuery.data ?? []).map((category) =>
+    toCategoryOption(category, { useMockKey: isMockMode }),
+  );
+  const categoryLabels = Object.fromEntries(
+    categoryOptions.map((category) => [category.value, category.label]),
+  );
+  const hasCategories = categoryQuery.isSuccess && categoryOptions.length > 0;
+  const availableEquipment = isMockMode && hasCategories ? MOCK_EQUIPMENT : [];
+
   // 탭의 숫자는 검색 전 전체 목업의 모델 수
   const tabItems = [
     {
-      value: "all",
-      label: "전체",
-      count: MOCK_EQUIPMENT.length,
+      ...ALL_CATEGORY_OPTION,
+      count: isMockMode ? availableEquipment.length : undefined,
       controlsId: panelId,
+      disabled: !hasCategories,
     },
-    ...EQUIPMENT_CATEGORIES.map((category) => ({
+    ...categoryOptions.map((category) => ({
       ...category,
-      count: MOCK_EQUIPMENT.filter(
-        (equipment) => equipment.category === category.value,
-      ).length,
+      count: isMockMode
+        ? availableEquipment.filter(
+            (equipment) => equipment.category === category.value,
+          ).length
+        : undefined,
       controlsId: panelId,
     })),
   ];
 
   const selectedCategoryLabel =
-    selectedCategory === "all" ? "전체" : CATEGORY_LABELS[selectedCategory];
+    selectedCategory === ALL_CATEGORY_OPTION.value
+      ? ALL_CATEGORY_OPTION.label
+      : categoryLabels[selectedCategory] ?? "카테고리";
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-  const filteredEquipment = MOCK_EQUIPMENT.filter((equipment) => {
+  const filteredEquipment = availableEquipment.filter((equipment) => {
     const matchesCategory =
-      selectedCategory === "all" || equipment.category === selectedCategory;
+      selectedCategory === ALL_CATEGORY_OPTION.value ||
+      equipment.category === selectedCategory;
 
     const matchesSearch =
       !normalizedSearchTerm ||
@@ -411,6 +426,10 @@ function AdminEquipmentListPage() {
   };
 
   const handleOpenCreateModal = () => {
+    if (!isMockMode || !hasCategories) {
+      return;
+    }
+
     setIsCreateModalOpen(true);
   };
 
@@ -462,11 +481,13 @@ function AdminEquipmentListPage() {
     setFeedbackType(null);
   };
 
-  const emptyMessage = normalizedSearchTerm
-    ? "검색 조건에 해당하는 기자재가 없습니다."
-    : selectedCategory === "all"
-      ? "표시할 기자재가 없습니다."
-      : "해당 카테고리에 표시할 기자재가 없습니다.";
+  const emptyMessage = !isMockMode
+    ? "기자재 API가 아직 제공되지 않았습니다."
+    : normalizedSearchTerm
+      ? "검색 조건에 해당하는 기자재가 없습니다."
+      : selectedCategory === ALL_CATEGORY_OPTION.value
+        ? "표시할 기자재가 없습니다."
+        : "해당 카테고리에 표시할 기자재가 없습니다.";
 
   const columns = [
     {
@@ -485,7 +506,12 @@ function AdminEquipmentListPage() {
       key: "category",
       header: "카테고리 / OS",
       width: 102,
-      render: (equipment) => <CategoryCell equipment={equipment} />,
+      render: (equipment) => (
+        <CategoryCell
+          equipment={equipment}
+          categoryLabel={categoryLabels[equipment.category] ?? "카테고리"}
+        />
+      ),
     },
     {
       key: "accessories",
@@ -569,55 +595,91 @@ function AdminEquipmentListPage() {
               onSubmit={handleSearchSubmit}
               ariaLabel="기자재명 또는 모델명 검색"
               placeholder="기자재명 또는 모델명으로 검색..."
+              disabled={!isMockMode || !hasCategories}
             />
           </div>
 
-          <div
-            id={panelId}
-            className={styles.tablePanel}
-            role="tabpanel"
-            aria-label={selectedCategoryLabel + " 기자재 목록"}
-          >
-            <DataTable
-              className={styles.dataTable}
-              ariaLabel="관리자 기자재 모델 목록"
-              columns={columns}
-              rows={visibleEquipment}
-              getRowId={(equipment) => equipment.id}
-              onRowClick={handleOpenAssetList}
-              minWidth={1120}
-              emptyMessage={emptyMessage}
-            />
-          </div>
+          {categoryQuery.isPending ? (
+            <p className={styles.categoryState}>
+              카테고리를 불러오는 중입니다.
+            </p>
+          ) : null}
 
-          <div className={styles.footer}>
-            <Pagination
-              className={styles.pagination}
-              page={resolvedCurrentPage}
-              totalPages={totalPages}
-              onChange={setCurrentPage}
-              ariaLabel="기자재 목록 페이지 이동"
-            />
+          {categoryQuery.isError ? (
+            <div className={styles.categoryState} role="alert">
+              <p>
+                {categoryQuery.error?.message ||
+                  "카테고리를 불러오지 못했습니다."}
+              </p>
+              <Button
+                color="Neutral"
+                kind="border"
+                size="Default"
+                status="Default"
+                text="다시 시도"
+                disabled={categoryQuery.isFetching}
+                onClick={() => categoryQuery.refetch()}
+              />
+            </div>
+          ) : null}
 
-            <Button
-              ref={registerButtonRef}
-              className={styles.registerButton}
-              kind="border"
-              size="Default"
-              color="Primary"
-              status="Default"
-              showLeftIcon={false}
-              type="button"
-              text="기자재 등록"
-              onClick={handleOpenCreateModal}
-            />
-          </div>
+          {categoryQuery.isSuccess && !hasCategories ? (
+            <p className={styles.categoryState}>
+              등록된 카테고리가 없습니다.
+            </p>
+          ) : null}
+
+          {hasCategories ? (
+            <>
+              <div
+                id={panelId}
+                className={styles.tablePanel}
+                role="tabpanel"
+                aria-label={selectedCategoryLabel + " 기자재 목록"}
+              >
+                <DataTable
+                  className={styles.dataTable}
+                  ariaLabel="관리자 기자재 모델 목록"
+                  columns={columns}
+                  rows={visibleEquipment}
+                  getRowId={(equipment) => equipment.id}
+                  onRowClick={handleOpenAssetList}
+                  minWidth={1120}
+                  emptyMessage={emptyMessage}
+                />
+              </div>
+
+              <div className={styles.footer}>
+                <Pagination
+                  className={styles.pagination}
+                  page={resolvedCurrentPage}
+                  totalPages={totalPages}
+                  onChange={setCurrentPage}
+                  ariaLabel="기자재 목록 페이지 이동"
+                />
+
+                <Button
+                  ref={registerButtonRef}
+                  className={styles.registerButton}
+                  kind="border"
+                  size="Default"
+                  color="Primary"
+                  status="Default"
+                  showLeftIcon={false}
+                  type="button"
+                  text="기자재 등록"
+                  disabled={!isMockMode}
+                  onClick={handleOpenCreateModal}
+                />
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
 
       <EquipmentCreateModal
         isOpen={isCreateModalOpen}
-        categoryOptions={EQUIPMENT_CATEGORIES}
+        categoryOptions={categoryOptions}
         onClose={handleCloseCreateModal}
         onConfirm={handleCreateEquipment}
         returnFocusRef={registerButtonRef}
@@ -628,7 +690,7 @@ function AdminEquipmentListPage() {
           key={editTargetEquipment.id}
           isOpen
           equipment={editTargetEquipment}
-          categoryOptions={EQUIPMENT_CATEGORIES}
+          categoryOptions={categoryOptions}
           onClose={handleCloseEditModal}
           onConfirm={handleUpdateEquipment}
           returnFocusRef={editButtonRef}
@@ -640,7 +702,7 @@ function AdminEquipmentListPage() {
           isOpen
           equipment={disposeTargetEquipment}
           categoryLabel={
-            CATEGORY_LABELS[disposeTargetEquipment.category] ?? "-"
+            categoryLabels[disposeTargetEquipment.category] ?? "-"
           }
           onClose={handleCloseDisposeModal}
           onConfirm={handleDisposeEquipment}
