@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   ALL_CATEGORY_OPTION,
@@ -8,7 +8,11 @@ import {
   toCategoryOption,
 } from "../../api/categories";
 import { isMockMode } from "../../api/client";
-import { getEquipmentModels } from "../../api/equipmentApi";
+import {
+  equipmentKeys,
+  getEquipmentModels,
+  setEquipmentModelWishlist,
+} from "../../api/equipmentApi";
 import Button from "../../components/common/Button";
 import SearchBar from "../../components/common/SearchBar";
 import Tabs from "../../components/common/Tabs";
@@ -18,10 +22,15 @@ import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import styles from "./StudentEquipmentListPage.module.css";
 
 function StudentEquipmentListPage() {
+  const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState(
     ALL_CATEGORY_OPTION.value,
   );
-  const [wishOverrides, setWishOverrides] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const pendingWishlistModelIdsRef = useRef(new Set());
+  const [pendingWishlistModelIds, setPendingWishlistModelIds] = useState(
+    () => new Set(),
+  );
 
   const categoryQuery = useQuery({
     queryKey: categoryKeys.list(),
@@ -44,28 +53,58 @@ function StudentEquipmentListPage() {
     (category) => category.value === selectedCategory,
   )?.categoryId;
 
-  function handleWishChange(equipmentId, nextIsWish) {
-    setWishOverrides((current) => ({
-      ...current,
-      [equipmentId]: nextIsWish,
-    }));
-  }
+  const normalizedSearchTerm = searchTerm.trim();
+  const listParams = {
+    categoryId: selectedCategoryId,
+    keyword: normalizedSearchTerm,
+    size: 12,
+  };
+
+  const wishlistMutation = useMutation({
+    mutationFn: setEquipmentModelWishlist,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: equipmentKeys.modelLists() }),
+        queryClient.invalidateQueries({ queryKey: equipmentKeys.wishlistRoot() }),
+      ]);
+    },
+    onSettled: (_data, _error, { modelId }) => {
+      pendingWishlistModelIdsRef.current.delete(modelId);
+      setPendingWishlistModelIds(
+        new Set(pendingWishlistModelIdsRef.current),
+      );
+    },
+  });
+
+  const handleWishChange = (modelId, isWish) => {
+    if (
+      !isMockMode ||
+      pendingWishlistModelIdsRef.current.has(modelId)
+    ) {
+      return;
+    }
+
+    pendingWishlistModelIdsRef.current.add(modelId);
+    setPendingWishlistModelIds(new Set(pendingWishlistModelIdsRef.current));
+    wishlistMutation.mutate({ modelId, isWish });
+  };
 
   const {
     items,
     loadMoreRef,
     isLoading,
     isError,
+    isSuccess,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteScroll({
     enabled: isMockMode && hasCategories,
-    queryKey: ["equipment-models", selectedCategory],
-    queryFn: ({ pageParam }) =>
+    queryKey: equipmentKeys.modelList(listParams),
+    queryFn: ({ pageParam, signal }) =>
       getEquipmentModels({
         page: pageParam,
-        size: 12,
-        categoryId: selectedCategoryId,
+        signal,
+        ...listParams,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
@@ -73,6 +112,19 @@ function StudentEquipmentListPage() {
       return nextPage < lastPage.totalPages ? nextPage : undefined;
     },
   });
+
+  const isEmptyEquipmentResult =
+    isMockMode &&
+    hasCategories &&
+    isSuccess &&
+    !isLoading &&
+    !isError &&
+    items.length === 0;
+  const emptyEquipmentMessage = normalizedSearchTerm
+    ? "검색 조건에 해당하는 기자재가 없습니다."
+    : selectedCategory !== ALL_CATEGORY_OPTION.value
+      ? "선택한 카테고리에 등록된 기자재가 없습니다."
+      : "등록된 기자재가 없습니다.";
 
   return (
     <main className={styles.studentEquipmentListPage}>
@@ -88,6 +140,9 @@ function StudentEquipmentListPage() {
           <SearchBar
             placeholder="기기명으로 검색..."
             disabled={!isMockMode || !hasCategories}
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onSubmit={setSearchTerm}
           />
         </div>
 
@@ -135,11 +190,19 @@ function StudentEquipmentListPage() {
                 기자재 목록을 불러오지 못했습니다.
               </p>
             ) : null}
+            {isMockMode && wishlistMutation.isError ? (
+              <p className={styles.equipmentState} role="alert">
+                찜 상태를 변경하지 못했습니다.
+              </p>
+            ) : null}
+            {isEmptyEquipmentResult ? (
+              <p className={styles.equipmentState}>{emptyEquipmentMessage}</p>
+            ) : null}
 
             {isMockMode
               ? items.map((equipment) => (
                   <EquipmentCard
-                    key={equipment.id}
+                    key={equipment.modelId}
                     category={
                       categoryOptions.find(
                         (category) =>
@@ -148,9 +211,11 @@ function StudentEquipmentListPage() {
                       )?.label ?? "카테고리"
                     }
                     {...equipment}
-                    isWish={wishOverrides[equipment.id] ?? equipment.isWish}
+                    isWishPending={
+                      pendingWishlistModelIds.has(equipment.modelId)
+                    }
                     onWishChange={(nextIsWish) =>
-                      handleWishChange(equipment.id, nextIsWish)
+                      handleWishChange(equipment.modelId, nextIsWish)
                     }
                   />
                 ))

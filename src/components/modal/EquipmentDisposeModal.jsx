@@ -13,6 +13,7 @@ function EquipmentDisposeModal({
   categoryLabel,
   equipment,
   isOpen = false,
+  isPending = false,
   onClose,
   onConfirm,
   returnFocusRef,
@@ -28,22 +29,32 @@ function EquipmentDisposeModal({
   }
 
   const handleCancel = (event) => {
+    if (isPending) {
+      return;
+    }
+
     onClose?.("cancel", event);
   };
 
   const handleConfirm = (event) => {
+    if (isPending) {
+      return;
+    }
+
     onConfirm?.(equipment, event);
   };
 
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={isPending ? undefined : onClose}
       className={styles.modal}
       ariaLabelledBy={titleId}
       ariaDescribedBy={descriptionId}
       initialFocusRef={cancelButtonRef}
       returnFocusRef={returnFocusRef}
+      closeOnEscape={!isPending}
+      closeOnOverlay={!isPending}
     >
       <section className={styles.layout}>
         <header className={styles.header}>
@@ -106,6 +117,7 @@ function EquipmentDisposeModal({
             status="Default"
             text="취소"
             type="button"
+            disabled={isPending}
             onClick={handleCancel}
           />
 
@@ -115,8 +127,9 @@ function EquipmentDisposeModal({
             size="Default"
             color="Danger"
             status="Default"
-            text="기자재 폐기"
+            text={isPending ? "처리 중" : "기자재 폐기"}
             type="button"
+            disabled={isPending}
             onClick={handleConfirm}
           />
         </footer>

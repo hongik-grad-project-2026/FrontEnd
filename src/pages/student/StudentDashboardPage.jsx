@@ -1,10 +1,15 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isMockMode } from "../../api/client";
 import { fetchNotices, noticeKeys } from '../../api/noticeApi';
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll"
 
-import { getMyWishlistedEquipmentModels } from "../../api/equipmentApi"
+import {
+  equipmentKeys,
+  getMyWishlistedEquipmentModels,
+  setEquipmentModelWishlist,
+} from "../../api/equipmentApi"
 
 import StatusBadge from "../../components/common/StatusBadge";
 import EquipmentCard from "../../components/card/EquipmentCard"
@@ -152,37 +157,71 @@ function RentalsLi({ rental }) {
 
 function StudentDashboardPage() {
   const navigate = useNavigate();
-  const [wishOverrides, setWishOverrides] = useState({});
+  const queryClient = useQueryClient();
+  const pendingWishlistModelIdsRef = useRef(new Set());
+  const [pendingWishlistModelIds, setPendingWishlistModelIds] = useState(
+    () => new Set(),
+  );
   const rentalGroups = {
     "승인대기": mockRentalList.filter((rental) => rental.status === "승인대기"),
     "수령대기": mockRentalList.filter((rental) => rental.status === "수령대기"),
     "대여중": mockRentalList.filter((rental) => rental.status === "대여중"),
   };
 
-  function handleWishChange(equipmentId, nextIsWish) {
-    setWishOverrides((current) => ({
-      ...current,
-      [equipmentId]: nextIsWish,
-    }));
-  }
+  const wishlistMutation = useMutation({
+    mutationFn: setEquipmentModelWishlist,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: equipmentKeys.modelLists() }),
+        queryClient.invalidateQueries({ queryKey: equipmentKeys.wishlistRoot() }),
+      ]);
+    },
+    onSettled: (_data, _error, { modelId }) => {
+      pendingWishlistModelIdsRef.current.delete(modelId);
+      setPendingWishlistModelIds(
+        new Set(pendingWishlistModelIdsRef.current),
+      );
+    },
+  });
+
+  const handleWishChange = (modelId, isWish) => {
+    if (
+      !isMockMode ||
+      pendingWishlistModelIdsRef.current.has(modelId)
+    ) {
+      return;
+    }
+
+    pendingWishlistModelIdsRef.current.add(modelId);
+    setPendingWishlistModelIds(new Set(pendingWishlistModelIdsRef.current));
+    wishlistMutation.mutate({ modelId, isWish });
+  };
 
   const {
     items,
     loadMoreRef,
     isLoading,
     isError,
+    isSuccess,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteScroll({
-    queryKey: ["equipment-models", "my-wishlist"],
-    queryFn: ({ pageParam }) =>
-      getMyWishlistedEquipmentModels({ page: pageParam, size: 12 }),
+    enabled: isMockMode,
+    queryKey: equipmentKeys.wishlist({ size: 12 }),
+    queryFn: ({ pageParam, signal }) =>
+      getMyWishlistedEquipmentModels({ page: pageParam, size: 12, signal }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => {
       const nextPage = lastPage.page + 1;
       return nextPage < lastPage.totalPages ? nextPage : undefined;
     },
   });
+  const isEmptyWishlist =
+    isMockMode &&
+    isSuccess &&
+    !isLoading &&
+    !isError &&
+    items.length === 0;
 
   return (
     <main className={styles.dashboardPage}>
@@ -242,30 +281,29 @@ function StudentDashboardPage() {
         <h3>찜목록</h3>
         <div className={styles.wishListGrid}>
 
-          {isLoading ? <p>찜 목록을 불러오는 중입니다.</p> : null}
-          {isError ? <p role="alert">찜 목록을 불러오지 못했습니다.</p> : null}
+          {!isMockMode ? <p>찜 API가 아직 제공되지 않았습니다.</p> : null}
+          {isMockMode && isLoading ? <p>찜 목록을 불러오는 중입니다.</p> : null}
+          {isMockMode && isError ? <p role="alert">찜 목록을 불러오지 못했습니다.</p> : null}
+          {isMockMode && wishlistMutation.isError ? (
+            <p role="alert">찜 상태를 변경하지 못했습니다.</p>
+          ) : null}
+          {isEmptyWishlist ? <p>찜한 기자재가 없습니다.</p> : null}
 
-          {items
-            .map((equipment) => ({
-              ...equipment,
-              // 클릭으로 바꾼 임시 상태가 있으면 API 응답의 isWish보다 우선
-              isWish: wishOverrides[equipment.id] ?? equipment.isWish,
-            }))
-            // 찜 해제 버튼을 누른 항목은 서버 변경 API 연결 전까지 현재 화면에서만 숨김
-            .filter((equipment) => equipment.isWish)
+          {isMockMode ? items
             .map((equipment) => (
               <EquipmentCard
-                key={equipment.id}
+                key={equipment.modelId}
                 {...equipment}
+                isWishPending={pendingWishlistModelIds.has(equipment.modelId)}
                 onWishChange={(nextIsWish) =>
-                  handleWishChange(equipment.id, nextIsWish)
+                  handleWishChange(equipment.modelId, nextIsWish)
                 }
               />
-            ))}
+            )) : null}
 
-          <div ref={loadMoreRef} aria-hidden="true" />
-          {isFetchingNextPage ? <p>찜 목록을 더 불러오는 중입니다.</p> : null}
-          {!hasNextPage && items.length > 0 ? <p>마지막 찜 항목입니다.</p> : null}
+          {isMockMode ? <div ref={loadMoreRef} aria-hidden="true" /> : null}
+          {isMockMode && isFetchingNextPage ? <p>찜 목록을 더 불러오는 중입니다.</p> : null}
+          {isMockMode && !hasNextPage && items.length > 0 ? <p>마지막 찜 항목입니다.</p> : null}
         </div>
       </section>
 

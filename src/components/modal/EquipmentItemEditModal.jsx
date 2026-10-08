@@ -96,7 +96,7 @@ function formatFileSize(size) {
 
 function createInitialForm(equipment) {
   return {
-    category: equipment.category ?? "",
+    category: equipment.categoryKey ?? "",
     status: equipment.status ?? "",
     receivedDate: parseDisplayDate(equipment.receivedDate),
     disposalDate: parseDisplayDate(equipment.disposalDate),
@@ -114,6 +114,7 @@ function EquipmentItemEditModal({
   categoryOptions = [],
   equipment,
   isOpen = false,
+  isPending = false,
   onClose,
   onConfirm,
   returnFocusRef,
@@ -157,10 +158,18 @@ function EquipmentItemEditModal({
   };
 
   const handleRequestClose = () => {
+    if (isPending) {
+      return;
+    }
+
     setIsCancelConfirmOpen(true);
   };
 
   const handleCancel = () => {
+    if (isPending) {
+      return;
+    }
+
     setIsCancelConfirmOpen(true);
   };
 
@@ -169,6 +178,10 @@ function EquipmentItemEditModal({
   };
 
   const handleConfirmCancel = (event) => {
+    if (isPending) {
+      return;
+    }
+
     setIsCancelConfirmOpen(false);
     onClose?.("cancel-confirm", event);
   };
@@ -187,16 +200,16 @@ function EquipmentItemEditModal({
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!hasFormChanges) {
+    if (!hasFormChanges || isPending) {
       return;
     }
 
     const submittedValues = {
-      equipmentId: equipment.id,
-      category: formValues.category,
+      modelId: equipment.modelId,
+      categoryKey: formValues.category,
       status: formValues.status,
       receivedDate: formValues.receivedDate,
       disposalDate: formValues.disposalDate,
@@ -209,7 +222,11 @@ function EquipmentItemEditModal({
       replacementImageFile: formValues.replacementImageFile,
     };
 
-    onConfirm?.(submittedValues, event);
+    try {
+      await onConfirm?.(submittedValues, event);
+    } catch {
+      // 실패하면 사용자가 입력한 값을 그대로 유지해.
+    }
   };
 
   return (
@@ -219,6 +236,8 @@ function EquipmentItemEditModal({
         onClose={handleRequestClose}
         className={styles.modal}
         ariaLabelledBy={titleId}
+        closeOnEscape={!isPending}
+        closeOnOverlay={!isPending}
         returnFocusRef={returnFocusRef}
       >
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
@@ -475,6 +494,7 @@ function EquipmentItemEditModal({
               status="Default"
               text="취소"
               type="button"
+              disabled={isPending}
               onClick={handleCancel}
             />
 
@@ -484,9 +504,9 @@ function EquipmentItemEditModal({
               size="Default"
               color="Primary"
               status="Default"
-              text="수정 완료"
+              text={isPending ? "처리 중" : "수정 완료"}
               type="submit"
-              disabled={!hasFormChanges}
+              disabled={!hasFormChanges || isPending}
             />
           </footer>
         </form>

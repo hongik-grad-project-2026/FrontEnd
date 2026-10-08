@@ -6,9 +6,6 @@ import { http, HttpResponse, delay } from "msw";
 import {
     // auth
     users, makeToken, parseToken,
-
-    // equipment
-    equipmentModels,
 } from "./db";
 import { MOCK_MEMBERS } from "../api/memberApi";
 import { MOCK_EQUIPMENT_CATEGORIES } from "../api/categories";
@@ -508,96 +505,6 @@ export const handlers = [
             code: "200",
             message: "성공",
             result: toMockMemberResponse(member),
-        });
-    }),
-
-    // -- 임시 내 찜 기자재 목록 --
-    // 백엔드의 찜 목록 경로가 확정되기 전까지 getMyWishlistedEquipmentModels() 요청을 응답합니다.
-    // mock DB의 isWish가 true인 모델만 고른 뒤, 일반 목록과 같은 page/size 응답 규격으로 반환합니다.
-    http.get(mockApiUrl("/users/me/wishlists/equipment-models"), async ({ request }) => {
-        await delay(300);
-
-        const searchParams = new URL(request.url).searchParams;
-        const page = Number(searchParams.get("page") ?? 0);
-        const size = Number(searchParams.get("size") ?? 20);
-
-        if (!Number.isInteger(page) || page < 0 || !Number.isInteger(size) || size < 1) {
-            return HttpResponse.json(
-                {
-                    isSuccess: false,
-                    code: "400",
-                    message: "페이지 번호 또는 페이지 크기가 올바르지 않습니다.",
-                    result: null,
-                },
-                { status: 400 }
-            );
-        }
-
-        const wishlistedModels = equipmentModels.filter((model) => model.isWish);
-        const totalElements = wishlistedModels.length;
-        const totalPages = Math.ceil(totalElements / size);
-        const content = wishlistedModels.slice(page * size, (page + 1) * size);
-
-        return HttpResponse.json({
-            isSuccess: true,
-            code: "200",
-            message: "성공",
-            result: {
-                content,
-                page,
-                size,
-                totalElements,
-                totalPages,
-            },
-        });
-    }),
-
-    // -- 공통 기자재 모델 목록 --
-    http.get(mockApiUrl("/equipment-models"), async ({ request }) => {
-        await delay(300);
-
-        const searchParams = new URL(request.url).searchParams;
-        const page = Number(searchParams.get("page") ?? 0);
-        const size = Number(searchParams.get("size") ?? 20);
-        const categoryId = searchParams.get("category_id");
-        const keyword = searchParams.get("keyword")?.trim().toLowerCase() ?? "";
-
-        if (!Number.isInteger(page) || page < 0 || !Number.isInteger(size) || size < 1) {
-            return HttpResponse.json(
-                {
-                    isSuccess: false,
-                    code: "400",
-                    message: "페이지 번호 또는 페이지 크기가 올바르지 않습니다.",
-                    result: null,
-                },
-                { status: 400 }
-            );
-        }
-
-        const filteredModels = equipmentModels.filter((model) => {
-            const matchesCategory =
-                !categoryId || model.categoryId === Number(categoryId);
-            const matchesKeyword =
-                !keyword || model.modelName.toLowerCase().includes(keyword);
-
-            return matchesCategory && matchesKeyword;
-        });
-
-        const totalElements = filteredModels.length;
-        const totalPages = Math.ceil(totalElements / size);
-        const content = filteredModels.slice(page * size, (page + 1) * size);
-
-        return HttpResponse.json({
-            isSuccess: true,
-            code: "200",
-            message: "성공",
-            result: {
-                content,
-                page,
-                size,
-                totalElements,
-                totalPages,
-            },
         });
     }),
 

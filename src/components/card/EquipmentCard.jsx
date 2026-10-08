@@ -6,13 +6,13 @@ function EquipmentCard({
     modelImageUrl,
     category = '카테고리',
     modelName = '모델명',
-    specification = "간단한 사양 설명이 들어갑니다.",
-    components = "간단한 구성 설명이 들어갑니다.",
-    description = "간단한 설명이 들어갑니다.",
-    stockTotal = 999,
-    stockRemaining = 111,
-    //찜버튼 임시 처리
+    specification = "",
+    components = "",
+    description = "",
+    stockTotal = 0,
+    stockRemaining = 0,
     isWish,
+    isWishPending = false,
     onWishChange,
 }) {
     const isStockOut = stockRemaining === 0 ? true : false;
@@ -66,6 +66,7 @@ function EquipmentCard({
                     />
                     <WishIconButton
                         isWish={isWish}
+                        disabled={isWishPending}
                         onClick={() => onWishChange(!isWish)}
                     />
                 </div>

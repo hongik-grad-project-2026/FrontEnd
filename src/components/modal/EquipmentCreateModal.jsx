@@ -60,6 +60,7 @@ function formatFileSize(size) {
 function EquipmentCreateModal({
   categoryOptions = [],
   isOpen = false,
+  isPending = false,
   onClose,
   onConfirm,
   returnFocusRef,
@@ -114,10 +115,18 @@ function EquipmentCreateModal({
   };
 
   const handleRequestClose = () => {
+    if (isPending) {
+      return;
+    }
+
     setIsCancelConfirmOpen(true);
   };
 
   const handleCancel = () => {
+    if (isPending) {
+      return;
+    }
+
     setIsCancelConfirmOpen(true);
   };
 
@@ -126,6 +135,10 @@ function EquipmentCreateModal({
   };
 
   const handleConfirmCancel = (event) => {
+    if (isPending) {
+      return;
+    }
+
     setIsCancelConfirmOpen(false);
     resetForm();
     onClose?.("cancel-confirm", event);
@@ -145,15 +158,17 @@ function EquipmentCreateModal({
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!isRequiredFormComplete) {
+    if (!isRequiredFormComplete || isPending) {
       return;
     }
 
+    const { category, ...otherFormValues } = formValues;
     const submittedValues = {
-      ...formValues,
+      ...otherFormValues,
+      categoryKey: category,
       name: formValues.name.trim(),
       modelName: formValues.modelName.trim(),
       accessories: formValues.accessories.trim(),
@@ -162,8 +177,12 @@ function EquipmentCreateModal({
       labelPrefix: formValues.labelPrefix.trim(),
     };
 
-    onConfirm?.(submittedValues, event);
-    resetForm();
+    try {
+      await onConfirm?.(submittedValues, event);
+      resetForm();
+    } catch {
+      // 실패하면 사용자가 입력한 값을 그대로 유지해.
+    }
   };
 
   return (
@@ -173,6 +192,8 @@ function EquipmentCreateModal({
         onClose={handleRequestClose}
         className={styles.modal}
         ariaLabelledBy={titleId}
+        closeOnEscape={!isPending}
+        closeOnOverlay={!isPending}
         returnFocusRef={returnFocusRef}
       >
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
@@ -433,6 +454,7 @@ function EquipmentCreateModal({
               status="Default"
               text="취소"
               type="button"
+              disabled={isPending}
               onClick={handleCancel}
             />
 
@@ -442,9 +464,9 @@ function EquipmentCreateModal({
               size="Default"
               color="Primary"
               status="Default"
-              text="등록"
+              text={isPending ? "처리 중" : "등록"}
               type="submit"
-              disabled={!isRequiredFormComplete}
+              disabled={!isRequiredFormComplete || isPending}
             />
           </footer>
         </form>

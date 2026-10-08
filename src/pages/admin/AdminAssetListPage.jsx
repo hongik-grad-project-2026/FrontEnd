@@ -1,10 +1,12 @@
 import { useId, useRef, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoaderData, useParams } from "react-router-dom";
 
+import { isMockMode } from "../../api/client";
 import {
   createAdminEquipmentItems,
   disposeAdminEquipmentItem,
+  equipmentKeys,
   getAdminEquipmentItemCounts,
   getAdminEquipmentItems,
   updateAdminEquipmentItem,
@@ -67,6 +69,7 @@ function NotesCell({ notes }) {
 function AdminAssetListPage() {
   const { modelId } = useParams();
   const modelSummary = useLoaderData();
+  const queryClient = useQueryClient();
 
   const panelId = useId();
   const lastActionTriggerRef = useRef(null);
@@ -84,42 +87,54 @@ function AdminAssetListPage() {
     isFetching: isItemsFetching,
     isError: isItemsError,
   } = useQuery({
-    queryKey: [
-      "admin",
-      "equipment",
-      "items",
-      {
-        modelId,
-        status: selectedStatus,
-        keyword,
-        page: currentPage - 1,
-        size: PAGE_SIZE,
-      },
-    ],
-    queryFn: () =>
+    queryKey: equipmentKeys.adminItems({
+      modelId,
+      status: selectedStatus,
+      keyword,
+      page: currentPage - 1,
+      size: PAGE_SIZE,
+    }),
+    queryFn: ({ signal }) =>
       getAdminEquipmentItems({
         modelId,
         status: selectedStatus,
         keyword,
         page: currentPage - 1,
         size: PAGE_SIZE,
+        signal,
       }),
-    enabled: Boolean(modelId),
+    enabled: isMockMode && Boolean(modelId),
     retry: false,
     refetchOnWindowFocus: false,
   });
 
   const { data: itemCounts, isError: isCountsError } = useQuery({
-    queryKey: ["admin", "equipment", "item-counts", modelId],
-    queryFn: () => getAdminEquipmentItemCounts(modelId),
-    enabled: Boolean(modelId),
+    queryKey: equipmentKeys.adminItemCounts(modelId),
+    queryFn: ({ signal }) =>
+      getAdminEquipmentItemCounts(modelId, { signal }),
+    enabled: isMockMode && Boolean(modelId),
     retry: false,
     refetchOnWindowFocus: false,
   });
 
+  const invalidateEquipmentQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: equipmentKeys.adminItemLists(modelId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: equipmentKeys.adminItemCounts(modelId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: equipmentKeys.adminModelLists(),
+      }),
+    ]);
+  };
+
   const createMutation = useMutation({
     mutationFn: createAdminEquipmentItems,
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
+      await invalidateEquipmentQueries();
       setActiveModal(null);
       setSelectedAsset(null);
 
@@ -129,8 +144,6 @@ function AdminAssetListPage() {
         details: result,
         keepParentOpen: false,
       });
-
-      // 실제 API 연결 후 목록·개수 query 무효화
     },
     onError: (error) => {
       setResultModal({
@@ -147,7 +160,8 @@ function AdminAssetListPage() {
 
   const updateMutation = useMutation({
     mutationFn: updateAdminEquipmentItem,
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateEquipmentQueries();
       setActiveModal(null);
       setSelectedAsset(null);
 
@@ -157,8 +171,6 @@ function AdminAssetListPage() {
         description: "정상적으로 수정 처리되었습니다.",
         keepParentOpen: false,
       });
-
-      // 실제 API 연결 후 목록·개수 query 무효화
     },
     onError: (error) => {
       setResultModal({
@@ -175,7 +187,8 @@ function AdminAssetListPage() {
 
   const disposeMutation = useMutation({
     mutationFn: disposeAdminEquipmentItem,
-    onSuccess: () => {
+    onSuccess: async () => {
+      await invalidateEquipmentQueries();
       setActiveModal(null);
       setSelectedAsset(null);
 
@@ -185,8 +198,6 @@ function AdminAssetListPage() {
         description: "정상적으로 폐기 처리되었습니다.",
         keepParentOpen: false,
       });
-
-      // 실제 API 연결 후 목록·개수 query 무효화
     },
     onError: (error) => {
       setResultModal({
@@ -223,7 +234,9 @@ function AdminAssetListPage() {
       ? "표시할 개별 기자재가 없습니다."
       : "선택한 상태에 해당하는 개별 기자재가 없습니다.";
 
-  if (!modelId) {
+  if (!isMockMode) {
+    emptyMessage = "개별 기자재 API가 아직 제공되지 않았습니다.";
+  } else if (!modelId) {
     emptyMessage = "조회할 기자재 모델 정보가 없습니다.";
   } else if (isItemsPending) {
     emptyMessage = "개별 기자재 목록을 불러오는 중입니다.";
@@ -247,6 +260,10 @@ function AdminAssetListPage() {
   };
 
   const handleOpenCreate = (event) => {
+    if (!isMockMode || createMutation.isPending) {
+      return;
+    }
+
     lastActionTriggerRef.current = event.currentTarget;
     setSelectedAsset(null);
     setActiveModal("create");
@@ -255,6 +272,10 @@ function AdminAssetListPage() {
   const handleOpenEdit = (asset, event) => {
     event.stopPropagation();
 
+    if (!isMockMode || updateMutation.isPending) {
+      return;
+    }
+
     lastActionTriggerRef.current = event.currentTarget;
     setSelectedAsset(asset);
     setActiveModal("edit");
@@ -262,6 +283,10 @@ function AdminAssetListPage() {
 
   const handleOpenDispose = (asset, event) => {
     event.stopPropagation();
+
+    if (!isMockMode || disposeMutation.isPending) {
+      return;
+    }
 
     lastActionTriggerRef.current = event.currentTarget;
     setSelectedAsset(asset);
@@ -370,6 +395,7 @@ function AdminAssetListPage() {
                 onSubmit={handleSearchSubmit}
                 ariaLabel="비품 번호 또는 라벨 번호 검색"
                 placeholder="검색어를 입력하세요."
+                disabled={!isMockMode}
               />
             </div>
 
@@ -425,7 +451,7 @@ function AdminAssetListPage() {
                 status="Default"
                 text="기기 등록"
                 type="button"
-                disabled={!modelId}
+                disabled={!isMockMode || !modelId}
                 onClick={handleOpenCreate}
               />
             </div>

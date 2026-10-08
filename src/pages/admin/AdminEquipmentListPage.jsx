@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   ALL_CATEGORY_OPTION,
@@ -8,6 +8,13 @@ import {
   toCategoryOption,
 } from "../../api/categories";
 import { isMockMode } from "../../api/client";
+import {
+  createAdminEquipmentModel,
+  disposeAdminEquipmentModel,
+  equipmentKeys,
+  getAdminEquipmentModels,
+  updateAdminEquipmentModel,
+} from "../../api/equipmentApi";
 import Button from "../../components/common/Button";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
@@ -24,196 +31,25 @@ import styles from "./AdminEquipmentListPage.module.css";
 
 const ROWS_PER_PAGE = 10;
 
+// 이 상태값은 실제 서버 계약이 아니라 현재 화면 확인용 mock 계약이야.
 const STATUS_BADGES = {
   active: "기자재-대여진행",
   paused: "기자재-대여중지",
 };
 
-// 화면과 목록 동작 확인용 임시 데이터
-// 실제 기자재, 제품 사양, API 응답 또는 서버 상태값을 의미하지 않음
-const MOCK_EQUIPMENT = [
-  {
-    id: "mock-equipment-001",
-    name: "화면 확인용 노트북 A",
-    modelName: "MOCK-LAPTOP-A",
-    category: "laptop",
-    os: "Windows",
-    accessories: "본체, 파우치, 충전 케이블",
-    specification: "화면 확인용 성능 정보",
-    description: "일반적인 두 줄 설명의 배치를 확인합니다.",
-    stockText: "3 / 5",
-    status: "active",
-    receivedDate: "2026.08.01",
-    disposalDate: "2028.08.01",
-  },
-  {
-    id: "mock-equipment-002",
-    name: "화면 확인용 긴 기자재명과 말줄임을 확인하는 노트북 B",
-    modelName: "MOCK-LAPTOP-B-LONG-MODEL-NAME",
-    category: "laptop",
-    os: "macOS",
-    accessories: "본체, 보호 케이스, 파우치, 어댑터, 충전 케이블",
-    specification: "긴 성능 정보가 두 줄을 초과할 때 표시를 확인합니다.",
-    description:
-      "긴 설명이 셀 너비와 행 높이를 넘지 않도록 두 줄 말줄임을 확인하는 임시 내용입니다.",
-    stockText: "0 / 4",
-    status: "paused",
-    receivedDate: "2026.08.02",
-    disposalDate: "2028.08.02",
-  },
-  {
-    id: "mock-equipment-003",
-    name: "화면 확인용 태블릿 A",
-    modelName: "MOCK-TABLET-A",
-    category: "tablet",
-    os: "Android",
-    accessories: "본체, 케이스, 충전 케이블",
-    specification: "화면 확인용 성능 정보",
-    description: "카테고리와 OS의 두 줄 표시를 확인합니다.",
-    stockText: "2 / 3",
-    status: "active",
-    receivedDate: "2026.08.03",
-    disposalDate: "2028.08.03",
-  },
-  {
-    id: "mock-equipment-004",
-    name: "화면 확인용 태블릿 B",
-    modelName: "MOCK-TABLET-B",
-    category: "tablet",
-    os: "iPadOS",
-    accessories: "본체, 케이스",
-    specification: "",
-    description: "성능 정보가 없는 셀의 배치를 확인합니다.",
-    stockText: "0 / 2",
-    status: "paused",
-    receivedDate: "2026.08.04",
-    disposalDate: "2028.08.04",
-  },
-  {
-    id: "mock-equipment-005",
-    name: "화면 확인용 키보드/마우스 A",
-    modelName: "",
-    category: "keyboard-mouse",
-    os: "",
-    accessories: "키보드, 마우스",
-    specification: "",
-    description: "모델명과 OS가 없는 한 줄 표시를 확인합니다.",
-    stockText: "4 / 6",
-    status: "active",
-    receivedDate: "2026.08.05",
-    disposalDate: "2028.08.05",
-  },
-  {
-    id: "mock-equipment-006",
-    name: "화면 확인용 키보드/마우스 B",
-    modelName: "MOCK-INPUT-B",
-    category: "keyboard-mouse",
-    os: "",
-    accessories: "키보드, 마우스, 수신기",
-    specification: "화면 확인용 연결 정보",
-    description: "대여중지 배지의 표시를 확인합니다.",
-    stockText: "0 / 3",
-    status: "paused",
-    receivedDate: "2026.08.06",
-    disposalDate: "2028.08.06",
-  },
-  {
-    id: "mock-equipment-007",
-    name: "화면 확인용 보조배터리 A",
-    modelName: "MOCK-BATTERY-A",
-    category: "power-bank",
-    os: "",
-    accessories: "본체, 충전 케이블",
-    specification: "화면 확인용 용량 정보",
-    description: "OS 없이 카테고리만 표시합니다.",
-    stockText: "5 / 8",
-    status: "active",
-    receivedDate: "2026.08.07",
-    disposalDate: "2028.08.07",
-  },
-  {
-    id: "mock-equipment-008",
-    name: "화면 확인용 보조배터리 B",
-    modelName: "MOCK-BATTERY-B",
-    category: "power-bank",
-    os: "",
-    accessories: "본체, 파우치, 충전 케이블",
-    specification: "화면 확인용 용량 정보",
-    description: "",
-    stockText: "0 / 4",
-    status: "paused",
-    receivedDate: "2026.08.08",
-    disposalDate: "2028.08.08",
-  },
-  {
-    id: "mock-equipment-009",
-    name: "화면 확인용 노트북 거치대 A",
-    modelName: "MOCK-LAPTOP-STAND-A",
-    category: "laptop-stand",
-    os: "",
-    accessories: "거치대, 보관 파우치",
-    specification: "",
-    description: "거치대 카테고리의 목록을 확인합니다.",
-    stockText: "2 / 2",
-    status: "active",
-    receivedDate: "2026.08.09",
-    disposalDate: "2028.08.09",
-  },
-  {
-    id: "mock-equipment-010",
-    name: "화면 확인용 노트북 거치대 B",
-    modelName: "MOCK-LAPTOP-STAND-B",
-    category: "laptop-stand",
-    os: "",
-    accessories: "거치대",
-    specification: "",
-    description: "첫 페이지의 마지막 행을 확인합니다.",
-    stockText: "0 / 2",
-    status: "paused",
-    receivedDate: "2026.08.10",
-    disposalDate: "2028.08.10",
-  },
-  {
-    id: "mock-equipment-011",
-    name: "화면 확인용 독서대 A",
-    modelName: "MOCK-BOOK-STAND-A",
-    category: "book-stand",
-    os: "",
-    accessories: "독서대",
-    specification: "",
-    description: "두 번째 페이지의 목록을 확인합니다.",
-    stockText: "1 / 2",
-    status: "active",
-    receivedDate: "2026.08.11",
-    disposalDate: "2028.08.11",
-  },
-  {
-    id: "mock-equipment-012",
-    name: "화면 확인용 독서대 B",
-    modelName: "MOCK-BOOK-STAND-B",
-    category: "book-stand",
-    os: "",
-    accessories: "독서대, 보관 가방",
-    specification: "",
-    description: "마지막 페이지와 대여중지 상태를 확인합니다.",
-    stockText: "0 / 1",
-    status: "paused",
-    receivedDate: "2026.08.12",
-    disposalDate: "2028.08.12",
-  },
-];
+function getErrorMessage(error, fallbackMessage) {
+  return error instanceof Error && error.message ? error.message : fallbackMessage;
+}
 
-function canDisposeEquipment(equipment) {
-  const matchedStock = equipment.stockText.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/);
-
-  if (!matchedStock) {
-    return false;
+function formatDisplayDate(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    return "";
   }
 
-  const availableCount = Number(matchedStock[1]);
-  const totalCount = Number(matchedStock[2]);
-
-  return availableCount === totalCount;
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}.${month}.${day}`;
 }
 
 function EquipmentImageCell() {
@@ -232,7 +68,6 @@ function EquipmentNameCell({ equipment }) {
       <strong className={styles.equipmentName} title={equipment.name}>
         {equipment.name}
       </strong>
-
       {equipment.modelName ? (
         <span className={styles.secondaryText} title={equipment.modelName}>
           {equipment.modelName}
@@ -245,10 +80,7 @@ function EquipmentNameCell({ equipment }) {
 function CategoryCell({ categoryLabel, equipment }) {
   return (
     <span className={styles.cellStack}>
-      <span className={styles.singleLineText}>
-        {categoryLabel}
-      </span>
-
+      <span className={styles.singleLineText}>{categoryLabel}</span>
       {equipment.os ? (
         <span className={styles.secondaryText} title={equipment.os}>
           {equipment.os}
@@ -272,15 +104,14 @@ function EquipmentDateCell({ equipment }) {
       <time
         className={styles.dateText}
         dateTime={equipment.receivedDate.replaceAll(".", "-")}
-        aria-label={"입고일 " + equipment.receivedDate}
+        aria-label={`입고일 ${equipment.receivedDate}`}
       >
         {equipment.receivedDate}
       </time>
-
       <time
         className={styles.dateText}
         dateTime={equipment.disposalDate.replaceAll(".", "-")}
-        aria-label={"폐기일 " + equipment.disposalDate}
+        aria-label={`폐기일 ${equipment.disposalDate}`}
       >
         {equipment.disposalDate}
       </time>
@@ -288,7 +119,12 @@ function EquipmentDateCell({ equipment }) {
   );
 }
 
-function EquipmentActionsCell({ equipment, onDispose, onEdit }) {
+function EquipmentActionsCell({
+  disabled,
+  equipment,
+  onDispose,
+  onEdit,
+}) {
   const handleEdit = (event) => {
     event.stopPropagation();
     onEdit(equipment, event);
@@ -306,16 +142,17 @@ function EquipmentActionsCell({ equipment, onDispose, onEdit }) {
         icon="edit"
         size={24}
         type="button"
-        ariaLabel={equipment.name + " 수정"}
+        ariaLabel={`${equipment.name} 수정`}
+        disabled={disabled}
         onClick={handleEdit}
       />
-
       <IconButton
         className={styles.actionButton}
         icon="trash"
         size={24}
         type="button"
-        ariaLabel={equipment.name + " 폐기"}
+        ariaLabel={`${equipment.name} 폐기`}
+        disabled={disabled}
         onClick={handleDispose}
       />
     </span>
@@ -324,6 +161,7 @@ function EquipmentActionsCell({ equipment, onDispose, onEdit }) {
 
 function AdminEquipmentListPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const panelId = useId();
   const registerButtonRef = useRef(null);
   const editButtonRef = useRef(null);
@@ -337,7 +175,7 @@ function AdminEquipmentListPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editTargetEquipment, setEditTargetEquipment] = useState(null);
   const [disposeTargetEquipment, setDisposeTargetEquipment] = useState(null);
-  const [feedbackType, setFeedbackType] = useState(null);
+  const [feedback, setFeedback] = useState(null);
 
   const categoryQuery = useQuery({
     queryKey: categoryKeys.list(),
@@ -346,65 +184,117 @@ function AdminEquipmentListPage() {
   const categoryOptions = (categoryQuery.data ?? []).map((category) =>
     toCategoryOption(category, { useMockKey: isMockMode }),
   );
-  const categoryLabels = Object.fromEntries(
-    categoryOptions.map((category) => [category.value, category.label]),
-  );
   const hasCategories = categoryQuery.isSuccess && categoryOptions.length > 0;
-  const availableEquipment = isMockMode && hasCategories ? MOCK_EQUIPMENT : [];
+  const selectedCategoryOption = categoryOptions.find(
+    (category) => category.value === selectedCategory,
+  );
+  const selectedCategoryId = selectedCategoryOption?.categoryId ?? null;
+  const normalizedSearchTerm = searchTerm.trim();
+  const listParams = {
+    categoryId: selectedCategoryId,
+    keyword: normalizedSearchTerm,
+    page: currentPage - 1,
+    size: ROWS_PER_PAGE,
+  };
 
-  // 탭의 숫자는 검색 전 전체 목업의 모델 수
+  const equipmentQuery = useQuery({
+    queryKey: equipmentKeys.adminModelList(listParams),
+    queryFn: ({ signal }) =>
+      getAdminEquipmentModels({ ...listParams, signal }),
+    enabled: isMockMode && hasCategories,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const invalidateEquipmentQueries = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: equipmentKeys.adminModelLists(),
+    });
+  };
+
+  const createMutation = useMutation({
+    mutationFn: createAdminEquipmentModel,
+    onSuccess: async () => {
+      await invalidateEquipmentQueries();
+      setIsCreateModalOpen(false);
+      setFeedback({ type: "create-success" });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: "operation-error",
+        message: getErrorMessage(error, "기자재를 등록하지 못했습니다."),
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: updateAdminEquipmentModel,
+    onSuccess: async () => {
+      await invalidateEquipmentQueries();
+      setEditTargetEquipment(null);
+      setFeedback({ type: "edit-success" });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: "operation-error",
+        message: getErrorMessage(error, "기자재를 수정하지 못했습니다."),
+      });
+    },
+  });
+
+  const disposeMutation = useMutation({
+    mutationFn: disposeAdminEquipmentModel,
+    onSuccess: async () => {
+      await invalidateEquipmentQueries();
+      setDisposeTargetEquipment(null);
+      setFeedback({ type: "dispose-success" });
+    },
+    onError: (error) => {
+      setFeedback({
+        type:
+          error?.code === "MODEL_HAS_UNAVAILABLE_ITEMS"
+            ? "dispose-failure"
+            : "operation-error",
+        message: getErrorMessage(error, "기자재를 폐기하지 못했습니다."),
+      });
+    },
+  });
+
+  const isMutationPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    disposeMutation.isPending;
+  const categoryLabels = Object.fromEntries(
+    categoryOptions.map((category) => [
+      String(category.categoryId),
+      category.label,
+    ]),
+  );
+  const categoryCounts = equipmentQuery.data?.categoryCounts ?? {};
   const tabItems = [
     {
       ...ALL_CATEGORY_OPTION,
-      count: isMockMode ? availableEquipment.length : undefined,
+      count: isMockMode ? categoryCounts.all : undefined,
       controlsId: panelId,
       disabled: !hasCategories,
     },
     ...categoryOptions.map((category) => ({
       ...category,
       count: isMockMode
-        ? availableEquipment.filter(
-            (equipment) => equipment.category === category.value,
-          ).length
+        ? categoryCounts[String(category.categoryId)] ?? 0
         : undefined,
       controlsId: panelId,
     })),
   ];
-
   const selectedCategoryLabel =
     selectedCategory === ALL_CATEGORY_OPTION.value
       ? ALL_CATEGORY_OPTION.label
-      : categoryLabels[selectedCategory] ?? "카테고리";
-
-  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-
-  const filteredEquipment = availableEquipment.filter((equipment) => {
-    const matchesCategory =
-      selectedCategory === ALL_CATEGORY_OPTION.value ||
-      equipment.category === selectedCategory;
-
-    const matchesSearch =
-      !normalizedSearchTerm ||
-      [equipment.name, equipment.modelName].some((value) =>
-        value.toLowerCase().includes(normalizedSearchTerm),
-      );
-
-    return matchesCategory && matchesSearch;
-  });
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredEquipment.length / ROWS_PER_PAGE),
-  );
-
-  const resolvedCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
-
-  const pageStartIndex = (resolvedCurrentPage - 1) * ROWS_PER_PAGE;
-
-  const visibleEquipment = filteredEquipment.slice(
-    pageStartIndex,
-    pageStartIndex + ROWS_PER_PAGE,
-  );
+      : selectedCategoryOption?.label ?? "카테고리";
+  const visibleEquipment = equipmentQuery.data?.content ?? [];
+  const totalPages = Math.max(1, equipmentQuery.data?.totalPages ?? 0);
+  const resolvedCurrentPage = equipmentQuery.data
+    ? equipmentQuery.data.page + 1
+    : currentPage;
 
   const handleCategoryChange = (nextCategory) => {
     setSelectedCategory(nextCategory);
@@ -422,72 +312,89 @@ function AdminEquipmentListPage() {
   };
 
   const handleOpenAssetList = (equipment) => {
-    navigate(`/admin/equipment/${encodeURIComponent(equipment.id)}/assets`);
-  };
-
-  const handleOpenCreateModal = () => {
-    if (!isMockMode || !hasCategories) {
-      return;
-    }
-
-    setIsCreateModalOpen(true);
+    navigate(
+      `/admin/equipment/${encodeURIComponent(equipment.modelId)}/assets`,
+    );
   };
 
   const handleCloseCreateModal = () => {
-    setIsCreateModalOpen(false);
+    if (!createMutation.isPending) {
+      setIsCreateModalOpen(false);
+    }
   };
 
-  const handleCreateEquipment = () => {
-    // 실제 등록 API와 목록 추가는 아직 연결하지 않음
-    setIsCreateModalOpen(false);
-    setFeedbackType("create-success");
+  const resolveCategory = (categoryKey) => {
+    const category = categoryOptions.find(
+      (option) => option.value === categoryKey,
+    );
+
+    if (!category) {
+      throw new Error("선택한 카테고리를 확인할 수 없습니다.");
+    }
+
+    return category;
   };
+
+  const toMutationValues = (values) => {
+    const category = resolveCategory(values.categoryKey ?? values.category);
+
+    return {
+      ...values,
+      modelId: values.modelId,
+      categoryId: category.categoryId,
+      categoryKey: category.key,
+      receivedDate: formatDisplayDate(values.receivedDate),
+      disposalDate: formatDisplayDate(values.disposalDate),
+    };
+  };
+
+  const handleCreateEquipment = (values) =>
+    createMutation.mutateAsync(toMutationValues(values));
 
   const handleOpenEditModal = (equipment, event) => {
+    if (isMutationPending) return;
     editButtonRef.current = event.currentTarget;
     setEditTargetEquipment(equipment);
   };
 
   const handleCloseEditModal = () => {
-    setEditTargetEquipment(null);
+    if (!updateMutation.isPending) {
+      setEditTargetEquipment(null);
+    }
   };
 
-  const handleUpdateEquipment = () => {
-    // 실제 수정 API와 목록 변경은 아직 연결하지 않음
-    setEditTargetEquipment(null);
-    setFeedbackType("edit-success");
-  };
+  const handleUpdateEquipment = (values) =>
+    updateMutation.mutateAsync(toMutationValues(values));
 
   const handleOpenDisposeModal = (equipment, event) => {
+    if (isMutationPending) return;
     disposeButtonRef.current = event.currentTarget;
     setDisposeTargetEquipment(equipment);
   };
 
   const handleCloseDisposeModal = () => {
-    setDisposeTargetEquipment(null);
+    if (!disposeMutation.isPending) {
+      setDisposeTargetEquipment(null);
+    }
   };
 
   const handleDisposeEquipment = (equipment) => {
-    // 실제 폐기 API가 없어서 임시 재고 문자열로 결과만 구분
-    const nextFeedbackType = canDisposeEquipment(equipment)
-      ? "dispose-success"
-      : "dispose-failure";
-
-    setDisposeTargetEquipment(null);
-    setFeedbackType(nextFeedbackType);
+    disposeMutation.mutate({ modelId: equipment.modelId });
   };
 
-  const handleCloseFeedback = () => {
-    setFeedbackType(null);
-  };
+  let emptyMessage = normalizedSearchTerm
+    ? "검색 조건에 해당하는 기자재가 없습니다."
+    : selectedCategory === ALL_CATEGORY_OPTION.value
+      ? "표시할 기자재가 없습니다."
+      : "해당 카테고리에 표시할 기자재가 없습니다.";
 
-  const emptyMessage = !isMockMode
-    ? "기자재 API가 아직 제공되지 않았습니다."
-    : normalizedSearchTerm
-      ? "검색 조건에 해당하는 기자재가 없습니다."
-      : selectedCategory === ALL_CATEGORY_OPTION.value
-        ? "표시할 기자재가 없습니다."
-        : "해당 카테고리에 표시할 기자재가 없습니다.";
+  if (!isMockMode) {
+    emptyMessage = "기자재 API가 아직 제공되지 않았습니다.";
+  } else if (equipmentQuery.isPending) {
+    emptyMessage = "기자재 목록을 불러오는 중입니다.";
+  } else if (equipmentQuery.isError) {
+    emptyMessage = "기자재 목록을 불러오지 못했습니다.";
+  }
 
   const columns = [
     {
@@ -509,7 +416,7 @@ function AdminEquipmentListPage() {
       render: (equipment) => (
         <CategoryCell
           equipment={equipment}
-          categoryLabel={categoryLabels[equipment.category] ?? "카테고리"}
+          categoryLabel={categoryLabels[String(equipment.categoryId)] ?? "카테고리"}
         />
       ),
     },
@@ -559,6 +466,7 @@ function AdminEquipmentListPage() {
       width: 68,
       render: (equipment) => (
         <EquipmentActionsCell
+          disabled={isMutationPending}
           equipment={equipment}
           onEdit={handleOpenEditModal}
           onDispose={handleOpenDisposeModal}
@@ -570,12 +478,7 @@ function AdminEquipmentListPage() {
   return (
     <section className={styles.page}>
       <PageHeader />
-
-      <div
-        className={styles.contentViewport}
-        role="region"
-        aria-label="기자재 목록 영역"
-      >
+      <div className={styles.contentViewport} role="region" aria-label="기자재 목록 영역">
         <div className={styles.content}>
           <div className={styles.toolbar}>
             <Tabs
@@ -585,7 +488,6 @@ function AdminEquipmentListPage() {
               onChange={handleCategoryChange}
               ariaLabel="기자재 카테고리"
             />
-
             <SearchBar
               className={styles.search}
               name="equipmentSearch"
@@ -600,17 +502,11 @@ function AdminEquipmentListPage() {
           </div>
 
           {categoryQuery.isPending ? (
-            <p className={styles.categoryState}>
-              카테고리를 불러오는 중입니다.
-            </p>
+            <p className={styles.categoryState}>카테고리를 불러오는 중입니다.</p>
           ) : null}
-
           {categoryQuery.isError ? (
             <div className={styles.categoryState} role="alert">
-              <p>
-                {categoryQuery.error?.message ||
-                  "카테고리를 불러오지 못했습니다."}
-              </p>
+              <p>{categoryQuery.error?.message || "카테고리를 불러오지 못했습니다."}</p>
               <Button
                 color="Neutral"
                 kind="border"
@@ -622,11 +518,8 @@ function AdminEquipmentListPage() {
               />
             </div>
           ) : null}
-
           {categoryQuery.isSuccess && !hasCategories ? (
-            <p className={styles.categoryState}>
-              등록된 카테고리가 없습니다.
-            </p>
+            <p className={styles.categoryState}>등록된 카테고리가 없습니다.</p>
           ) : null}
 
           {hasCategories ? (
@@ -635,20 +528,20 @@ function AdminEquipmentListPage() {
                 id={panelId}
                 className={styles.tablePanel}
                 role="tabpanel"
-                aria-label={selectedCategoryLabel + " 기자재 목록"}
+                aria-label={`${selectedCategoryLabel} 기자재 목록`}
+                aria-busy={equipmentQuery.isFetching}
               >
                 <DataTable
                   className={styles.dataTable}
                   ariaLabel="관리자 기자재 모델 목록"
                   columns={columns}
                   rows={visibleEquipment}
-                  getRowId={(equipment) => equipment.id}
+                  getRowId={(equipment) => equipment.modelId}
                   onRowClick={handleOpenAssetList}
                   minWidth={1120}
                   emptyMessage={emptyMessage}
                 />
               </div>
-
               <div className={styles.footer}>
                 <Pagination
                   className={styles.pagination}
@@ -657,7 +550,6 @@ function AdminEquipmentListPage() {
                   onChange={setCurrentPage}
                   ariaLabel="기자재 목록 페이지 이동"
                 />
-
                 <Button
                   ref={registerButtonRef}
                   className={styles.registerButton}
@@ -665,11 +557,10 @@ function AdminEquipmentListPage() {
                   size="Default"
                   color="Primary"
                   status="Default"
-                  showLeftIcon={false}
                   type="button"
                   text="기자재 등록"
-                  disabled={!isMockMode}
-                  onClick={handleOpenCreateModal}
+                  disabled={!isMockMode || isMutationPending}
+                  onClick={() => setIsCreateModalOpen(true)}
                 />
               </div>
             </>
@@ -679,16 +570,17 @@ function AdminEquipmentListPage() {
 
       <EquipmentCreateModal
         isOpen={isCreateModalOpen}
+        isPending={createMutation.isPending}
         categoryOptions={categoryOptions}
         onClose={handleCloseCreateModal}
         onConfirm={handleCreateEquipment}
         returnFocusRef={registerButtonRef}
       />
-
       {editTargetEquipment ? (
         <EquipmentItemEditModal
-          key={editTargetEquipment.id}
+          key={editTargetEquipment.modelId}
           isOpen
+          isPending={updateMutation.isPending}
           equipment={editTargetEquipment}
           categoryOptions={categoryOptions}
           onClose={handleCloseEditModal}
@@ -696,13 +588,13 @@ function AdminEquipmentListPage() {
           returnFocusRef={editButtonRef}
         />
       ) : null}
-
       {disposeTargetEquipment ? (
         <EquipmentDisposeModal
           isOpen
+          isPending={disposeMutation.isPending}
           equipment={disposeTargetEquipment}
           categoryLabel={
-            categoryLabels[disposeTargetEquipment.category] ?? "-"
+            categoryLabels[String(disposeTargetEquipment.categoryId)] ?? "-"
           }
           onClose={handleCloseDisposeModal}
           onConfirm={handleDisposeEquipment}
@@ -711,53 +603,60 @@ function AdminEquipmentListPage() {
       ) : null}
 
       <ConfirmModal
-        isOpen={feedbackType === "create-success"}
+        isOpen={feedback?.type === "create-success"}
         icon="checkmark"
         title="등록 완료"
         description="정상적으로 등록되었습니다."
         secondaryDescription="기자재 모델 상세페이지에서 기기를 등록해주세요."
         confirmText="확인"
         showCancel={false}
-        onClose={handleCloseFeedback}
-        onConfirm={handleCloseFeedback}
+        onClose={() => setFeedback(null)}
+        onConfirm={() => setFeedback(null)}
         returnFocusRef={registerButtonRef}
       />
-
       <ConfirmModal
-        isOpen={feedbackType === "edit-success"}
+        isOpen={feedback?.type === "edit-success"}
         icon="checkmark"
         title="수정 완료"
         description="정상적으로 수정되었습니다."
         confirmText="확인"
         showCancel={false}
-        onClose={handleCloseFeedback}
-        onConfirm={handleCloseFeedback}
+        onClose={() => setFeedback(null)}
+        onConfirm={() => setFeedback(null)}
         returnFocusRef={editButtonRef}
       />
-
       <ConfirmModal
-        isOpen={feedbackType === "dispose-success"}
+        isOpen={feedback?.type === "dispose-success"}
         icon="checkmark"
         title="폐기 완료"
         description="정상적으로 폐기처리되었습니다."
         confirmText="확인"
         showCancel={false}
-        onClose={handleCloseFeedback}
-        onConfirm={handleCloseFeedback}
+        onClose={() => setFeedback(null)}
+        onConfirm={() => setFeedback(null)}
         returnFocusRef={disposeButtonRef}
       />
-
       <ConfirmModal
-        isOpen={feedbackType === "dispose-failure"}
+        isOpen={feedback?.type === "dispose-failure"}
         icon="warning"
         title="폐기 불가능 상태입니다"
-        description="아직 대여중인 기기가 존재합니다."
+        description={feedback?.message || "아직 대여중인 기기가 존재합니다."}
         confirmText="확인"
         confirmColor="Danger"
         showCancel={false}
-        onClose={handleCloseFeedback}
-        onConfirm={handleCloseFeedback}
-        returnFocusRef={disposeButtonRef}
+        onClose={() => setFeedback(null)}
+        onConfirm={() => setFeedback(null)}
+      />
+      <ConfirmModal
+        isOpen={feedback?.type === "operation-error"}
+        icon="warning"
+        title="요청을 처리하지 못했습니다"
+        description={feedback?.message}
+        confirmText="확인"
+        confirmColor="Danger"
+        showCancel={false}
+        onClose={() => setFeedback(null)}
+        onConfirm={() => setFeedback(null)}
       />
     </section>
   );
