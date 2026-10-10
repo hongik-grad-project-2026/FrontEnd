@@ -63,6 +63,7 @@ function NoticeArea() {
                 return (<AccordionItem
                     key={notice.noticeId}
                     noticeId={notice.noticeId}
+                    detailPath={`/admin/notices/${notice.noticeId}`}
                     isImportant={notice.important}
                     title={notice.title}
                     hasAttachments={hasAttachments}

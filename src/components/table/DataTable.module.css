@@ -81,6 +81,22 @@
   border-radius: var(--radius-8) var(--radius-8) 0 0;
 }
 
+.dataTableRoot[data-header-overflow="true"] .tableFrame,
+.dataTableRoot[data-header-overflow="true"] .headerCell,
+.dataTableRoot[data-header-overflow="true"] .headerCell .cellContent {
+  overflow: visible;
+}
+
+.dataTableRoot[data-header-overflow="true"] .headerCell {
+  position: relative;
+  z-index: 2;
+}
+
+.dataTableRoot[data-header-overflow="true"] .headerRow {
+  position: relative;
+  z-index: 2;
+}
+
 .table {
   width: 100%;
   table-layout: fixed;

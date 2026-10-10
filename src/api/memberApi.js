@@ -113,6 +113,7 @@ export const MOCK_MEMBERS = [
     name: "긴이름표시확인용가상학생",
     studentId: "C000011",
     department: "긴 학과명 표시 확인용 가상 학과 및 융합전공",
+    status: "WITHDRAWN",
     listGroup: "normal",
     membershipStatus: "normal",
     phone: "010-0000-0000",
@@ -405,6 +406,43 @@ function requireMockOnlyFeature() {
   throw error;
 }
 
+function createUnsupportedError(message) {
+  const error = new Error(message);
+  error.code = "API_NOT_SUPPORTED";
+  return error;
+}
+
+export function getAdminMemberCapabilities() {
+  return {
+    canFilterOtherDepartment: isMockMode,
+    canUpdateStatus: isMockMode,
+  };
+}
+
+function getMockMemberStatus(member) {
+  if (["ACTIVE", "SUSPENDED", "WITHDRAWN"].includes(member.status)) {
+    return member.status;
+  }
+
+  return member.listGroup === "blacklist" ? "SUSPENDED" : "ACTIVE";
+}
+
+function toMockMemberContract(member) {
+  return {
+    userId: member.id,
+    loginId: member.studentId,
+    studentId: member.studentId,
+    name: member.name,
+    email: member.email,
+    phoneNumber: member.phone,
+    college: member.college ?? "공과대학",
+    department: member.department,
+    role: "STUDENT",
+    status: getMockMemberStatus(member),
+    profileImageUrl: member.profileImageUrl ?? null,
+  };
+}
+
 function resolvePage(page, totalPages) {
   const requestedPage = Number.isInteger(page) && page >= 0 ? page : 0;
 
@@ -484,21 +522,86 @@ function toMemberDetail(member) {
   };
 }
 
+function getMockMembersByOtherDepartment({
+  keyword,
+  status,
+  currentDepartment,
+  page,
+  size,
+}) {
+  requireMockOnlyFeature();
+
+  if (!currentDepartment) {
+    throw createUnsupportedError("관리자 소속 학과 정보를 확인할 수 없습니다.");
+  }
+
+  const normalizedKeyword = keyword.trim().toLowerCase();
+  const filteredMembers = MOCK_MEMBERS.map(toMockMemberContract).filter((member) => {
+    const matchesKeyword =
+      !normalizedKeyword ||
+      member.name.toLowerCase().includes(normalizedKeyword) ||
+      member.studentId.toLowerCase().includes(normalizedKeyword);
+    const matchesStatus = !status || member.status === status;
+    const isOtherDepartment = member.department !== currentDepartment;
+
+    return matchesKeyword && matchesStatus && isOtherDepartment;
+  });
+  const memberPage = createPage(filteredMembers, page, size);
+
+  return {
+    ...memberPage,
+    content: memberPage.content.map(toMemberListItem),
+    hasNext: memberPage.page + 1 < memberPage.totalPages,
+  };
+}
+
 export async function getAdminMembers({
   keyword = "",
   status = "",
   college = "",
   department = "",
+  affiliation = "all",
+  currentCollege = "",
+  currentDepartment = "",
   page = 0,
   size = 10,
   signal,
 } = {}) {
+  if (affiliation === "other") {
+    if (!isMockMode) {
+      throw createUnsupportedError(
+        "현재 서버 API에서 타과생 전체 조회를 지원하지 않습니다.",
+      );
+    }
+
+    return getMockMembersByOtherDepartment({
+      keyword,
+      status,
+      currentDepartment,
+      page,
+      size,
+    });
+  }
+
+  const resolvedCollege = affiliation === "own" ? currentCollege : college;
+  const resolvedDepartment =
+    affiliation === "own" ? currentDepartment : department;
+
+  if (affiliation === "own" && !resolvedDepartment) {
+    throw createUnsupportedError("관리자 소속 학과 정보를 확인할 수 없습니다.");
+  }
+
   const params = new URLSearchParams({
     page: String(page),
     size: String(size),
   });
 
-  const optionalParams = { keyword, status, college, department };
+  const optionalParams = {
+    keyword,
+    status,
+    college: resolvedCollege,
+    department: resolvedDepartment,
+  };
 
   for (const [key, value] of Object.entries(optionalParams)) {
     const normalizedValue = value?.trim();
@@ -563,6 +666,28 @@ export async function updateAdminMember(userId, fields, options) {
   );
 
   return toMemberDetail(result);
+}
+
+export async function updateAdminMemberStatus(userId, status) {
+  if (!isMockMode) {
+    throw createUnsupportedError(
+      "현재 서버 API에서 회원 상태 변경을 지원하지 않습니다.",
+    );
+  }
+
+  if (!["ACTIVE", "SUSPENDED"].includes(status)) {
+    const error = new Error("지원하지 않는 회원 상태입니다.");
+    error.code = "INVALID_MEMBER_STATUS";
+    throw error;
+  }
+
+  const member = requireMember(userId);
+  member.status = status;
+  member.listGroup = status === "SUSPENDED" ? "blacklist" : "normal";
+  member.membershipStatus =
+    status === "SUSPENDED" ? "blacklist" : "normal";
+
+  return toMemberDetail(toMockMemberContract(member));
 }
 
 // 회원별 블랙리스트 기록 임시 조회

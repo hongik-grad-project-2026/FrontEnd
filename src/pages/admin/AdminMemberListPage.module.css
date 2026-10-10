@@ -61,8 +61,119 @@
 }
 
 .dataTable {
-  overflow: hidden;
   border-radius: var(--radius-8);
+}
+
+.departmentFilter {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.departmentFilterTrigger {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-4);
+  color: inherit;
+  background-color: transparent;
+  font: inherit;
+  white-space: nowrap;
+}
+
+.departmentFilterTrigger[data-active="true"] {
+  color: var(--color-brand-primary);
+}
+
+.departmentFilterTrigger:hover {
+  color: var(--color-neutral-90);
+}
+
+.departmentFilterTrigger:focus-visible {
+  outline: var(--border-width-default) solid var(--color-focus);
+  outline-offset: var(--spacing-2);
+  border-radius: var(--radius-2);
+}
+
+.departmentFilterIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  background-color: currentColor;
+  -webkit-mask-image: url("/icons/icon24/down.png");
+  mask-image: url("/icons/icon24/down.png");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 16px;
+  mask-size: 16px;
+}
+
+.departmentFilterTrigger[aria-expanded="true"] .departmentFilterIcon {
+  -webkit-mask-image: url("/icons/icon24/up.png");
+  mask-image: url("/icons/icon24/up.png");
+}
+
+.departmentFilterMenu {
+  position: absolute;
+  top: calc(100% + var(--spacing-8));
+  left: 0;
+  z-index: 20;
+  display: flex;
+  width: 208px;
+  max-width: calc(100vw - var(--spacing-32));
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-6);
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-border-default);
+  border-radius: var(--radius-8);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+}
+
+.departmentFilterOption {
+  display: flex;
+  width: 100%;
+  min-height: 36px;
+  align-items: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-6) var(--spacing-8);
+  color: var(--color-neutral-80);
+  text-align: left;
+  background-color: transparent;
+  border-radius: var(--radius-4);
+  font-size: var(--text-body-3-size);
+  font-weight: var(--text-body-3-weight);
+  line-height: var(--text-body-3-line-height);
+}
+
+.departmentFilterOption:not(:disabled):hover,
+.departmentFilterOption:not(:disabled):focus-visible {
+  background-color: var(--color-neutral-10);
+}
+
+.departmentFilterOption[data-selected="true"] {
+  color: var(--color-brand-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.departmentFilterOption:disabled {
+  color: var(--color-neutral-40);
+  cursor: not-allowed;
+}
+
+.departmentFilterCheck {
+  width: 16px;
+  flex: 0 0 16px;
+  text-align: center;
+}
+
+.unsupportedLabel {
+  margin-left: auto;
+  color: var(--color-neutral-50);
+  font-size: var(--text-label-size);
+  white-space: nowrap;
 }
 
 .memberCell {

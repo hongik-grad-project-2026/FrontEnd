@@ -41,6 +41,7 @@ function isInteractiveTarget(target) {
 }
 
 function DataTable({
+  allowHeaderOverflow = false,
   ariaLabel = "데이터 표",
   bulkAction,
   className = "",
@@ -137,7 +138,10 @@ function DataTable({
   const tableColumnCount = columns.length + (selectable ? 1 : 0);
 
   return (
-    <section className={rootClassName}>
+    <section
+      className={rootClassName}
+      data-header-overflow={allowHeaderOverflow || undefined}
+    >
       {showToolbar ? (
         <div className={styles.toolbar}>
           <div className={styles.toolbarStart}>

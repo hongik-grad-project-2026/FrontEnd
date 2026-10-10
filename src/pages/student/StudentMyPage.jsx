@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useBeforeUnload, useBlocker, useNavigate } from "react-router-dom";
 
 import DashboardStatusCard from "../../components/card/DashboardStatusCard";
 import Button from "../../components/common/Button";
@@ -56,6 +56,7 @@ function StudentMyPage() {
   const imageSubmitGuardRef = useRef(false);
   const withdrawGuardRef = useRef(false);
   const infoDirtyRef = useRef(false);
+  const bypassNavigationGuardRef = useRef(false);
   const localCount = 99; // 대여 집계 API가 생길 때까지 기존 임시값을 유지해.
   const currentUserQueryKey = ["currentUser", user?.id];
   const hasHydratedUser = hasCompleteMyInfo(user);
@@ -114,6 +115,7 @@ function StudentMyPage() {
   const hasInfoChanges =
     trimmedEmail !== (availableUser?.email ?? "") ||
     trimmedPhoneNumber !== (availableUser?.phoneNumber ?? "");
+  const hasUnsavedChanges = hasInfoChanges || selectedImage !== null;
   const canSubmitInfo =
     hasInfoChanges &&
     isEmailValid &&
@@ -121,6 +123,35 @@ function StudentMyPage() {
     !infoMutation.isPending;
   const profileImageSrc =
     previewUrl || availableUser?.profileImageUrl || DEFAULT_PROFILE_IMAGE;
+
+  const shouldBlockNavigation = useCallback(
+    ({ currentLocation, nextLocation }) =>
+      !bypassNavigationGuardRef.current &&
+      hasUnsavedChanges &&
+      (currentLocation.pathname !== nextLocation.pathname ||
+        currentLocation.search !== nextLocation.search ||
+        currentLocation.hash !== nextLocation.hash),
+    [hasUnsavedChanges],
+  );
+  const navigationBlocker = useBlocker(shouldBlockNavigation);
+
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (
+          !hasUnsavedChanges ||
+          bypassNavigationGuardRef.current
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.returnValue = "";
+      },
+      [hasUnsavedChanges],
+    ),
+    { capture: true },
+  );
 
   async function handleInfoSubmit(event) {
     event.preventDefault();
@@ -211,6 +242,7 @@ function StudentMyPage() {
     try {
       await withdrawMutation.mutateAsync();
       queryClient.removeQueries({ queryKey: ["currentUser"] });
+      bypassNavigationGuardRef.current = true;
       navigate("/login", { replace: true });
     } catch {
       // 실패하면 확인창을 유지해서 서버 오류를 보여줘.
@@ -422,6 +454,18 @@ function StudentMyPage() {
           />
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={navigationBlocker.state === "blocked"}
+        icon="warning"
+        title="저장하지 않은 변경이 있습니다."
+        description="이 페이지를 나가면 저장하지 않은 이메일·연락처 또는 프로필 이미지 변경이 사라집니다."
+        cancelText="계속 작성"
+        confirmText="나가기"
+        confirmColor="Danger"
+        onClose={() => navigationBlocker.reset?.()}
+        onConfirm={() => navigationBlocker.proceed?.()}
+      />
 
       <ConfirmModal
         isOpen={isWithdrawModalOpen}

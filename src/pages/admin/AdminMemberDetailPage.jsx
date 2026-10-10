@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
@@ -7,10 +7,12 @@ import {
   getAdminMemberDetail,
   getAdminMemberRentalHistory,
   updateAdminMember,
+  updateAdminMemberStatus,
 } from "../../api/memberApi";
 
 import MemberInfoCard from "../../components/card/MemberInfoCard";
 import MemberEditModal from "../../components/modal/MemberEditModal";
+import ConfirmModal from "../../components/modal/ConfirmModal";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/common/SearchBar";
@@ -26,10 +28,10 @@ const RENTAL_PAGE_SIZE = 10;
 
 const MEMBER_BADGE_STATUS = {
   active: "회원-일반",
+  suspended: "회원-블랙",
 };
 
 const MEMBER_STATUS_LABEL = {
-  suspended: "정지회원",
   withdrawn: "탈퇴회원",
   unknown: "상태 미확인",
 };
@@ -252,9 +254,11 @@ function AdminMemberDetailPage() {
   const panelId = useId();
   const { userId } = useParams();
   const queryClient = useQueryClient();
+  const statusRequestRef = useRef(false);
 
   const [selectedTab, setSelectedTab] = useState("info");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [nextMemberStatus, setNextMemberStatus] = useState(null);
   const [blacklistPage, setBlacklistPage] = useState(1);
   const [rentalKeyword, setRentalKeyword] = useState("");
   const [rentalPage, setRentalPage] = useState(1);
@@ -278,9 +282,32 @@ function AdminMemberDetailPage() {
         queryKey: ["admin", "members", "list"],
       });
       queryClient.invalidateQueries({
+        queryKey: ["admin", "members", "counts"],
+      });
+      queryClient.invalidateQueries({
         queryKey: ["admin", "members", "detail", userId],
       });
       setIsEditModalOpen(false);
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: (status) => updateAdminMemberStatus(userId, status),
+    onSuccess: (updatedMember) => {
+      queryClient.setQueryData(
+        ["admin", "members", "detail", userId],
+        updatedMember,
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "members", "list"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "members", "counts"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "members", "detail", userId],
+      });
+      setNextMemberStatus(null);
     },
   });
 
@@ -414,6 +441,49 @@ function AdminMemberDetailPage() {
     }
   };
 
+  const handleOpenStatusModal = () => {
+    updateStatusMutation.reset();
+
+    if (member.membershipStatus === "active") {
+      setNextMemberStatus("SUSPENDED");
+    } else if (member.membershipStatus === "suspended") {
+      setNextMemberStatus("ACTIVE");
+    }
+  };
+
+  const handleCloseStatusModal = () => {
+    if (!updateStatusMutation.isPending && !statusRequestRef.current) {
+      setNextMemberStatus(null);
+    }
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (
+      !nextMemberStatus ||
+      updateStatusMutation.isPending ||
+      statusRequestRef.current
+    ) {
+      return;
+    }
+
+    statusRequestRef.current = true;
+
+    try {
+      await updateStatusMutation.mutateAsync(nextMemberStatus);
+    } catch {
+      // 오류는 확인창에 보여주고 기존 회원 상태를 유지해.
+    } finally {
+      statusRequestRef.current = false;
+    }
+  };
+
+  const statusActionLabel =
+    member.membershipStatus === "active"
+      ? "블랙리스트 등록"
+      : member.membershipStatus === "suspended"
+        ? "블랙리스트 해제"
+        : null;
+
   return (
     <div className={styles.page}>
       <PageHeader customTitle={member.name} />
@@ -470,6 +540,11 @@ function AdminMemberDetailPage() {
                   onEditMember={handleOpenEditModal}
                   onEditPhone={handleOpenEditModal}
                   onEditEmail={handleOpenEditModal}
+                  statusActionLabel={statusActionLabel}
+                  statusActionPending={updateStatusMutation.isPending}
+                  onStatusAction={
+                    statusActionLabel ? handleOpenStatusModal : undefined
+                  }
                 />
               </section>
 
@@ -589,6 +664,32 @@ function AdminMemberDetailPage() {
           onSubmit={(fields) => updateMemberMutation.mutate(fields)}
         />
       ) : null}
+
+      <ConfirmModal
+        isOpen={Boolean(nextMemberStatus)}
+        title={
+          nextMemberStatus === "SUSPENDED"
+            ? "블랙리스트로 등록할까요?"
+            : "블랙리스트를 해제할까요?"
+        }
+        description={
+          nextMemberStatus === "SUSPENDED"
+            ? `${member.name} 회원을 블랙리스트로 등록합니다.`
+            : `${member.name} 회원을 일반회원으로 전환합니다.`
+        }
+        secondaryDescription={updateStatusMutation.error?.message}
+        confirmText={
+          updateStatusMutation.isPending
+            ? "처리 중..."
+            : (statusActionLabel ?? "확인")
+        }
+        confirmColor="Danger"
+        actionsDisabled={updateStatusMutation.isPending}
+        closeOnEscape={!updateStatusMutation.isPending}
+        closeOnOverlay={!updateStatusMutation.isPending}
+        onClose={handleCloseStatusModal}
+        onConfirm={handleConfirmStatusChange}
+      />
     </div>
   );
 }

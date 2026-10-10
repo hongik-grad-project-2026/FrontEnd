@@ -85,7 +85,7 @@
     line-clamp: 2;
 }
 
-.accordionItem[data-has-content="true"]:hover .content {
+.accordionItem[data-expanded="true"] .content {
     grid-template-rows: 1fr;
     padding-bottom: var(--spacing-10);
 }
@@ -94,8 +94,32 @@
     background-color: var(--color-neutral-10);
 }
 
-.accordionItem[data-has-content="true"]:hover .updownIcon {
+.accordionItem[data-expanded="true"] .updownIcon {
     background-image: url('/icons/icon24/up.png');
+}
+
+.accordionItem:focus-visible {
+    outline: var(--border-width-active) solid var(--color-focus);
+    outline-offset: calc(-1 * var(--border-width-active));
+}
+
+.contentStatus {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-8);
+}
+
+.retryButton {
+    padding: var(--spacing-2) var(--spacing-8);
+    color: var(--color-neutral-90);
+    background-color: var(--color-white);
+    border: var(--border-width-default) solid var(--color-border-default);
+    border-radius: var(--radius-4);
+    font: inherit;
+}
+
+.retryButton:hover {
+    background-color: var(--color-neutral-20);
 }
 
 .accordionItem:active {

@@ -43,6 +43,9 @@ function MemberInfoCard({
   onEditMember,
   onEditPhone,
   onEditEmail,
+  statusActionLabel,
+  statusActionPending = false,
+  onStatusAction,
 }) {
   return (
     <article className={styles.card} aria-label={`${member.name} 기본 정보`}>
@@ -64,6 +67,17 @@ function MemberInfoCard({
           {statusLabel ? <span className={styles.statusLabel}>{statusLabel}</span> : null}
 
           <EditButton label="회원 기본 정보" onClick={onEditMember} />
+
+          {statusActionLabel ? (
+            <button
+              type="button"
+              className={styles.statusActionButton}
+              disabled={statusActionPending}
+              onClick={onStatusAction}
+            >
+              {statusActionPending ? "처리 중..." : statusActionLabel}
+            </button>
+          ) : null}
         </div>
 
         <div className={styles.detailsGrid}>

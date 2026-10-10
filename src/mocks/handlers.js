@@ -24,6 +24,10 @@ if (!MOCK_API_BASE_URL) {
 const mockApiUrl = (path) => `${MOCK_API_BASE_URL}${path}`;
 
 function getMockMemberStatus(member) {
+    if (["ACTIVE", "SUSPENDED", "WITHDRAWN"].includes(member.status)) {
+        return member.status;
+    }
+
     if (member.listGroup === "blacklist") {
         return "SUSPENDED";
     }

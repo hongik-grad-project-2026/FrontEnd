@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { IconTextButton } from "../common/IconButton";
 import styles from "./Sidebar.module.css";
@@ -11,6 +11,7 @@ function NavItem({
   navLink = "/",
   icon = "dashboard",
   end = false,
+  forceActive = false,
 }) {
   return (
     <li>
@@ -18,7 +19,7 @@ function NavItem({
         end={end}
         to={navLink}
         className={({ isActive }) =>
-          `${styles.navItem} ${isActive ? styles["navItem-active"] : ""}`
+          `${styles.navItem} ${isActive || forceActive ? styles["navItem-active"] : ""}`
         }
       >
         <span
@@ -73,7 +74,7 @@ function AccountPanel({ userName, userRole, userId, profileImage, onLogout }) {
           <p className={styles.userName}>{userName}</p>
 
           <p className={styles.userInfo}>
-            {userRole === "admin" ? "관리자 모드" : userId}
+            {userId}
           </p>
         </div>
       </div>
@@ -86,6 +87,7 @@ function AccountPanel({ userName, userRole, userId, profileImage, onLogout }) {
 function Sidebar() {
   const { user, logout } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const userName = user.name;
   const userId = user.loginId || user.id;
@@ -105,20 +107,33 @@ function Sidebar() {
     return null;
   }
 
+  const dashboardPath = isAdmin ? "/admin" : "/student";
+  const isDashboardActive =
+    location.pathname === dashboardPath ||
+    location.pathname === `${dashboardPath}/` ||
+    location.pathname.startsWith(`${dashboardPath}/notices`);
+
   return (
     <section className={styles.sidebar}>
       <h1 className={styles.logoArea}>
-        <img src="/images/h1.png" alt="홍익대학교" />
-        멀티미디어실
+        <Link
+          className={styles.logoLink}
+          to={dashboardPath}
+          aria-label="현재 역할 대시보드로 이동"
+        >
+          <img src="/images/h1.png" alt="홍익대학교" />
+          <span>멀티미디어실</span>
+        </Link>
       </h1>
 
       <div className={styles.navCon}>
         <NavSubtitle titleName="overview">
           <NavItem
             itemName="대시보드"
-            navLink={`/${accountMode}/`}
+            navLink={dashboardPath}
             icon="dashboard"
             end
+            forceActive={isDashboardActive}
           />
         </NavSubtitle>
 

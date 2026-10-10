@@ -1,8 +1,11 @@
-import { useId, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useId, useRef, useState } from "react";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { getAdminMembers } from "../../api/memberApi";
+import {
+  getAdminMemberCapabilities,
+  getAdminMembers,
+} from "../../api/memberApi";
 
 import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
@@ -10,24 +13,32 @@ import Tabs from "../../components/common/Tabs";
 import SearchBar from "../../components/common/SearchBar";
 import Pagination from "../../components/common/Pagination";
 import StatusBadge from "../../components/common/StatusBadge";
+import { useUser } from "../../context/UserContext";
 
 import styles from "./AdminMemberListPage.module.css";
 
 const PAGE_SIZE = 10;
+const COUNT_QUERY_SIZE = 1;
+const COUNT_STALE_TIME = 30 * 1000;
 
 const MEMBER_TABS = [
   { value: "all", label: "전체" },
-  { value: "ACTIVE", label: "활성" },
-  { value: "SUSPENDED", label: "정지" },
-  { value: "WITHDRAWN", label: "탈퇴" },
+  { value: "ACTIVE", label: "일반회원" },
+  { value: "SUSPENDED", label: "블랙리스트" },
+];
+
+const AFFILIATION_OPTIONS = [
+  { value: "all", label: "전체 소속" },
+  { value: "own", label: "소속 학과" },
+  { value: "other", label: "타과생" },
 ];
 
 const MEMBER_BADGE_STATUS = {
   active: "회원-일반",
+  suspended: "회원-블랙",
 };
 
 const MEMBER_STATUS_LABEL = {
-  suspended: "정지회원",
   withdrawn: "탈퇴회원",
   unknown: "상태 미확인",
 };
@@ -54,6 +65,109 @@ function TextCell({ text }) {
   );
 }
 
+function DepartmentFilterHeader({
+  value,
+  canFilterOtherDepartment,
+  onChange,
+}) {
+  const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedLabel =
+    value === "own" ? "소속" : value === "other" ? "타과생" : "";
+
+  const options = AFFILIATION_OPTIONS.map((option) => ({
+    ...option,
+    disabled:
+      option.value === "other" && !canFilterOtherDepartment,
+  }));
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const handleOutsidePointerDown = (event) => {
+      if (!rootRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    };
+
+    document.addEventListener("pointerdown", handleOutsidePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen]);
+
+  const handleSelect = (option) => {
+    if (option.disabled) {
+      return;
+    }
+
+    onChange(option.value);
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  return (
+    <div ref={rootRef} className={styles.departmentFilter}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={styles.departmentFilterTrigger}
+        data-active={value !== "all"}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((previous) => !previous)}
+      >
+        <span>학과{selectedLabel ? ` · ${selectedLabel}` : ""}</span>
+        <span className={styles.departmentFilterIcon} aria-hidden="true" />
+      </button>
+
+      {isOpen ? (
+        <div className={styles.departmentFilterMenu} role="menu">
+          {options.map((option) => {
+            const isSelected = option.value === value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={styles.departmentFilterOption}
+                role="menuitemradio"
+                aria-checked={isSelected}
+                disabled={option.disabled}
+                data-selected={isSelected}
+                onClick={() => handleSelect(option)}
+              >
+                <span className={styles.departmentFilterCheck} aria-hidden="true">
+                  {isSelected ? "✓" : ""}
+                </span>
+                <span>{option.label}</span>
+                {option.disabled ? (
+                  <span className={styles.unsupportedLabel}>API 미지원</span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const MEMBER_COLUMNS = [
   {
     key: "name",
@@ -75,7 +189,7 @@ const MEMBER_COLUMNS = [
   },
   {
     key: "membershipStatus",
-    header: "상태",
+    header: "분류",
     width: 116,
     render: (member) => {
       const badgeStatus = MEMBER_BADGE_STATUS[member.membershipStatus];
@@ -106,11 +220,26 @@ const MEMBER_COLUMNS = [
 function AdminMemberListPage() {
   const panelId = useId();
   const navigate = useNavigate();
+  const { user, refreshCurrentUser } = useUser();
 
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedAffiliation, setSelectedAffiliation] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const college = "";
-  const department = "";
+  const { canFilterOtherDepartment } = getAdminMemberCapabilities();
+
+  const needsAffiliationInfo = selectedAffiliation !== "all";
+  const hasUserAffiliation = Boolean(user?.department);
+  const currentUserQuery = useQuery({
+    queryKey: ["currentUser", user?.id],
+    queryFn: ({ signal }) => refreshCurrentUser({ signal }),
+    enabled: needsAffiliationInfo && !hasUserAffiliation,
+    initialData: hasUserAffiliation ? user : undefined,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  const affiliationUser = hasUserAffiliation ? user : currentUserQuery.data;
+  const canLoadMembers =
+    !needsAffiliationInfo || Boolean(affiliationUser?.department);
 
   // 화면 페이지 번호: 1부터 시작
   // 조회 함수 전달 시 0부터 시작하는 번호로 변환
@@ -121,6 +250,7 @@ function AdminMemberListPage() {
     isPending: isMembersPending,
     isFetching: isMembersFetching,
     isError: isMembersError,
+    error: membersError,
   } = useQuery({
     queryKey: [
       "admin",
@@ -129,8 +259,9 @@ function AdminMemberListPage() {
       {
         keyword: searchTerm,
         status: selectedStatus === "all" ? "" : selectedStatus,
-        college,
-        department,
+        affiliation: selectedAffiliation,
+        currentCollege: affiliationUser?.college ?? "",
+        currentDepartment: affiliationUser?.department ?? "",
         page: currentPage - 1,
         size: PAGE_SIZE,
       },
@@ -139,20 +270,60 @@ function AdminMemberListPage() {
       getAdminMembers({
         keyword: searchTerm,
         status: selectedStatus === "all" ? "" : selectedStatus,
-        college,
-        department,
+        affiliation: selectedAffiliation,
+        currentCollege: affiliationUser?.college ?? "",
+        currentDepartment: affiliationUser?.department ?? "",
         page: currentPage - 1,
         size: PAGE_SIZE,
         signal,
       }),
+    enabled: canLoadMembers,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
-  const tabItems = MEMBER_TABS.map((tab) => ({
+  const memberCountQueries = useQueries({
+    queries: MEMBER_TABS.map((tab) => {
+      const status = tab.value === "all" ? "" : tab.value;
+
+      return {
+        queryKey: [
+          "admin",
+          "members",
+          "counts",
+          {
+            keyword: searchTerm,
+            status,
+            affiliation: selectedAffiliation,
+            currentCollege: affiliationUser?.college ?? "",
+            currentDepartment: affiliationUser?.department ?? "",
+            size: COUNT_QUERY_SIZE,
+          },
+        ],
+        queryFn: ({ signal }) =>
+          getAdminMembers({
+            keyword: searchTerm,
+            status,
+            affiliation: selectedAffiliation,
+            currentCollege: affiliationUser?.college ?? "",
+            currentDepartment: affiliationUser?.department ?? "",
+            page: 0,
+            size: COUNT_QUERY_SIZE,
+            signal,
+          }),
+        enabled:
+          canLoadMembers &&
+          (selectedAffiliation !== "other" || canFilterOtherDepartment),
+        staleTime: COUNT_STALE_TIME,
+        retry: false,
+        refetchOnWindowFocus: false,
+      };
+    }),
+  });
+
+  const tabItems = MEMBER_TABS.map((tab, index) => ({
     ...tab,
-    count:
-      tab.value === selectedStatus ? memberPage?.totalElements : undefined,
+    count: memberCountQueries[index].data?.totalElements ?? "-",
     controlsId: panelId,
   }));
 
@@ -170,10 +341,17 @@ function AdminMemberListPage() {
     ? "검색 조건에 해당하는 회원이 없습니다."
     : "표시할 회원이 없습니다.";
 
-  if (isMembersPending) {
+  if (needsAffiliationInfo && currentUserQuery.isPending) {
+    emptyMessage = "관리자 소속 정보를 불러오는 중입니다.";
+  } else if (needsAffiliationInfo && currentUserQuery.isError) {
+    emptyMessage =
+      currentUserQuery.error?.message ||
+      "관리자 소속 정보를 불러오지 못했습니다.";
+  } else if (isMembersPending) {
     emptyMessage = "회원 목록을 불러오는 중입니다.";
   } else if (isMembersError) {
-    emptyMessage = "회원 목록을 불러오지 못했습니다.";
+    emptyMessage =
+      membersError?.message || "회원 목록을 불러오지 못했습니다.";
   }
 
   const handleStatusChange = (nextStatus) => {
@@ -183,6 +361,11 @@ function AdminMemberListPage() {
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleAffiliationChange = (nextAffiliation) => {
+    setSelectedAffiliation(nextAffiliation);
     setCurrentPage(1);
   };
 
@@ -197,6 +380,21 @@ function AdminMemberListPage() {
   const handleOpenMemberDetail = (member) => {
     navigate(`/admin/members/${encodeURIComponent(member.id)}`);
   };
+
+  const memberColumns = MEMBER_COLUMNS.map((column) =>
+    column.key === "department"
+      ? {
+          ...column,
+          header: (
+            <DepartmentFilterHeader
+              value={selectedAffiliation}
+              canFilterOtherDepartment={canFilterOtherDepartment}
+              onChange={handleAffiliationChange}
+            />
+          ),
+        }
+      : column,
+  );
 
   return (
     <div className={styles.page}>
@@ -244,8 +442,9 @@ function AdminMemberListPage() {
 
             <DataTable
               className={styles.dataTable}
+              allowHeaderOverflow
               ariaLabel="회원 관리 목록"
-              columns={MEMBER_COLUMNS}
+              columns={memberColumns}
               rows={visibleMembers}
               getRowId={(member) => member.id}
               getRowLabel={(member) => `${member.name} 회원`}
