@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBeforeUnload, useBlocker, useNavigate } from "react-router-dom";
+import {
+  getStudentRentalCounts,
+  studentRentalKeys,
+} from "../../api/rentalApi";
 
 import DashboardStatusCard from "../../components/card/DashboardStatusCard";
 import Button from "../../components/common/Button";
@@ -57,7 +61,6 @@ function StudentMyPage() {
   const withdrawGuardRef = useRef(false);
   const infoDirtyRef = useRef(false);
   const bypassNavigationGuardRef = useRef(false);
-  const localCount = 99; // 대여 집계 API가 생길 때까지 기존 임시값을 유지해.
   const currentUserQueryKey = ["currentUser", user?.id];
   const hasHydratedUser = hasCompleteMyInfo(user);
 
@@ -70,6 +73,18 @@ function StudentMyPage() {
   const infoMutation = useMutation({ mutationFn: updateMyInfo });
   const imageMutation = useMutation({ mutationFn: updateMyProfileImage });
   const withdrawMutation = useMutation({ mutationFn: withdrawCurrentUser });
+  const rentalCountsQuery = useQuery({
+    queryKey: studentRentalKeys.counts(),
+    queryFn: ({ signal }) => getStudentRentalCounts({ signal }),
+    retry: (failureCount, error) =>
+      error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" && failureCount < 1,
+  });
+  const rentalCounts = rentalCountsQuery.data;
+  const rentalApplicationCount = rentalCounts?.approvalPending ?? "-";
+  const activeRentalCount = rentalCounts
+    ? rentalCounts.pickupPending + rentalCounts.renting
+    : "-";
+  const returnedRentalCount = rentalCounts?.returned ?? "-";
 
   function releasePreviewUrl() {
     if (previewUrlRef.current) {
@@ -408,22 +423,29 @@ function StudentMyPage() {
 
       <div className={styles.contentSection}>
         <h3>대여 현황</h3>
+        {rentalCountsQuery.isError ? (
+          <p className={styles.rentalCountState} role="status">
+            {rentalCountsQuery.error?.code === "STUDENT_RENTAL_API_UNAVAILABLE"
+              ? "대여 API가 아직 제공되지 않았습니다."
+              : "대여 현황을 불러오지 못했습니다."}
+          </p>
+        ) : null}
         <div className={styles.contentContainer}>
           <DashboardStatusCard
             title="대여 신청"
-            count={localCount}
+            count={rentalApplicationCount}
             onClick={() => navigate("/student/history")}
             color="yellow"
           />
           <DashboardStatusCard
             title="대여 중"
-            count={localCount}
+            count={activeRentalCount}
             onClick={() => navigate("/student/history")}
             color="green"
           />
           <DashboardStatusCard
             title="반납 완료"
-            count={localCount}
+            count={returnedRentalCount}
             onClick={() => navigate("/student/history")}
             color="red"
           />

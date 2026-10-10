@@ -122,7 +122,16 @@
 }
 
 .rentalsLi[data-rantalstatus='대여중'] .liDateInfo {
+    color: var(--color-neutral-50);
+}
+
+.rentalsLi[data-rantalstatus='연체'] .liDateInfo {
     color: var(--color-status-danger);
+    font-weight: var(--text-body-2-weight);
+}
+
+.rentalsLi[data-rantalstatus='연체']::before {
+    background: var(--color-status-danger);
 }
 
 .rentalsCount {

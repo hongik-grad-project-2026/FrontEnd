@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isMockMode } from "../../api/client";
 import { fetchNotices, noticeKeys } from '../../api/noticeApi';
+import {
+  getStudentRentalDashboard,
+  studentRentalKeys,
+} from "../../api/rentalApi";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll"
 
 import {
@@ -20,53 +24,77 @@ import AccordionItem from "../../components/common/AccordionItem";
 
 import styles from "./StudentDashboardPage.module.css"
 
-const mockRentalList = [
-  { id: 1, status: "승인대기", modelName: "Sony A7 IV" },
-  {
-    id: 2,
-    status: "승인대기",
-    modelName: "Canon EOS R6 Mark II",
-  },
-  {
-    id: 3,
-    status: "승인대기",
-    modelName: "Zoom H6 레코더",
-  },
-  {
-    id: 4,
-    status: "승인대기",
-    modelName: "Zoom H6 레코더",
-  },
-  {
-    id: 5,
-    status: "수령대기",
-    modelName: "FE 24-70mm F2.8",
-    expectedPickupAt: "2026-09-20T14:00:00",
-  },
-  {
-    id: 6,
-    status: "수령대기",
-    modelName: "무선 핀마이크",
-    expectedPickupAt: "2026-09-21T10:30:00",
-  },
-  {
-    id: 9,
-    status: "대여중",
-    modelName: "DJI RS 3 짐벌",
-    expectedReturnAt: "2026-09-20",
-    returnDday: 2,
-  },
-
-]
-
-
 function formatPickupDateTime(dateTime) {
+  if (!dateTime?.includes("T")) {
+    return dateTime ?? "-";
+  }
+
   const [date, time] = dateTime.split("T");
   return `${date.replaceAll("-", ".")} ${time}`;
 }
 
 function formatReturnDate(date) {
-  return date.replaceAll("-", ".");
+  return date?.replaceAll("-", ".") ?? "-";
+}
+
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function parseDateParts(dateValue) {
+  if (typeof dateValue !== "string") {
+    return null;
+  }
+
+  const matchedDate = dateValue.match(/^(\d{4})[-.](\d{1,2})[-.](\d{1,2})/);
+
+  if (!matchedDate) {
+    return null;
+  }
+
+  const [, yearText, monthText, dayText] = matchedDate;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return { year, month, day };
+}
+
+function formatReturnDateWithDday(dateValue, today = new Date()) {
+  const returnDate = parseDateParts(dateValue);
+
+  if (!returnDate || Number.isNaN(today.getTime())) {
+    return "-";
+  }
+
+  const returnDay = Date.UTC(
+    returnDate.year,
+    returnDate.month - 1,
+    returnDate.day,
+  );
+  const todayDay = Date.UTC(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const remainingDays = Math.round(
+    (returnDay - todayDay) / MILLISECONDS_PER_DAY,
+  );
+  const dday =
+    remainingDays > 0
+      ? `D-${remainingDays}`
+      : remainingDays === 0
+        ? "D-Day"
+        : `D+${Math.abs(remainingDays)}`;
+
+  return `${formatReturnDate(dateValue)} (${dday})`;
 }
 
 
@@ -138,17 +166,24 @@ function NoticeArea() {
 
 
 function RentalsLi({ rental }) {
+  const statusLabel = {
+    approvalPending: "승인대기",
+    pickupPending: "수령대기",
+    renting: "대여중",
+    overdue: "연체",
+  }[rental.status];
+
   return (
-    <li className={styles.rentalsLi} data-rantalstatus={rental.status}>
+    <li className={styles.rentalsLi} data-rantalstatus={statusLabel}>
       <div >
-        <span className={styles.liModelName}>{rental.modelName}</span>
+        <span className={styles.liModelName}>{rental.equipmentName}</span>
       </div>
-      {rental.status === "수령대기" && (
+      {rental.status === "pickupPending" && (
         <span className={styles.liDateInfo}>{formatPickupDateTime(rental.expectedPickupAt)}</span>
       )}
-      {rental.status === "대여중" && (
+      {(rental.status === "renting" || rental.status === "overdue") && (
         <span className={styles.liDateInfo}>
-          {formatReturnDate(rental.expectedReturnAt)} (D-{rental.returnDday})
+          {formatReturnDateWithDday(rental.expectedReturnAt)}
         </span>
       )}
     </li>
@@ -162,10 +197,16 @@ function StudentDashboardPage() {
   const [pendingWishlistModelIds, setPendingWishlistModelIds] = useState(
     () => new Set(),
   );
-  const rentalGroups = {
-    "승인대기": mockRentalList.filter((rental) => rental.status === "승인대기"),
-    "수령대기": mockRentalList.filter((rental) => rental.status === "수령대기"),
-    "대여중": mockRentalList.filter((rental) => rental.status === "대여중"),
+  const rentalQuery = useQuery({
+    queryKey: studentRentalKeys.dashboard(),
+    queryFn: ({ signal }) => getStudentRentalDashboard({ signal }),
+    retry: (failureCount, error) =>
+      error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" && failureCount < 1,
+  });
+  const rentalGroups = rentalQuery.data ?? {
+    approvalPending: [],
+    pickupPending: [],
+    renting: [],
   };
 
   const wishlistMutation = useMutation({
@@ -243,37 +284,58 @@ function StudentDashboardPage() {
 
       <section className={styles.section} >
         <h3>대여 현황</h3>
-        <div className={styles.rentalsGrid}>
+        {rentalQuery.isPending ? (
+          <p className={styles.noticeState}>대여 현황을 불러오는 중입니다.</p>
+        ) : null}
+        {rentalQuery.isError ? (
+          <div className={styles.noticeState} role="alert">
+            <p>
+              {rentalQuery.error?.code === "STUDENT_RENTAL_API_UNAVAILABLE"
+                ? "대여 API가 아직 제공되지 않았습니다."
+                : rentalQuery.error?.message ||
+                  "대여 현황을 불러오지 못했습니다."}
+            </p>
+            {rentalQuery.error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" ? (
+              <IconTextButton
+                icon="rotate"
+                text={rentalQuery.isFetching ? "다시 시도 중" : "다시 시도"}
+                disabled={rentalQuery.isFetching}
+                onClick={() => rentalQuery.refetch()}
+              />
+            ) : null}
+          </div>
+        ) : null}
+        {rentalQuery.isSuccess ? <div className={styles.rentalsGrid}>
           <div className={`${styles.contentArea} ${styles.rentalStatusBox}`}>
             <StatusBadge status='대여-승인대기' size='md' />
             <ul>
-              {rentalGroups["승인대기"].slice(0, 2).map((rental) => (
-                <RentalsLi key={rental.id} rental={rental} />
+              {rentalGroups.approvalPending.slice(0, 2).map((rental) => (
+                <RentalsLi key={rental.rentalId} rental={rental} />
               ))}
-              {rentalGroups["승인대기"].length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups["승인대기"].length - 2}건</span></li> : ''}
+              {rentalGroups.approvalPending.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.approvalPending.length - 2}건</span></li> : ''}
             </ul>
           </div>
           <div className={`${styles.contentArea} ${styles.rentalStatusBox}`}>
             <StatusBadge status='대여-수령대기' size='md' />
             <ul>
-              {rentalGroups["수령대기"].slice(0, 2).map((rental) => (
-                <RentalsLi key={rental.id} rental={rental} />
+              {rentalGroups.pickupPending.slice(0, 2).map((rental) => (
+                <RentalsLi key={rental.rentalId} rental={rental} />
               ))}
-              {rentalGroups["수령대기"].length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups["승인대기"].length - 2}건</span></li> : ''}
+              {rentalGroups.pickupPending.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.pickupPending.length - 2}건</span></li> : ''}
             </ul>
 
           </div>
           <div className={`${styles.contentArea} ${styles.rentalStatusBox}`}>
             <StatusBadge status='대여-대여중' size='md' />
             <ul>
-              {rentalGroups["대여중"].slice(0, 2).map((rental) => (
-                <RentalsLi key={rental.id} rental={rental} />
+              {rentalGroups.renting.slice(0, 2).map((rental) => (
+                <RentalsLi key={rental.rentalId} rental={rental} />
               ))}
-              {rentalGroups["대여중"].length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups["승인대기"].length - 2}건</span></li> : ''}
+              {rentalGroups.renting.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.renting.length - 2}건</span></li> : ''}
             </ul>
 
           </div>
-        </div>
+        </div> : null}
 
       </section>
 

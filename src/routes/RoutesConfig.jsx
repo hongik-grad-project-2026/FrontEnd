@@ -236,7 +236,7 @@ const studentRoutes = {
       path: "history",
       element: <StudentRentalHistoryPage />,
       handle: {
-        title: "내 대여내역",
+        title: "내 대여 내역",
       },
     },
     {

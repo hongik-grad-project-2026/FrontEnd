@@ -29,6 +29,13 @@ h3 {
     width: 100%;
 }
 
+.rentalCountState {
+    color: var(--color-neutral-60);
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    line-height: var(--text-body-2-line-height);
+}
+
 .profileCard {
     display: flex;
     width: 100%;
