@@ -151,3 +151,12 @@
     grid-template-columns: 1fr 1fr 1fr 1fr;
 
 }
+
+.wishlistState {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-8);
+    color: var(--color-neutral-60);
+}

@@ -209,8 +209,7 @@ function StudentDashboardPage() {
   const rentalQuery = useQuery({
     queryKey: studentRentalKeys.dashboard(),
     queryFn: ({ signal }) => getStudentRentalDashboard({ signal }),
-    retry: (failureCount, error) =>
-      error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" && failureCount < 1,
+    enabled: isMockMode,
   });
   const rentalGroups = rentalQuery.data ?? {
     approvalPending: [],
@@ -220,6 +219,7 @@ function StudentDashboardPage() {
   const categoryQuery = useQuery({
     queryKey: categoryKeys.list(),
     queryFn: ({ signal }) => fetchCategories({ signal }),
+    enabled: isMockMode,
   });
 
   const wishlistMutation = useMutation({
@@ -279,6 +279,8 @@ function StudentDashboardPage() {
     isLoading,
     isError,
     isSuccess,
+    isFetching,
+    refetch: refetchWishlist,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteScroll({
@@ -294,10 +296,17 @@ function StudentDashboardPage() {
   });
   const isEmptyWishlist =
     isMockMode &&
+    categoryQuery.isSuccess &&
+    (categoryQuery.data?.length ?? 0) > 0 &&
     isSuccess &&
     !isLoading &&
     !isError &&
     items.length === 0;
+  const isEmptyRentalDashboard =
+    rentalQuery.isSuccess &&
+    rentalGroups.approvalPending.length === 0 &&
+    rentalGroups.pickupPending.length === 0 &&
+    rentalGroups.renting.length === 0;
 
   return (
     <main className={styles.dashboardPage}>
@@ -319,28 +328,27 @@ function StudentDashboardPage() {
 
       <section className={styles.section} >
         <h3>대여 현황</h3>
-        {rentalQuery.isPending ? (
+        {!isMockMode ? (
+          <p className={styles.noticeState}>대여 API가 아직 제공되지 않았습니다.</p>
+        ) : null}
+        {isMockMode && rentalQuery.isPending ? (
           <p className={styles.noticeState}>대여 현황을 불러오는 중입니다.</p>
         ) : null}
-        {rentalQuery.isError ? (
+        {isMockMode && rentalQuery.isError ? (
           <div className={styles.noticeState} role="alert">
-            <p>
-              {rentalQuery.error?.code === "STUDENT_RENTAL_API_UNAVAILABLE"
-                ? "대여 API가 아직 제공되지 않았습니다."
-                : rentalQuery.error?.message ||
-                  "대여 현황을 불러오지 못했습니다."}
-            </p>
-            {rentalQuery.error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" ? (
-              <IconTextButton
-                icon="rotate"
-                text={rentalQuery.isFetching ? "다시 시도 중" : "다시 시도"}
-                disabled={rentalQuery.isFetching}
-                onClick={() => rentalQuery.refetch()}
-              />
-            ) : null}
+            <p>{rentalQuery.error?.message || "대여 현황을 불러오지 못했습니다."}</p>
+            <IconTextButton
+              icon="rotate"
+              text={rentalQuery.isFetching ? "다시 시도 중" : "다시 시도"}
+              disabled={rentalQuery.isFetching}
+              onClick={() => rentalQuery.refetch()}
+            />
           </div>
         ) : null}
-        {rentalQuery.isSuccess ? <div className={styles.rentalsGrid}>
+        {isMockMode && isEmptyRentalDashboard ? (
+          <p className={styles.noticeState}>대여 내역이 없습니다.</p>
+        ) : null}
+        {isMockMode && rentalQuery.isSuccess && !isEmptyRentalDashboard ? <div className={styles.rentalsGrid}>
           <div className={`${styles.contentArea} ${styles.rentalStatusBox}`}>
             <StatusBadge status='대여-승인대기' size='md' />
             <ul>
@@ -379,14 +387,39 @@ function StudentDashboardPage() {
         <div className={styles.wishListGrid}>
 
           {!isMockMode ? <p>찜 API가 아직 제공되지 않았습니다.</p> : null}
-          {isMockMode && isLoading ? <p>찜 목록을 불러오는 중입니다.</p> : null}
-          {isMockMode && isError ? <p role="alert">찜 목록을 불러오지 못했습니다.</p> : null}
-          {isMockMode && wishlistMutation.isError ? (
+          {isMockMode && categoryQuery.isPending ? <p>카테고리 정보를 불러오는 중입니다.</p> : null}
+          {isMockMode && categoryQuery.isError ? (
+            <div className={styles.wishlistState} role="alert">
+              <p>{categoryQuery.error?.message || "카테고리 정보를 불러오지 못했습니다."}</p>
+              <IconTextButton
+                icon="rotate"
+                text={categoryQuery.isFetching ? "다시 시도 중" : "다시 시도"}
+                disabled={categoryQuery.isFetching}
+                onClick={() => categoryQuery.refetch()}
+              />
+            </div>
+          ) : null}
+          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length === 0 ? (
+            <p>등록된 카테고리가 없습니다.</p>
+          ) : null}
+          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && isLoading ? <p>찜 목록을 불러오는 중입니다.</p> : null}
+          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && isError ? (
+            <div className={styles.wishlistState} role="alert">
+              <p>찜 목록을 불러오지 못했습니다.</p>
+              <IconTextButton
+                icon="rotate"
+                text={isFetching ? "다시 시도 중" : "다시 시도"}
+                disabled={isFetching}
+                onClick={() => refetchWishlist()}
+              />
+            </div>
+          ) : null}
+          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && wishlistMutation.isError ? (
             <p role="alert">찜 상태를 변경하지 못했습니다.</p>
           ) : null}
           {isEmptyWishlist ? <p>찜한 기자재가 없습니다.</p> : null}
 
-          {isMockMode ? items
+          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && isSuccess ? items
             .map((equipment) => (
               <EquipmentCard
                 key={equipment.modelId}
@@ -406,9 +439,9 @@ function StudentDashboardPage() {
               />
             )) : null}
 
-          {isMockMode ? <div ref={loadMoreRef} aria-hidden="true" /> : null}
-          {isMockMode && isFetchingNextPage ? <p>찜 목록을 더 불러오는 중입니다.</p> : null}
-          {isMockMode && !hasNextPage && items.length > 0 ? <p>마지막 찜 항목입니다.</p> : null}
+          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 ? <div ref={loadMoreRef} aria-hidden="true" /> : null}
+          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && isFetchingNextPage ? <p>찜 목록을 더 불러오는 중입니다.</p> : null}
+          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && !hasNextPage && items.length > 0 ? <p>마지막 찜 항목입니다.</p> : null}
         </div>
       </section>
 
