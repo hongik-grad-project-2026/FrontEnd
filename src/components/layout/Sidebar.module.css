@@ -1,4 +1,4 @@
-/*  ----- Sidebar ----- */
+/* Sidebar 영역을 정의함. */
 
 .sidebar {
     position: sticky;
@@ -54,7 +54,7 @@
 
 
 
-/* ----- NavSubtitle ----- */
+/* NavSubtitle 영역을 정의함. */
 .navSubtitle {
     color: var(--color-neutral-40);
     padding: 16px 12px 2px 12px;
@@ -71,7 +71,7 @@
 }
 
 
-/* ----- NavItem ----- */
+/* NavItem 영역을 정의함. */
 
 .navItem {
     background-color: var(--color-white);
@@ -122,7 +122,7 @@
 
 
 
-/* ----- AccountPanel ----- */
+/* AccountPanel 영역을 정의함. */
 
 .accountPanel {
     /* background-color: forestgreen; */

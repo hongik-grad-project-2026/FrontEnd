@@ -15,9 +15,9 @@ const PASSWORD_MAX_LENGTH = 16;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TEL_PATTERN = /^010[0-9]{8}$/;
 
-// 단과대학 목록
+// 단과대학 목록을 정의함.
 const COLLEGE_OPTIONS = [
-    // 서울캠퍼스
+    // 서울캠퍼스 단과대학을 정의함.
     { value: "engineering", label: "공과대학" },
     { value: "architecture", label: "건축도시대학" },
     { value: "business", label: "경영대학" },
@@ -32,7 +32,7 @@ const COLLEGE_OPTIONS = [
     { value: "convergenceSeoul", label: "융합전공(서울)" },
     { value: "bioHealth", label: "바이오헬스융합학부" },
     { value: "generalStudiesSeoul", label: "교양과(서울)" },
-    // 세종캠퍼스
+    // 세종캠퍼스 단과대학을 정의함.
     { value: "scienceTech", label: "과학기술대학" },
     { value: "aidScienceTech", label: "AID융합과학기술대학" },
     { value: "game", label: "게임학부" },
@@ -46,9 +46,9 @@ const COLLEGE_OPTIONS = [
     { value: "generalStudiesSejong", label: "교양과(세종)" },
 ];
 
-// 단과대학별 학과 목록 — key는 위 COLLEGE_OPTIONS의 value와 일치시킴
+// 단과대학별 학과 목록의 key가 COLLEGE_OPTIONS의 value와 일치하도록 구성함.
 const DEPARTMENT_OPTIONS = {
-    // ─── 서울캠퍼스 ───
+    // 서울캠퍼스 학과를 정의함.
     engineering: [
         { value: "electronicElectrical", label: "전자전기공학부" },
         { value: "materials", label: "신소재공학전공" },
@@ -135,7 +135,7 @@ const DEPARTMENT_OPTIONS = {
         { value: "generalStudies", label: "교양과" },
     ],
 
-    // ─── 세종캠퍼스 ───
+    // 세종캠퍼스 학과를 정의함.
     scienceTech: [
         { value: "undeclared", label: "자율전공" },
         { value: "electronicConvergence", label: "전자전기융합공학과" },
@@ -247,24 +247,24 @@ function SignUpPage() {
     const [termsAgree, setTermsAgree] = useState(false);
     const submitGuardRef = useRef(false);
 
-    const departmentOptions = DEPARTMENT_OPTIONS[college] ?? [];//// 선택된 단과대학에 딸린 학과 목록. 미선택이면 빈 배열
+    const departmentOptions = DEPARTMENT_OPTIONS[college] ?? []; // 선택된 단과대학의 학과 목록이며 미선택 시 빈 배열임.
 
 
 
     function handleCollegeChange(nextCollege) {
-        // 단과대학을 바꾸면 학과 선택은 초기화
+        // 단과대학 변경 시 학과 선택을 초기화함.
         setCollege(nextCollege);
         setDepartment("");
     }
 
 
-    // 제출 중 여부
+    // 제출 중 여부를 관리함.
     const [isSubmitting, setIsSubmitting] = useState(false);
-    // 서버가 돌려준 에러 문구와 필드별 오류를 따로 보여줘.
+    // 서버 오류 문구와 필드별 오류를 분리해 표시함.
     const [errorMessage, setErrorMessage] = useState("");
     const [fieldErrors, setFieldErrors] = useState({});
 
-    // ----- 유효성 검사 -----
+    // 입력값 유효성을 검사함.
     const isNameValid = name.trim() !== "";
     const isIdValid = ID_PATTERN.test(id.trim());
     const isPasswordValid =
@@ -276,7 +276,7 @@ function SignUpPage() {
     const isEmailValid = EMAIL_PATTERN.test(email.trim());
     const isTelValid = TEL_PATTERN.test(tel.trim());
 
-    // 안내 문구는 "입력이 시작된 뒤"에만 띄움
+    // 안내 문구는 입력이 시작된 뒤에만 표시함.
     const idHelperText =
         fieldErrors.id || (id !== "" && !isIdValid
             ? "학번 형식이 올바르지 않습니다. (예: C123456)"
@@ -351,14 +351,14 @@ function SignUpPage() {
 
 
 
-    // 1단계 항목만 검사
+    // 1단계 항목만 검사함.
     const canGoNext =
         isNameValid &&
         isIdValid &&
         isPasswordValid &&
         isPasswordMatched;
 
-    // 2단계까지 모두 통과 -> 제출 가능
+    // 2단계까지 모두 통과하면 제출 가능 상태로 처리함.
     const canSubmit =
         canGoNext &&
         isCollegeValid &&
@@ -368,9 +368,9 @@ function SignUpPage() {
 
 
     async function handleSubmit(event) {
-        event.preventDefault(); // 폼 기본 동작(페이지 새로고침) 차단
+        event.preventDefault(); // 폼의 기본 페이지 새로고침 동작을 차단함.
 
-        // 버튼이 비활성이어도 Enter 키로 제출될 수 있어 한 번 더 막음
+        // 비활성 버튼 상태에서도 Enter 키 제출이 가능하므로 추가로 차단함.
         if (!canSubmit || submitGuardRef.current) {
             return;
         }
@@ -396,9 +396,9 @@ function SignUpPage() {
             });
 
 
-            // 가입 완료 페이지로 이동
-            // replace: 뒤로가기로 가입 폼에 돌아오지 못하도록
-            // state: 가입을 거쳐서 왔다는 표시 (완료 페이지에서 확인용으로 쓸 수 있음)
+            // 가입 완료 페이지로 이동함.
+            // replace로 뒤로가기를 통한 가입 폼 복귀를 차단함.
+            // state로 가입 절차를 거쳐 진입했음을 표시함.
             navigate("/signup/complete", {
                 replace: true,
                 state: {

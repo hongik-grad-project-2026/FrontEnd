@@ -7,7 +7,7 @@ function SignUpCompletePage() {
 
     const navigate = useNavigate();
     const location = useLocation();
-    // 가입 폼에서 넘겨준 값. 직접 주소로 들어오면 null이므로 ?. 로 접근
+    // 가입 폼에서 전달한 값이며 직접 주소로 진입하면 null이므로 선택적 연결 연산자로 접근함.
     const name = location.state?.name;
     const id = location.state?.id;
     const email = location.state?.email;

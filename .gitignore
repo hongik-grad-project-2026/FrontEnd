@@ -1,4 +1,4 @@
-# Logs
+# 로그 파일을 제외함.
 logs
 *.log
 npm-debug.log*
@@ -12,7 +12,7 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# 편집기 관련 디렉터리와 파일을 제외함.
 .vscode/*
 !.vscode/extensions.json
 .idea

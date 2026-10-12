@@ -54,7 +54,7 @@
   min-width: 0;
 }
 
-/* DataTable의 공개 className에만 페이지 스타일을 적용*/
+/* DataTable의 공개 className에만 페이지 스타일을 적용함. */
 .dataTable {
   overflow: hidden;
   border-radius: var(--radius-8);
@@ -202,7 +202,7 @@
   white-space: nowrap;
 }
 
-/* 셀 내부에서 배지 그림자가 왼쪽 경계에 잘리지 않도록 공간을 둠 */
+/* 셀 내부에서 배지 그림자가 왼쪽 경계에 잘리지 않도록 공간을 확보함. */
 .statusCell {
   display: flex;
   min-width: 0;
@@ -220,7 +220,7 @@
   justify-content: center;
 }
 
-/* 화면에서는 숨기고 스크린리더에는 설명을 전달 */
+/* 화면에서는 숨기고 스크린리더에는 설명을 전달함. */
 .visuallyHidden {
   position: absolute;
   width: 1px;

@@ -1,9 +1,9 @@
 import { equipmentModels as studentEquipmentModels } from "./db";
 
-// 학생 목록·찜과 관리자 모델·개별 기자재는 현재 서로 다른 mock 저장소를 써.
-// 실제 서버 계약으로 보지 말고, API가 제공되면 equipmentApi 함수에서 함께 교체해.
+// 학생 목록·찜과 관리자 모델·개별 기자재는 현재 서로 다른 mock 저장소를 사용함.
+// 실제 서버 계약이 아니며 API 제공 시 equipmentApi 함수에서 함께 교체함.
 
-// 이 상태값들은 화면 동작을 확인하기 위한 mock 전용 계약이야.
+// 상태값은 화면 동작 확인을 위한 mock 전용 계약임.
 export const MOCK_EQUIPMENT_MODEL_STATUSES = Object.freeze([
   "active",
   "paused",

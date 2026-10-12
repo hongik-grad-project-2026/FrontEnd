@@ -31,7 +31,7 @@ function normalizeNoticeSummary(notice) {
     authorId: notice.authorId ?? null,
     authorName: notice.authorName ?? "",
     createdAt: notice.createdAt ?? null,
-    // Swagger 목록 응답에 없는 값은 실제 데이터처럼 만들지 않아.
+    // Swagger 목록 응답에 없는 값을 실제 데이터처럼 생성하지 않음.
     summary: "",
     hasAttachment: null,
     viewCount: null,
@@ -52,7 +52,7 @@ function normalizeNoticeDetail(notice) {
     createdAt: notice?.createdAt ?? null,
     updatedAt: notice?.updatedAt ?? null,
     attachments: (notice?.attachments ?? []).map(normalizeAttachment),
-    // Swagger 상세 응답에 없는 이전·다음 공지와 조회수는 미지원 상태로 둬.
+    // Swagger 상세 응답에 없는 이전·다음 공지와 조회수는 미지원 상태로 유지함.
     previousNotice: null,
     nextNotice: null,
     viewCount: null,

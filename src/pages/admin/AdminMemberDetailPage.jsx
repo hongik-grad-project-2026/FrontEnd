@@ -475,7 +475,7 @@ function AdminMemberDetailPage() {
     try {
       await updateStatusMutation.mutateAsync(nextMemberStatus);
     } catch {
-      // 오류는 확인창에 보여주고 기존 회원 상태를 유지해.
+      // 오류는 확인창에 표시하고 기존 회원 상태를 유지함.
     } finally {
       statusRequestRef.current = false;
     }

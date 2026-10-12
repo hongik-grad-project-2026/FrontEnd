@@ -40,7 +40,7 @@ function LoginPage() {
     const { login, authError } = useUser();
     const navigate = useNavigate();
 
-    // 둘 다 입력됐고 제출 중이 아닐 때만 활성화해.
+    // 두 값이 모두 입력되고 제출 중이 아닐 때만 활성화함.
     const canSubmit = loginId.trim() !== "" && password !== "" && !isSubmitting;
     const displayedErrorMessage = errorMessage || authError?.message || "";
 

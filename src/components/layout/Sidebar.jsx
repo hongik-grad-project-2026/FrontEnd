@@ -4,7 +4,7 @@ import { IconTextButton } from "../common/IconButton";
 import styles from "./Sidebar.module.css";
 
 
-// ----- NavItem ----- //
+// NavItem 영역을 정의함.
 
 function NavItem({
   itemName = "itemName",
@@ -36,7 +36,7 @@ function NavItem({
   );
 }
 
-// ----- NavSubtitle ----- //
+// NavSubtitle 영역을 정의함.
 
 function NavSubtitle({ titleName = "titleName", children }) {
   return (
@@ -48,7 +48,7 @@ function NavSubtitle({ titleName = "titleName", children }) {
   );
 }
 
-// ----- AccountPanel ----- //
+// AccountPanel 영역을 정의함.
 
 function AccountPanel({ userName, userRole, userId, profileImage, onLogout }) {
   return (
@@ -82,7 +82,7 @@ function AccountPanel({ userName, userRole, userId, profileImage, onLogout }) {
   );
 }
 
-// ----- Sidebar ----- //
+// Sidebar 영역을 정의함.
 
 function Sidebar() {
   const { user, logout } = useUser();
@@ -99,7 +99,7 @@ function Sidebar() {
 
   async function handleLogout() {
     await logout();
-    // 뒤로가기로 로그인 이전 페이지에 돌아가지 못하게 해.
+    // 뒤로가기로 로그인 이전 페이지에 돌아가지 못하도록 처리함.
     navigate("/login", { replace: true });
   }
 

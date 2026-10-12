@@ -1,7 +1,7 @@
-// be 연결 후 미사용될 파일
+// 백엔드 연결 후 사용하지 않을 파일임.
 
-// -------- auth -------- //
-// 임시 계정 DB
+// 인증 mock 영역임.
+// 임시 계정 DB임.
 export const users = [
     {
         userId: 1,
@@ -33,13 +33,13 @@ export const users = [
     },
 ];
 
-// MSW용 임시 문자열 토큰. 로그인 성공 시 사용자 ID를 붙여 mock-token-${id} 형식으로 만듦.
+// MSW용 임시 문자열 토큰이며 로그인 성공 시 사용자 ID를 붙여 mock-token-${id} 형식으로 생성함.
 const TOKEN_PREFIX = "Bearer mock-token-";
 
 export const makeToken = (id) => `mock-token-${id}`;
 
-// 응답에서 비밀번호 제거 — 실제 서버도 절대 내려주지 않으므로 동작을 맞춤
-// 구조 분해로 password만 빼내고 나머지를 새 객체로 모음
+// 실제 서버 동작과 맞추기 위해 응답에서 비밀번호를 제거함.
+// 구조 분해로 password를 제외하고 나머지를 새 객체로 구성함.
 export const toPublicUser = ({ password, ...user }) => user;
 
 export const parseToken = (header) => {
@@ -49,8 +49,8 @@ export const parseToken = (header) => {
 
 
 
-// -------- equipment -------- //
-// 임시 기자재 모델 DB
+// 기자재 mock 영역임.
+// 임시 기자재 모델 DB임.
 export const equipmentModels = [
     {
         id: 1,

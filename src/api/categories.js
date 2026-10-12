@@ -5,7 +5,7 @@ export const categoryKeys = {
   list: () => ["categories", "list"],
 };
 
-// 전체 탭은 서버 카테고리가 아니라 화면에서만 쓰는 선택지야.
+// 전체 탭은 서버 카테고리가 아닌 화면 전용 선택지임.
 export const ALL_CATEGORY_OPTION = Object.freeze({
   key: "all",
   value: "all",
@@ -13,7 +13,7 @@ export const ALL_CATEGORY_OPTION = Object.freeze({
   categoryId: null,
 });
 
-// 이 ID와 key는 MSW 기자재 데이터끼리 맞추기 위한 mock 전용 값이야.
+// ID와 key는 MSW 기자재 데이터 정합성을 위한 mock 전용 값임.
 export const MOCK_EQUIPMENT_CATEGORIES = Object.freeze([
   { key: "laptop", value: "laptop", label: "노트북", categoryId: 1 },
   { key: "power-bank", value: "power-bank", label: "보조배터리", categoryId: 2 },

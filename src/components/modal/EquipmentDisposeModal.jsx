@@ -1,4 +1,4 @@
-//기자재 모델 폐기
+// 기자재 모델 폐기 모달임.
 import { useId, useRef } from "react";
 import Button from "../common/Button";
 import BaseModal from "./BaseModal";

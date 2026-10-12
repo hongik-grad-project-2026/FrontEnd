@@ -91,7 +91,7 @@ function AdminDashboardPage() {
         queryKey: rentalKeys.adminDashboard(),
         queryFn: ({ signal }) => getAdminRentalDashboard({ signal }),
         enabled: isMockMode,
-        staleTime: 1000 * 60 * 5, // 5분 동안 데이터를 Fresh 상태로 유지
+        staleTime: 1000 * 60 * 5, // 데이터를 5분 동안 Fresh 상태로 유지함.
     });
 
     const initialCounts = {

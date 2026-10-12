@@ -20,7 +20,7 @@ const STATUS_BADGES = { canceled: "대여-신청취소", returned: "대여-반�
 function EquipmentCell({ record }) {
   return (
     <div className={styles.equipmentCell}>
-      {/* 옆의 기자재명과 중복되므로 이미지 영역은 장식 요소야. */}
+      {/* 기자재명과 중복되는 이미지 영역은 장식 요소임. */}
       <span className={styles.equipmentImage} aria-hidden="true">
         {record.imageSrc ? (
           <img
@@ -90,8 +90,8 @@ function ApplicantCell({ record }) {
   );
 }
 
-// 이 화면의 YYYY.MM.DD 문자열 또는 null만 지원해.
-// 문자열 치환은 dateTime 표시용이며 범용 API 날짜 변환이 아니야.
+// YYYY.MM.DD 문자열 또는 null만 지원함.
+// 문자열 치환은 dateTime 표시용이며 범용 API 날짜 변환이 아니다.
 function DateValue({ value, label }) {
   if (!value) {
     return (

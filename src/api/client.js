@@ -1,5 +1,5 @@
-// 모든 fetch 요청이 거쳐가는 공통 API client입니다.
-// mock/실제 모드 선택, 헤더 구성, 응답 파싱과 공통 오류 변환을 담당합니다.
+// 모든 fetch 요청이 거치는 공통 API client임.
+// mock·실제 모드 선택, 헤더 구성, 응답 파싱, 공통 오류 변환을 담당함.
 
 const mockMode = import.meta.env.VITE_USE_MOCK;
 
@@ -77,12 +77,12 @@ async function parseResponseBody(response, responseType) {
       return null;
     }
 
-    // HTTP 오류의 일반 텍스트 본문은 아래 공통 HTTP 오류 처리에서 메시지로 사용해.
+    // HTTP 오류의 일반 텍스트 본문을 공통 HTTP 오류 메시지로 사용함.
     if (!response.ok) {
       return text;
     }
 
-    // 일반 API 요청은 JSON 계약이야. HTML 같은 응답을 성공 데이터로 넘기지 않아.
+    // 일반 API 요청은 JSON 계약이며 HTML 등의 응답을 성공 데이터로 전달하지 않음.
     throw new ApiError({
       status: response.status,
       code: "UNEXPECTED_CONTENT_TYPE",
@@ -163,7 +163,7 @@ export async function request(
     requestHeaders.set("Content-Type", "application/json");
   }
 
-  // 인증 형식은 기존 동작을 유지합니다. Swagger에 security scheme이 없어 변경하지 않습니다.
+  // Swagger에 security scheme이 없으므로 기존 인증 형식을 유지함.
   if (token && !requestHeaders.has("Authorization")) {
     requestHeaders.set("Authorization", `Bearer ${token}`);
   }
@@ -178,12 +178,12 @@ export async function request(
       ...(hasBody && { body: isFormData ? body : JSON.stringify(body) }),
     });
   } catch (cause) {
-    // 사용자가 취소했거나 AbortSignal이 중단한 요청은 호출한 쪽에서 구분할 수 있게 그대로 전달합니다.
+    // 사용자 취소나 AbortSignal로 중단된 요청은 호출부에서 구분하도록 그대로 전달함.
     if (cause?.name === "AbortError") {
       throw cause;
     }
 
-    // 브라우저 fetch는 CORS, 서버 단절, DNS 등의 네트워크 실패를 TypeError로 알립니다.
+    // 브라우저 fetch가 CORS, 서버 단절, DNS 등의 네트워크 실패를 TypeError로 반환함.
     if (cause instanceof TypeError) {
       throw new ApiError({
         status: null,

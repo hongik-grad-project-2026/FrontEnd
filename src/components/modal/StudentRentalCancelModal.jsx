@@ -89,7 +89,7 @@ function StudentRentalCancelModal({
     try {
       await onSubmit?.(reason);
     } catch {
-      // 오류 문구와 선택한 사유는 현재 모달에 그대로 남겨둬.
+      // 오류 문구와 선택한 사유를 현재 모달에 그대로 유지함.
     } finally {
       submitGuardRef.current = false;
     }

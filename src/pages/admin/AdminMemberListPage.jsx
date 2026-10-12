@@ -241,8 +241,8 @@ function AdminMemberListPage() {
   const canLoadMembers =
     !needsAffiliationInfo || Boolean(affiliationUser?.department);
 
-  // 화면 페이지 번호: 1부터 시작
-  // 조회 함수 전달 시 0부터 시작하는 번호로 변환
+  // 화면 페이지 번호는 1부터 시작함.
+  // 조회 함수에 전달할 때 0부터 시작하는 번호로 변환함.
   const [currentPage, setCurrentPage] = useState(1);
 
   const {
@@ -329,10 +329,10 @@ function AdminMemberListPage() {
 
   const selectedTab = tabItems.find((tab) => tab.value === selectedStatus);
 
-  // 검색·필터·페이지 분할이 완료된 현재 페이지 데이터
+  // 검색·필터·페이지 분할이 완료된 현재 페이지 데이터임.
   const visibleMembers = memberPage?.content ?? [];
 
-  // 조회 결과가 없어도 화면에는 1페이지 표시
+  // 조회 결과가 없어도 화면에는 1페이지를 표시함.
   const totalPages = Math.max(1, memberPage?.totalPages ?? 0);
 
   const resolvedCurrentPage = memberPage ? memberPage.page + 1 : 1;
@@ -369,9 +369,9 @@ function AdminMemberListPage() {
     setCurrentPage(1);
   };
 
-  // 기존 입력 즉시 검색 동작 유지
-  // Enter·검색 버튼에 동일한 검색어 적용
-  // SearchBar 기본 alert 실행 방지
+  // 기존 입력 즉시 검색 동작을 유지함.
+  // Enter와 검색 버튼에 동일한 검색어를 적용함.
+  // SearchBar의 기본 alert 실행을 방지함.
   const handleSearchSubmit = (inputText) => {
     setSearchTerm(inputText);
     setCurrentPage(1);

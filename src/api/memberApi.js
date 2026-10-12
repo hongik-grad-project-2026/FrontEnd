@@ -1,13 +1,13 @@
 import { api, isMockMode } from "./client";
 import { getMemberRentalHistory } from "./rentalApi";
 
-// 화면 확인용 임시 데이터
-// 실제 서버 응답 구조 아님
+// 화면 확인용 임시 데이터임.
+// 실제 서버 응답 구조가 아니다.
 //
-// id: 회원 구분용 임시 고유 ID
-// studentId: 화면 표시 및 검색용 학번
-// listGroup: 목업 전용 상호 배타적 탭 분류
-// membershipStatus: 회원 배지 표시용 상태
+// id는 회원 구분용 임시 고유 ID임.
+// studentId는 화면 표시 및 검색용 학번임.
+// listGroup은 mock 전용 상호 배타적 탭 분류임.
+// membershipStatus는 회원 배지 표시용 상태임.
 export const MOCK_MEMBERS = [
   {
     id: 1,
@@ -122,8 +122,8 @@ export const MOCK_MEMBERS = [
   },
 ];
 
-// 화면 확인용 블랙리스트 기록
-// 실제 서버 상태·기간 규칙 아님
+// 화면 확인용 블랙리스트 기록임.
+// 실제 서버 상태·기간 규칙이 아니다.
 const MOCK_BLACKLIST_HISTORY_BY_MEMBER_ID = {
   1: [
     {
@@ -173,8 +173,8 @@ const MOCK_BLACKLIST_HISTORY_BY_MEMBER_ID = {
   ],
 };
 
-// 화면 확인용 회원별 대여 내역
-// 실제 서버 응답·업무 상태 코드 아님
+// 화면 확인용 회원별 대여 내역임.
+// 실제 서버 응답이나 업무 상태 코드가 아니다.
 const MOCK_MEMBER_RENTALS_BY_MEMBER_ID = {
   1: [
     {
@@ -690,7 +690,7 @@ export async function updateAdminMemberStatus(userId, status) {
   return toMemberDetail(toMockMemberContract(member));
 }
 
-// 회원별 블랙리스트 기록 임시 조회
+// 회원별 블랙리스트 기록을 임시 조회함.
 export async function getAdminMemberBlacklistHistory({
   memberId,
   page = 0,
@@ -713,8 +713,8 @@ export async function getAdminMemberBlacklistHistory({
   };
 }
 
-// 회원별 대여 내역 임시 조회
-// keyword 검색 필드는 화면 확인용 임시 규칙
+// 회원별 대여 내역을 임시 조회함.
+// keyword 검색 필드는 화면 확인용 임시 규칙임.
 export async function getAdminMemberRentalHistory({
   memberId,
   page = 0,

@@ -2,11 +2,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 
-// TanStack Query 관련 import (무한스크롤)
+// TanStack Query와 무한 스크롤 관련 모듈을 가져온다.
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-// 라우터 관련 import
+// 라우터 관련 모듈을 가져온다.
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import {
   adminRoutes,
@@ -34,23 +34,25 @@ async function enableMocking() {
 const queryClient = new QueryClient(/*{
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // 브라우저 탭/창 포커스 시 자동 재요청 비활성화 (기본 true)
-      retry: 1,                    // API 요청 실패 시 재시도 횟수 (기본 3)
+      refetchOnWindowFocus: false, // 브라우저 탭이나 창에 포커스할 때의 자동 재요청을 비활성화함.
+      retry: 1,                    // API 요청 실패 시 한 번 재시도함.
     },
   }
-}*/);
+}
+비활성 QueryClient 기본 옵션을 보관함.
+*/);
 
 const router = createBrowserRouter([
-  // 공동 라우트
+  // 공통 라우트를 등록함.
   commonRoutes,
 
-  // 인증 라우트
+  // 인증 라우트를 등록함.
   authRoutes,
 
-  // 관리자모드 라우트
+  // 관리자 모드 라우트를 등록함.
   adminRoutes,
 
-  // 학생모드 라우트
+  // 학생 모드 라우트를 등록함.
   studentRoutes,
 ]);
 enableMocking().then(() => {
@@ -62,7 +64,7 @@ enableMocking().then(() => {
           <RouterProvider router={router} />
         </UserProvider>
         <ReactQueryDevtools initialIsOpen={false} />{" "}
-        {/*Devtools : 개발용 패널, 프로덕션 빌드 시 자동 비활성화됨 */}
+        {/* 개발용 패널이며 프로덕션 빌드에서는 비활성 상태임. */}
       </QueryClientProvider>
     </StrictMode>
   );

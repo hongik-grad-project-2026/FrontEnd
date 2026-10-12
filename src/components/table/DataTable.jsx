@@ -1,4 +1,4 @@
-// AdminRentalApprovalPage 해당 표
+// AdminRentalApprovalPage에서 사용하는 표 컴포넌트임.
 import Checkbox from "../common/Checkbox";
 import styles from "./DataTable.module.css";
 

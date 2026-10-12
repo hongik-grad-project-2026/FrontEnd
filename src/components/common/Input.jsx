@@ -5,7 +5,7 @@ function joinClassNames(...classNames) {
 }
 
 function InputBar({
-  status = 'default', // default | disabled
+  status = 'default', // 허용 상태는 default 또는 disabled임.
   width = 220,
   height = "md",
   placeholder = "placeholder",

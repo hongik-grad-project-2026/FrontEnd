@@ -44,7 +44,7 @@
   flex: 0 0 360px;
 }
 
-/* 스크롤 영역의 가장자리에서도 포커스 테두리가 보이게 합니다. */
+/* 스크롤 영역의 가장자리에서도 포커스 테두리가 보이도록 처리함. */
 .memberTabs button:focus-visible,
 .search input:focus-visible,
 .search button:focus-visible {
@@ -55,8 +55,8 @@
   width: 100%;
   min-width: 0;
 
-  /* Figma의 헤더 48px + 본문 10행 × 64px 기준입니다.
-     다음 페이지의 행이 적어도 페이지네이션 위치를 유지합니다. */
+  /* Figma의 헤더 48px과 본문 10행 × 64px을 기준으로 함.
+     다음 페이지의 행이 적어도 페이지네이션 위치를 유지함. */
   min-height: 688px;
 }
 
@@ -198,7 +198,7 @@
   border-radius: var(--radius-full);
 }
 
-/* 기존 로컬 사용자 아이콘을 Figma의 옅은 회색으로 표시합니다. */
+/* 기존 로컬 사용자 아이콘을 Figma의 옅은 회색으로 표시함. */
 .userIcon {
   display: block;
   width: 24px;

@@ -1,4 +1,4 @@
-//AdminRentalStatusPage 에서 사용
+// AdminRentalStatusPage에서 사용하는 정보 컴포넌트임.
 import styles from "./RentalCardInfo.module.css";
 
 function joinClassNames(...classNames) {

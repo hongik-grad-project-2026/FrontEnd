@@ -1,5 +1,5 @@
-// 이 상태값은 학생 대여 화면을 확인하기 위한 mock 전용 계약이야.
-// 실제 서버 상태값은 대여 API가 Swagger에 추가된 뒤 별도로 변환해야 해.
+// 상태값은 학생 대여 화면 확인을 위한 mock 전용 계약임.
+// 실제 서버 상태값은 대여 API가 Swagger에 추가된 뒤 별도로 변환함.
 export const MOCK_STUDENT_RENTAL_STATUSES = Object.freeze([
   "approvalPending",
   "pickupPending",
@@ -9,8 +9,8 @@ export const MOCK_STUDENT_RENTAL_STATUSES = Object.freeze([
   "returned",
 ]);
 
-// 관리자 반려는 학생 신청 취소와 다른 mock 결과로만 관리해.
-// 실제 서버 상태값은 대여 API 계약이 나온 뒤 별도로 변환해야 해.
+// 관리자 반려는 학생 신청 취소와 다른 mock 결과로 관리함.
+// 실제 서버 상태값은 대여 API 계약이 나온 뒤 별도로 변환함.
 export const MOCK_ADMIN_RENTAL_RESULTS = Object.freeze(["rejected"]);
 
 export const MOCK_STUDENT_RENTAL_CANCEL_REASONS = Object.freeze([

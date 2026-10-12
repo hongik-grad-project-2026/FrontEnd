@@ -1,4 +1,4 @@
-//기자제 모델 수정
+// 기자재 모델 수정 모달임.
 import { useId, useRef, useState } from "react";
 import Button from "../common/Button";
 import IconButton, { IconTextButton } from "../common/IconButton";
@@ -225,7 +225,7 @@ function EquipmentItemEditModal({
     try {
       await onConfirm?.(submittedValues, event);
     } catch {
-      // 실패하면 사용자가 입력한 값을 그대로 유지해.
+      // 실패 시 사용자가 입력한 값을 그대로 유지함.
     }
   };
 

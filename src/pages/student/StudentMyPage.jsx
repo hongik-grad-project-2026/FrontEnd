@@ -188,7 +188,7 @@ function StudentMyPage() {
       setPhoneNumber(updatedUser.phoneNumber ?? "");
       queryClient.setQueryData(currentUserQueryKey, updatedUser);
     } catch {
-      // 오류 내용은 mutation 상태로 화면에 보여줘.
+      // 오류 내용은 mutation 상태로 화면에 표시함.
     } finally {
       infoSubmitGuardRef.current = false;
     }
@@ -234,7 +234,7 @@ function StudentMyPage() {
         imageInputRef.current.value = "";
       }
     } catch {
-      // 실패하면 선택한 파일과 미리보기를 그대로 둬.
+      // 실패 시 선택한 파일과 미리보기를 그대로 유지함.
     } finally {
       imageSubmitGuardRef.current = false;
     }
@@ -260,7 +260,7 @@ function StudentMyPage() {
       bypassNavigationGuardRef.current = true;
       navigate("/login", { replace: true });
     } catch {
-      // 실패하면 확인창을 유지해서 서버 오류를 보여줘.
+      // 실패 시 확인창을 유지해 서버 오류를 표시함.
     } finally {
       withdrawGuardRef.current = false;
     }

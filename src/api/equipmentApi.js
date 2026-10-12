@@ -34,7 +34,7 @@ function normalizeItemParams(params = {}) {
   };
 }
 
-// 화면은 이 key만 사용하고, mock 데이터가 어디에 있는지는 알지 않게 해.
+// 화면은 key만 사용하며 mock 데이터의 저장 위치를 알지 못하도록 구성함.
 export const equipmentKeys = {
   all: ["equipment"],
   modelLists: () => ["equipment", "models", "list"],
@@ -90,8 +90,8 @@ function assertMockMode() {
   throw error;
 }
 
-// 아래 함수는 Swagger에 기자재 API가 추가되면 실제 요청으로 교체할 경계야.
-// 지금은 mock 모드에서만 src/mocks의 상태를 사용하고 실제 서버로 요청하지 않아.
+// 아래 함수는 Swagger에 기자재 API가 추가되면 실제 요청으로 교체할 경계임.
+// 현재는 mock 모드에서만 src/mocks의 상태를 사용하며 실제 서버로 요청하지 않음.
 export async function getEquipmentModels(params = {}) {
   assertMockMode();
   return queryMockEquipmentModels(params);

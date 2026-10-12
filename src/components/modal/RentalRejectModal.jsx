@@ -1,4 +1,4 @@
-//대여 신청 반려
+// 대여 신청 반려 모달임.
 import { useId, useRef } from "react";
 import BaseModal from "./BaseModal";
 import Button from "../common/Button";

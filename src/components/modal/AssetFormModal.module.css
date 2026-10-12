@@ -87,7 +87,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-/* 수정 모달의 상태 영역은 한 행 전체 사용 */
+/* 수정 모달의 상태 영역이 한 행 전체를 사용함. */
 .editStatusRow {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -109,18 +109,18 @@
   line-height: var(--text-head-4-line-height);
 }
 
-/* 등록·수정 모달 상태 Select */
+/* 등록·수정 모달의 상태 Select를 정의함. */
 .select {
   width: 100%;
 }
 
-/* 내부 배경에 가려지지 않도록 trigger에 테두리 표시 */
+/* 내부 배경에 가려지지 않도록 trigger에 테두리를 표시함. */
 .select > button {
   border-radius: var(--radius-8);
   box-shadow: inset 0 0 0 var(--border-width-default) var(--color-neutral-20);
 }
 
-/* Select를 펼쳤을 때 테두리 강조 */
+/* Select가 열린 상태에서 테두리를 강조함. */
 .select[data-open="true"] > button {
   box-shadow: inset 0 0 0 var(--border-width-default) var(--color-neutral-40);
 }

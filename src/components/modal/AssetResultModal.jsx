@@ -1,4 +1,4 @@
-//개별 기자재 작업 결과
+// 개별 기자재 작업 결과 모달임.
 import { useId, useRef } from "react";
 
 import Button from "../common/Button";

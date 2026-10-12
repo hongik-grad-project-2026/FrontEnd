@@ -1,6 +1,6 @@
 import { api } from "./client";
 
-// 서버 role은 URL에 직접 쓰지 말고 기존 화면 모드로만 바꿔.
+// 서버 role을 URL에 직접 사용하지 않고 기존 화면 모드로 변환함.
 const SERVER_ROLE_TO_APP_ROLE = {
   STUDENT: "student",
   WORKER: "admin",
@@ -61,7 +61,7 @@ function normalizeUser(userData) {
     id: userFields.userId ?? userFields.id ?? null,
     loginId: userFields.loginId ?? userFields.id ?? "",
     role,
-    // 서버 권한 원본은 나중에 endpoint별 접근 범위를 나눌 수 있게 남겨 둬.
+    // endpoint별 접근 범위 분리에 사용할 수 있도록 서버 권한 원본을 보존함.
     serverRole: SERVER_ROLE_TO_APP_ROLE[userFields.role] ? userFields.role : null,
     status,
     profileImageUrl:

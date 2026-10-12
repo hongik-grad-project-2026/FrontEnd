@@ -1,4 +1,4 @@
-//대여 상세 및 일부 처리
+// 대여 상세 표시와 일부 업무 처리를 담당하는 모달임.
 import { useId, useRef, useState } from "react";
 import Button from "../common/Button";
 import IconButton, {

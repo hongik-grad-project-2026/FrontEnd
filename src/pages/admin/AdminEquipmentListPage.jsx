@@ -31,7 +31,7 @@ import styles from "./AdminEquipmentListPage.module.css";
 
 const ROWS_PER_PAGE = 10;
 
-// 이 상태값은 실제 서버 계약이 아니라 현재 화면 확인용 mock 계약이야.
+// 상태값은 실제 서버 계약이 아닌 화면 확인용 mock 계약임.
 const STATUS_BADGES = {
   active: "기자재-대여진행",
   paused: "기자재-대여중지",

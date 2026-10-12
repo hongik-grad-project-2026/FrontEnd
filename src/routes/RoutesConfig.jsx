@@ -1,4 +1,4 @@
-// ------ 공용 ------
+// 공용 모듈을 가져온다.
 import { Navigate, Outlet } from "react-router-dom";
 
 import PageLayout from "../components/layout/PageLayout";
@@ -8,8 +8,8 @@ import ProtectedRoute from "./ProtectedRoute";
 
 import { getAdminEquipmentModelSummary } from "../api/equipmentApi";
 
-// ------ 관리자모드 ------
-// 1차 페이지
+// 관리자 모드 모듈을 가져온다.
+// 관리자 1차 페이지를 구성함.
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import AdminEquipmentListPage from "../pages/admin/AdminEquipmentListPage";
 import AdminMemberListPage from "../pages/admin/AdminMemberListPage";
@@ -17,7 +17,7 @@ import AdminRentalApprovalPage from "../pages/admin/AdminRentalApprovalPage";
 import AdminRentalHistoryPage from "../pages/admin/AdminRentalHistoryPage";
 import AdminRentalStatusPage from "../pages/admin/AdminRentalStatusPage";
 
-// 2차 페이지
+// 관리자 2차 페이지를 구성함.
 import AdminAssetListPage from "../pages/admin/AdminAssetListPage";
 import AdminMemberDetailPage from "../pages/admin/AdminMemberDetailPage";
 import AdminNoticeListPage from "../pages/admin/AdminNoticeListPage";
@@ -25,18 +25,18 @@ import AdminNoticeDetailPage from "../pages/admin/AdminNoticeDetailPage";
 import AdminNoticeCreatePage from "../pages/admin/AdminNoticeCreatePage";
 import AdminNoticeEditPage from "../pages/admin/AdminNoticeEditPage";
 
-// ------ 학생모드 ------
-// 1차 페이지
+// 학생 모드 모듈을 가져온다.
+// 학생 1차 페이지를 구성함.
 import StudentDashboardPage from "../pages/student/StudentDashboardPage";
 import StudentEquipmentListPage from "../pages/student/StudentEquipmentListPage";
 import StudentRentalHistoryPage from "../pages/student/StudentRentalHistoryPage";
 import StudentMyPage from "../pages/student/StudentMyPage";
 
-// 2차 페이지
+// 학생 2차 페이지를 구성함.
 import StudentNoticeListPage from "../pages/student/StudentNoticeListPage";
 import StudentNoticeDetailPage from "../pages/student/StudentNoticeDetailPage";
 
-// ------ 로그인/회원가입 ------
+// 로그인과 회원가입 모듈을 가져온다.
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpPage from "../pages/auth/SignUpPage";
 import SignUpCompletePage from "../pages/auth/SignUpCompletePage";
@@ -53,7 +53,7 @@ async function loadAdminEquipmentModel({ params }) {
   }
 }
 
-// 공동 라우트
+// 공통 라우트를 정의함.
 const commonRoutes = {
   path: "/",
   element: <Navigate to="/login" replace />,
@@ -86,10 +86,10 @@ const authRoutes = {
   ],
 };
 
-// 관리자모드 라우트 그룹
+// 관리자 모드 라우트 그룹을 정의함.
 const adminRoutes = {
   path: "/admin",
-  // PageLayout을 보호 컴포넌트의 children으로 전달해 하위 페이지로 가기 전에 인증과 role을 검사
+  // PageLayout을 보호 컴포넌트의 children으로 전달해 하위 페이지 진입 전에 인증과 role을 검사함.
   element: (
     <ProtectedRoute allowedRoles={["admin"]}>
       <PageLayout />
@@ -205,10 +205,10 @@ const adminRoutes = {
   ],
 };
 
-// 학생모드 라우트 그룹
+// 학생 모드 라우트 그룹을 정의함.
 const studentRoutes = {
   path: "/student",
-  // 학생 영역의 허용 role을 student로 제한
+  // 학생 영역의 허용 role을 student로 제한함.
   element: (
     <ProtectedRoute allowedRoles={["student"]}>
       <PageLayout />

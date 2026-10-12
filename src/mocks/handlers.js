@@ -1,10 +1,9 @@
-// mocks/handlers.js
-// 요청을 개발 환경에서 가로채는 mock 서버 설정
-// 실제 백엔드 연결 전에도 필터링과 page/size 응답을 화면에서 시험할 수 있도록 mock 서버 역할
+// 개발 환경의 요청을 가로채는 mock 서버 설정 파일임.
+// 실제 백엔드 연결 전 필터링과 page·size 응답을 화면에서 시험하는 mock 서버 역할을 담당함.
 
 import { http, HttpResponse, delay } from "msw";
 import {
-    // auth
+    // 인증 데이터를 가져온다.
     users, makeToken, parseToken,
 } from "./db";
 import { MOCK_MEMBERS } from "../api/memberApi";
@@ -99,7 +98,7 @@ function getMockNoticeValidationErrors(body) {
 
 export const handlers = [
 
-    // -- 카테고리 목록 --
+    // 카테고리 목록 요청을 처리함.
     http.get(mockApiUrl("/categories"), async () => {
         await delay(200);
 
@@ -114,7 +113,7 @@ export const handlers = [
         });
     }),
 
-    // -- 공지사항 목록 --
+    // 공지사항 목록 요청을 처리함.
     http.get(mockApiUrl("/notices"), async ({ request }) => {
         await delay(250);
 
@@ -170,7 +169,7 @@ export const handlers = [
         });
     }),
 
-    // -- 공지사항 작성 --
+    // 공지사항 작성 요청을 처리함.
     http.post(mockApiUrl("/notices"), async ({ request }) => {
         await delay(300);
 
@@ -211,7 +210,7 @@ export const handlers = [
         });
     }),
 
-    // -- 공지사항 상세 --
+    // 공지사항 상세 요청을 처리함.
     http.get(mockApiUrl("/notices/:noticeId"), async ({ params }) => {
         await delay(200);
 
@@ -239,7 +238,7 @@ export const handlers = [
         });
     }),
 
-    // -- 공지사항 수정 --
+    // 공지사항 수정 요청을 처리함.
     http.patch(mockApiUrl("/notices/:noticeId"), async ({ params, request }) => {
         await delay(300);
 
@@ -282,7 +281,7 @@ export const handlers = [
         });
     }),
 
-    // -- 공지사항 삭제 --
+    // 공지사항 삭제 요청을 처리함.
     http.delete(mockApiUrl("/notices/:noticeId"), async ({ params }) => {
         await delay(300);
 
@@ -307,7 +306,7 @@ export const handlers = [
         });
     }),
 
-    // -- 공지사항 첨부파일 업로드 --
+    // 공지사항 첨부파일 업로드 요청을 처리함.
     http.post(mockApiUrl("/notices/:noticeId/attachments"), async ({ params, request }) => {
         await delay(250);
 
@@ -352,7 +351,7 @@ export const handlers = [
         });
     }),
 
-    // -- 공지사항 첨부파일 다운로드 --
+    // 공지사항 첨부파일 다운로드 요청을 처리함.
     http.get(
         mockApiUrl("/notices/:noticeId/attachments/:attachmentId/download"),
         async ({ params }) => {
@@ -387,7 +386,7 @@ export const handlers = [
         },
     ),
 
-    // -- 관리자 회원 목록 --
+    // 관리자 회원 목록 요청을 처리함.
     http.get(mockApiUrl("/admin/users"), async ({ request }) => {
         await delay(250);
 
@@ -430,7 +429,7 @@ export const handlers = [
         });
     }),
 
-    // -- 관리자 근로생 목록 --
+    // 관리자 근로생 목록 요청을 처리함.
     http.get(mockApiUrl("/admin/users/staff"), async () => {
         await delay(200);
 
@@ -448,7 +447,7 @@ export const handlers = [
         });
     }),
 
-    // -- 관리자 회원 상세 --
+    // 관리자 회원 상세 요청을 처리함.
     http.get(mockApiUrl("/admin/users/:userId"), async ({ params }) => {
         await delay(200);
 
@@ -476,7 +475,7 @@ export const handlers = [
         });
     }),
 
-    // -- 관리자 회원 수정 --
+    // 관리자 회원 수정 요청을 처리함.
     http.patch(mockApiUrl("/admin/users/:userId"), async ({ params, request }) => {
         await delay(300);
 
@@ -512,9 +511,9 @@ export const handlers = [
         });
     }),
 
-    // -- 로그인 --
+    // 로그인 요청을 처리함.
     http.post(mockApiUrl("/login"), async ({ request }) => {
-        await delay(400); // 로딩 스피너와 버튼 비활성 상태를 확인하려고 지연시켜.
+        await delay(400); // 로딩 스피너와 버튼 비활성 상태 확인을 위해 지연함.
 
         const { loginId, password } = await request.json();
 
@@ -551,7 +550,7 @@ export const handlers = [
         });
     }),
 
-    // -- 로그아웃 --
+    // 로그아웃 요청을 처리함.
     http.post(mockApiUrl("/logout"), async ({ request }) => {
         await delay(200);
 
@@ -572,13 +571,13 @@ export const handlers = [
         });
     }),
 
-    // -- 회원가입 --
+    // 회원가입 요청을 처리함.
     http.post(mockApiUrl("/users"), async ({ request }) => {
         await delay(400);
 
         const body = await request.json();
 
-        // 실제 SignupRequestDTO 기준으로 필드별 오류를 만들어.
+        // 실제 SignupRequestDTO 기준으로 필드별 오류를 생성함.
         const errors = {};
         if (!body.email?.includes("@")) errors.email = "올바른 이메일 형식이 아닙니다.";
         if (!body.password || body.password.length < 8 || body.password.length > 16)
@@ -602,7 +601,7 @@ export const handlers = [
             );
         }
 
-        // 중복 학번 응답도 같은 서버 필드명으로 돌려줘.
+        // 중복 학번 응답에도 동일한 서버 필드명을 사용함.
         if (users.some((u) => u.id === body.studentId)) {
             return HttpResponse.json(
                 {
@@ -643,19 +642,19 @@ export const handlers = [
         });
     }),
 
-    // -- 내정보 --
+    // 내 정보 조회 요청을 처리함.
     http.get(mockApiUrl("/users/me"), async ({ request }) => {
         await delay(200);
 
-        // 헤더를 실제로 읽음 → client.js가 토큰을 제대로 붙이는지 검증됨
+        // 헤더를 직접 읽어 client.js의 토큰 첨부 여부를 검증함.
         const id = parseToken(request.headers.get("Authorization"));
 
-        // 토큰이 없거나 형식이 깨진 경우
+        // 토큰이 없거나 형식이 잘못된 경우를 처리함.
         if (!id) {
             return HttpResponse.json({ message: "로그인이 필요합니다." }, { status: 401 });
         }
 
-        // 형식은 맞지만 그 id의 유저가 없는 경우 (새로고침으로 mock DB가 초기화된 뒤 등)
+        // 형식은 올바르지만 해당 ID의 사용자가 없는 경우를 처리함.
         const user = users.find((u) => u.id === id);
         if (!user) {
             return HttpResponse.json(
@@ -672,7 +671,7 @@ export const handlers = [
         });
     }),
 
-    // -- 내정보 수정 --
+    // 내 정보 수정 요청을 처리함.
     http.patch(mockApiUrl("/users/me"), async ({ request }) => {
         await delay(300);
 
@@ -720,7 +719,7 @@ export const handlers = [
         });
     }),
 
-    // -- 프로필 사진 수정 --
+    // 프로필 사진 수정 요청을 처리함.
     http.patch(mockApiUrl("/users/me/profile-image"), async ({ request }) => {
         await delay(300);
 
@@ -754,7 +753,7 @@ export const handlers = [
         });
     }),
 
-    // -- 회원탈퇴 --
+    // 회원탈퇴 요청을 처리함.
     http.delete(mockApiUrl("/users/me"), async ({ request }) => {
         await delay(300);
 

@@ -77,7 +77,7 @@
 }
 
 
-/* inputLayout */
+/* 입력 레이아웃 영역을 정의함. */
 .inputSection {
     /* border: 1px solid red; */
     display: flex;

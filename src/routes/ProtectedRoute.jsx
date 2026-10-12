@@ -11,7 +11,7 @@ export default function ProtectedRoute({ allowedRoles, children }) {
   const location = useLocation();
   const requestedPath = `${location.pathname}${location.search}`;
 
-  // 저장된 토큰을 확인하는 동안 로그인 화면으로 먼저 보내지 마.
+  // 저장된 토큰을 확인하는 동안 로그인 화면으로 이동시키지 않음.
   if (authStatus === "checking") {
     return null;
   }

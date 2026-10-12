@@ -1,4 +1,4 @@
-//개별 기자재 폐기
+// 개별 기자재 폐기 모달임.
 import { useId } from "react";
 
 import Button from "../common/Button";

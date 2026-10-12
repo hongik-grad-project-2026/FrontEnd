@@ -1,4 +1,4 @@
-//개별 기자재 등록,수정
+// 개별 기자재 등록·수정 모달임.
 import { useId, useState } from "react";
 
 import Button from "../common/Button";

@@ -24,12 +24,12 @@ function DynamicCrumbLabel({ crumb }) {
   return data?.[valueField] || crumb.label;
 }
 
-// useMatches()를 호출하면 현재 URL에 해당하는  최상위 부모부터 최하위 자식까지의 라우트 정보가 배열로 들어옴
+// useMatches() 호출 결과에 현재 URL의 최상위 부모부터 최하위 자식까지 라우트 정보를 포함함.
 function Breadcrumbs() {
   const navigate = useNavigate();
   const matches = useMatches();
 
-  // handle.title이 존재하는 라우트만 뽑아내기
+  // handle.title이 존재하는 라우트만 추출함.
   const crumbs = matches
     .filter((match) => match.handle?.title)
     .map((match) => {

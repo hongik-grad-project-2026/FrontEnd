@@ -1,5 +1,5 @@
 .noticeDetailPage {
-    /* 48px: 상단 breadcrumbs 높이, 32px: contentWrap padding-top */
+    /* 상단 breadcrumbs 높이 48px과 contentWrap 상단 padding 32px을 반영함. */
     height: calc(100vh - 48px - 32px);
     display: flex;
     flex-direction: column;
@@ -58,7 +58,7 @@
     min-width: 0;
 }
 
-/* 자식1 .noticeMetaCon  */
+/* 첫 번째 자식인 noticeMetaCon 영역을 정의함. */
 .noticeMetaCon {
     color: var(--color-neutral-80);
     border-bottom: var(--border-width-default) solid var(--color-neutral-20);
@@ -170,7 +170,7 @@
 
 
 
-/* noticeContentCon   */
+/* noticeContentCon 영역을 정의함. */
 .noticeContentCon {
     padding: 0 var(--spacing-24);
     flex: 1;

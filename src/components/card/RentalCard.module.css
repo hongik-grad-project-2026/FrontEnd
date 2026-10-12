@@ -37,8 +37,8 @@
 }
 
 /*
-  내부 텍스트 공통 컴포넌트가 들어가는 영역
-  텍스트의 색상·크기·간격은 해당 공통 컴포넌트가 관리
+  내부 텍스트 공통 컴포넌트가 들어가는 영역임.
+  텍스트의 색상·크기·간격은 해당 공통 컴포넌트가 관리함.
 */
 .contentSlot {
   display: flex;
@@ -49,8 +49,8 @@
 }
 
 /*
-  공통 Button 컴포넌트가 들어가는 영역
-  RentalCard는 버튼의 위치와 간격만 관리
+  공통 Button 컴포넌트가 들어가는 영역임.
+  RentalCard는 버튼의 위치와 간격만 관리함.
 */
 .actions {
   display: flex;
@@ -65,8 +65,8 @@
 }
 
 /*
-  공통 StatusBadge 컴포넌트가 들어가는 영역
-  RentalCard는 뱃지의 위치만 관리
+  공통 StatusBadge 컴포넌트가 들어가는 영역임.
+  RentalCard는 배지의 위치만 관리함.
 */
 .badgeSlot {
   position: absolute;

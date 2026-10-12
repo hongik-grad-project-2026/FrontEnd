@@ -94,7 +94,7 @@ export function UserProvider({ children }) {
       password,
     );
 
-    // 응답 검증이 끝난 뒤에만 토큰과 사용자 상태를 저장해.
+    // 응답 검증이 끝난 뒤에만 토큰과 사용자 상태를 저장함.
     setAccessToken(accessToken);
     setUser(authenticatedUser);
     setAuthStatus(AUTH_STATUS.AUTHENTICATED);
@@ -113,7 +113,7 @@ export function UserProvider({ children }) {
     } catch (error) {
       serverError = error;
     } finally {
-      // 서버 로그아웃이 실패해도 이 브라우저의 로그인 정보는 반드시 지워.
+      // 서버 로그아웃 실패 여부와 관계없이 브라우저의 로그인 정보를 제거함.
       clearAccessToken();
       setUser(null);
       setAuthError(null);
@@ -147,7 +147,7 @@ export function UserProvider({ children }) {
   async function withdrawCurrentUser() {
     await withdrawCurrentUserRequest();
 
-    // 서버에서 탈퇴가 완료된 뒤에만 이 브라우저의 로그인 정보를 지워.
+    // 서버에서 탈퇴가 완료된 뒤에만 브라우저의 로그인 정보를 제거함.
     clearAccessToken();
     setUser(null);
     setAuthError(null);

@@ -102,8 +102,8 @@ function assertRentalMockMode() {
   throw error;
 }
 
-// Swagger에 대여 API가 추가되면 아래 함수 내부만 실제 요청으로 교체해.
-// 지금 사용하는 상태값과 입력 구조는 모두 화면 확인용 mock 계약이야.
+// Swagger에 대여 API가 추가되면 아래 함수 내부만 실제 요청으로 교체함.
+// 현재 상태값과 입력 구조는 모두 화면 확인용 mock 계약임.
 export async function getStudentRentals(params = {}) {
   assertRentalMockMode();
   return queryMockStudentRentals({

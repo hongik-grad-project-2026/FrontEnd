@@ -142,7 +142,7 @@ function AdminNoticeCreatePage() {
         attachmentFiles: files,
       });
     } catch {
-      // 입력값과 업로드하지 못한 파일은 mutation 상태와 화면에 그대로 남겨.
+      // 입력값과 업로드하지 못한 파일을 mutation 상태와 화면에 그대로 유지함.
     } finally {
       submitGuardRef.current = false;
     }
