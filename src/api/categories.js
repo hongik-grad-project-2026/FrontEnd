@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, ApiError } from "./client";
 
 export const categoryKeys = {
   all: ["categories"],
@@ -33,7 +33,17 @@ function normalizeCategory(category) {
 export async function fetchCategories(options) {
   const result = await api.get("/categories", options);
 
-  return Array.isArray(result) ? result.map(normalizeCategory) : [];
+  if (!Array.isArray(result)) {
+    throw new ApiError({
+      status: null,
+      code: "INVALID_CATEGORIES_RESPONSE",
+      message: "카테고리 응답 형식이 올바르지 않습니다.",
+      data: result,
+      errorType: "CONTRACT_ERROR",
+    });
+  }
+
+  return result.map(normalizeCategory);
 }
 
 export function toCategoryOption(category, { useMockKey = false } = {}) {

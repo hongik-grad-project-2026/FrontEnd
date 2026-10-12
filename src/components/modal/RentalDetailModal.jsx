@@ -80,6 +80,8 @@ function RentalDetailModal({
   rental,
   returnFocusRef,
   workerName = "",
+  isPending = false,
+  error,
 }) {
   const generatedId = useId();
   const closeButtonRef = useRef(null);
@@ -112,6 +114,7 @@ function RentalDetailModal({
   };
 
   const handleRequestClose = (reason, event) => {
+    if (isPending) return;
     resetProcessPhoto();
     onClose?.(reason, event);
   };
@@ -121,22 +124,25 @@ function RentalDetailModal({
   };
 
   const handleBackToDetail = () => {
+    if (isPending) return;
     resetProcessPhoto();
     setMode("detail");
   };
 
   const handleFileSelect = (event) => {
+    if (isPending) return;
     const [selectedFile] = Array.from(event.target.files ?? []);
 
     setProcessPhoto(selectedFile ?? null);
   };
 
   const handleRemoveFile = () => {
+    if (isPending) return;
     resetProcessPhoto();
   };
 
   const handleComplete = (event) => {
-    if (!processPhoto) {
+    if (!processPhoto || isPending) {
       return;
     }
 
@@ -155,6 +161,8 @@ function RentalDetailModal({
     <BaseModal
       isOpen={isOpen}
       onClose={handleRequestClose}
+      closeOnEscape={!isPending}
+      closeOnOverlay={!isPending}
       className={styles.modal}
       ariaLabelledBy={titleId}
       initialFocusRef={closeButtonRef}
@@ -173,6 +181,7 @@ function RentalDetailModal({
             type="button"
             ariaLabel="대여내역 상세 닫기"
             onClick={(event) => handleRequestClose("close-button", event)}
+            disabled={isPending}
           />
         </header>
 
@@ -264,6 +273,7 @@ function RentalDetailModal({
                   type="file"
                   accept="image/*"
                   onChange={handleFileSelect}
+                  disabled={isPending}
                 />
 
                 {processPhoto ? (
@@ -282,6 +292,7 @@ function RentalDetailModal({
                       type="button"
                       ariaLabel={`${processPhoto.name} 파일 제거`}
                       onClick={handleRemoveFile}
+                      disabled={isPending}
                     />
                   </div>
                 ) : (
@@ -293,11 +304,13 @@ function RentalDetailModal({
                     text="파일 선택"
                     ariaLabel={`${processTitle} 사진 선택`}
                     onClick={() => fileInputRef.current?.click()}
+                    disabled={isPending}
                   />
                 )}
               </div>
             </section>
           ) : null}
+          {error ? <p role="alert">{error.message || `${processTitle} 처리에 실패했습니다.`}</p> : null}
         </div>
 
         {isProcessing ? (
@@ -311,6 +324,7 @@ function RentalDetailModal({
               text="돌아가기"
               type="button"
               onClick={handleBackToDetail}
+              disabled={isPending}
             />
 
             <Button
@@ -319,9 +333,9 @@ function RentalDetailModal({
               size="Default"
               color="Primary"
               status="Default"
-              text={completeButtonText}
+              text={isPending ? "처리 중" : completeButtonText}
               type="button"
-              disabled={!processPhoto}
+              disabled={!processPhoto || isPending}
               onClick={handleComplete}
             />
           </footer>

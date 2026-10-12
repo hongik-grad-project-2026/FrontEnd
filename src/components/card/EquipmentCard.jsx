@@ -13,6 +13,8 @@ function EquipmentCard({
     stockRemaining = 0,
     isWish,
     isWishPending = false,
+    isRentPending = false,
+    onRent,
     onWishChange,
 }) {
     const isStockOut = stockRemaining === 0 ? true : false;
@@ -62,7 +64,8 @@ function EquipmentCard({
                         size="Default"
                         status="Default"
                         text="대여하기"
-                        disabled={isStockOut ? true : false}
+                        disabled={isStockOut || isRentPending}
+                        onClick={onRent}
                     />
                     <WishIconButton
                         isWish={isWish}

@@ -9,6 +9,8 @@ import {
   updateAdminMember,
   updateAdminMemberStatus,
 } from "../../api/memberApi";
+import { isMockMode } from "../../api/client";
+import { getMemberRentalCount, rentalKeys } from "../../api/rentalApi";
 
 import MemberInfoCard from "../../components/card/MemberInfoCard";
 import MemberEditModal from "../../components/modal/MemberEditModal";
@@ -335,17 +337,11 @@ function AdminMemberDetailPage() {
   });
 
   const rentalQuery = useQuery({
-    queryKey: [
-      "admin",
-      "members",
-      userId,
-      "rental-history",
-      {
+    queryKey: rentalKeys.memberHistory(userId, {
         page: rentalPage - 1,
         size: RENTAL_PAGE_SIZE,
         keyword: rentalKeyword,
-      },
-    ],
+      }),
     queryFn: () =>
       getAdminMemberRentalHistory({
         memberId: userId,
@@ -357,6 +353,14 @@ function AdminMemberDetailPage() {
       Boolean(userId) &&
       Boolean(memberQuery.data) &&
       selectedTab === "rentals",
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const rentalCountQuery = useQuery({
+    queryKey: rentalKeys.memberCount(userId),
+    queryFn: ({ signal }) => getMemberRentalCount(userId, { signal }),
+    enabled: Boolean(userId) && Boolean(memberQuery.data) && isMockMode,
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -405,7 +409,7 @@ function AdminMemberDetailPage() {
     {
       value: "rentals",
       label: "대여 내역",
-      count: member.rentalCount,
+      count: rentalCountQuery.data ?? "-",
       controlsId: panelId,
     },
   ];

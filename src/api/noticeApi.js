@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api, ApiError } from "./client";
 
 export const noticeKeys = {
   all: ["notices"],
@@ -82,8 +82,18 @@ export async function fetchNotices({
     signal,
   });
 
+  if (!result || !Array.isArray(result.notices)) {
+    throw new ApiError({
+      status: null,
+      code: "INVALID_NOTICES_RESPONSE",
+      message: "공지사항 목록 응답 형식이 올바르지 않습니다.",
+      data: result,
+      errorType: "CONTRACT_ERROR",
+    });
+  }
+
   return {
-    content: (result?.notices ?? []).map(normalizeNoticeSummary),
+    content: result.notices.map(normalizeNoticeSummary),
     page: Number(result?.page ?? page),
     size: Number(result?.size ?? size),
     totalElements: Number(result?.totalElements ?? 0),

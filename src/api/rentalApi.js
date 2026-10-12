@@ -1,165 +1,231 @@
 import { isMockMode } from "./client";
 import {
-    cancelMockStudentRental,
-    getMockStudentRentalCounts,
-    getMockStudentRentalDetail,
-    MOCK_STUDENT_RENTAL_CANCEL_REASONS,
-    queryMockStudentRentals,
+  approveMockRental,
+  cancelMockStudentRental,
+  createMockStudentRental,
+  getMockAdminRentalDashboard,
+  getMockAdminRentalHistoryCounts,
+  getMockAdminRentalStatusCounts,
+  getMockMemberRentalCount,
+  getMockStudentRentalCounts,
+  getMockStudentRentalDetail,
+  MOCK_STUDENT_RENTAL_CANCEL_REASONS,
+  pickupMockRental,
+  queryMockAdminRentalApprovals,
+  queryMockAdminRentalHistory,
+  queryMockAdminRentalStatuses,
+  queryMockMemberRentalHistory,
+  queryMockStudentRentals,
+  rejectMockRental,
+  returnMockRental,
 } from "../mocks/studentRentalData";
 
-function getDateKey(date) {
-    const pad = (value) => String(value).padStart(2, "0");
-
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-export const today = getDateKey(new Date());
-
-const RENTAL_STATUSES = ["대여중", "승인대기", "수령대기", '반납완료', '신청취소'];
-
-// 임시 목업 데이터
-export const MOCK_RENTALS = [
-    {
-        id: 1,
-        status: "승인대기",
-        expectedPickupAt: null,
-        actualPickupAt: null,
-        expectedReturnAt: null,
-        actualReturnAt: null,
-    },
-    {
-        id: 2,
-        status: "수령대기",
-        expectedPickupAt: today,
-        actualPickupAt: null,
-        expectedReturnAt: "2026-12-31",
-        actualReturnAt: null,
-    },
-    {
-        id: 3,
-        status: "대여중",
-        expectedPickupAt: "2026-03-04",
-        actualPickupAt: "2026-03-04",
-        expectedReturnAt: "2026-12-31",
-        actualReturnAt: null,
-    },
-    {
-        id: 4,
-        status: "대여중",
-        expectedPickupAt: "2026-03-04",
-        actualPickupAt: "2026-03-04",
-        expectedReturnAt: today,
-        actualReturnAt: null,
-    },
-    {
-        id: 5,
-        status: "대여중",
-        expectedPickupAt: "2026-03-04",
-        actualPickupAt: "2026-03-04",
-        expectedReturnAt: "2026-04-03",
-        actualReturnAt: null,
-    },
-    {
-        id: 6,
-        status: "수령대기",
-        expectedPickupAt: today,
-        actualPickupAt: null,
-        expectedReturnAt: "2026-12-31",
-        actualReturnAt: null,
-    },
-    {
-        id: 7,
-        status: "반납완료",
-        expectedPickupAt: "2026-03-04",
-        actualPickupAt: "2026-03-04",
-        expectedReturnAt: "2026-04-03",
-        actualReturnAt: "2026-04-03",
-    },
-]
-
-// 임시 API
-export async function fetchRentals({ statuses = RENTAL_STATUSES } = {}) {
-    return MOCK_RENTALS.filter((rental) => statuses.includes(rental.status));
+function normalizeListParams(params = {}, defaultSize = 10) {
+  return {
+    status: params.status ?? "all",
+    keyword: params.keyword?.trim() ?? "",
+    page: params.page ?? 0,
+    size: params.size ?? defaultSize,
+    sort: params.sort ?? "requestedAt,desc",
+  };
 }
 
-function normalizeStudentRentalListParams(params = {}) {
-    return {
-        status: params.status ?? "all",
-        keyword: params.keyword?.trim() ?? "",
-        page: params.page ?? 0,
-        size: params.size ?? 50,
-    };
-}
+export const rentalKeys = {
+  all: ["rentals"],
+  adminApprovalLists: () => ["rentals", "admin", "approval", "list"],
+  adminApprovalList: (params) => [
+    "rentals",
+    "admin",
+    "approval",
+    "list",
+    normalizeListParams(params),
+  ],
+  adminStatusLists: () => ["rentals", "admin", "status", "list"],
+  adminStatusList: (params) => [
+    "rentals",
+    "admin",
+    "status",
+    "list",
+    normalizeListParams(params),
+  ],
+  adminStatusCounts: () => ["rentals", "admin", "status", "counts"],
+  adminHistoryLists: () => ["rentals", "admin", "history", "list"],
+  adminHistoryList: (params) => [
+    "rentals",
+    "admin",
+    "history",
+    "list",
+    normalizeListParams(params),
+  ],
+  adminHistoryCounts: () => ["rentals", "admin", "history", "counts"],
+  adminDashboard: () => ["rentals", "admin", "dashboard"],
+  memberHistories: () => ["rentals", "admin", "member-history"],
+  memberHistory: (memberId, params) => [
+    "rentals",
+    "admin",
+    "member-history",
+    String(memberId),
+    normalizeListParams(params),
+  ],
+  memberCounts: () => ["rentals", "admin", "member-count"],
+  memberCount: (memberId) => [
+    "rentals",
+    "admin",
+    "member-count",
+    String(memberId),
+  ],
+};
 
 export const studentRentalKeys = {
-    all: ["student-rentals"],
-    lists: () => ["student-rentals", "list"],
-    list: (params) => [
-        "student-rentals",
-        "list",
-        normalizeStudentRentalListParams(params),
-    ],
-    counts: () => ["student-rentals", "counts"],
-    details: () => ["student-rentals", "detail"],
-    detail: (rentalId) => ["student-rentals", "detail", String(rentalId)],
-    dashboard: () => ["student-rentals", "dashboard"],
+  all: ["student-rentals"],
+  lists: () => ["student-rentals", "list"],
+  list: (params) => [
+    "student-rentals",
+    "list",
+    normalizeListParams(params, 50),
+  ],
+  counts: () => ["student-rentals", "counts"],
+  details: () => ["student-rentals", "detail"],
+  detail: (rentalId) => ["student-rentals", "detail", String(rentalId)],
+  dashboard: () => ["student-rentals", "dashboard"],
 };
 
 export const studentRentalCancelReasons = MOCK_STUDENT_RENTAL_CANCEL_REASONS;
 
-function assertStudentRentalMockMode() {
-    if (isMockMode) {
-        return;
-    }
+function assertRentalMockMode() {
+  if (isMockMode) {
+    return;
+  }
 
-    const error = new Error("대여 API가 아직 제공되지 않았습니다.");
-    error.code = "STUDENT_RENTAL_API_UNAVAILABLE";
-    throw error;
+  const error = new Error("대여 API가 아직 제공되지 않았습니다.");
+  error.code = "STUDENT_RENTAL_API_UNAVAILABLE";
+  throw error;
 }
 
-// Swagger에 학생 대여 API가 추가되면 아래 함수 안의 요청만 실제 API로 교체해.
-// 페이지는 mock 저장소를 직접 알지 않고 이 경계만 사용해.
+// Swagger에 대여 API가 추가되면 아래 함수 내부만 실제 요청으로 교체해.
+// 지금 사용하는 상태값과 입력 구조는 모두 화면 확인용 mock 계약이야.
 export async function getStudentRentals(params = {}) {
-    assertStudentRentalMockMode();
-    return queryMockStudentRentals({
-        ...normalizeStudentRentalListParams(params),
-        signal: params.signal,
-    });
+  assertRentalMockMode();
+  return queryMockStudentRentals({
+    ...normalizeListParams(params, 50),
+    signal: params.signal,
+  });
 }
 
 export async function getStudentRentalCounts(options = {}) {
-    assertStudentRentalMockMode();
-    return getMockStudentRentalCounts(options);
+  assertRentalMockMode();
+  return getMockStudentRentalCounts(options);
 }
 
 export async function getStudentRentalDetail(rentalId, options = {}) {
-    assertStudentRentalMockMode();
-    return getMockStudentRentalDetail(rentalId, options);
+  assertRentalMockMode();
+  return getMockStudentRentalDetail(rentalId, options);
+}
+
+export async function createStudentRental(values) {
+  assertRentalMockMode();
+  return createMockStudentRental(values);
 }
 
 export async function cancelStudentRental(values) {
-    assertStudentRentalMockMode();
-    return cancelMockStudentRental(values);
+  assertRentalMockMode();
+  return cancelMockStudentRental(values);
 }
 
 export async function getStudentRentalDashboard(options = {}) {
-    assertStudentRentalMockMode();
+  assertRentalMockMode();
+  const { content } = await queryMockStudentRentals({
+    page: 0,
+    size: 50,
+    status: "all",
+    signal: options.signal,
+  });
 
-    const { content } = await queryMockStudentRentals({
-        page: 0,
-        size: 50,
-        status: "all",
-        signal: options.signal,
-    });
+  return {
+    approvalPending: content.filter((rental) => rental.status === "approvalPending"),
+    pickupPending: content.filter((rental) => rental.status === "pickupPending"),
+    renting: content.filter(
+      (rental) => rental.status === "renting" || rental.status === "overdue",
+    ),
+  };
+}
 
-    return {
-        approvalPending: content.filter(
-            (rental) => rental.status === "approvalPending",
-        ),
-        pickupPending: content.filter(
-            (rental) => rental.status === "pickupPending",
-        ),
-        renting: content.filter(
-            (rental) => rental.status === "renting" || rental.status === "overdue",
-        ),
-    };
+export async function getAdminRentalApprovals(params = {}) {
+  assertRentalMockMode();
+  return queryMockAdminRentalApprovals({
+    ...normalizeListParams(params),
+    signal: params.signal,
+  });
+}
+
+export async function approveRental(values) {
+  assertRentalMockMode();
+  return approveMockRental(values);
+}
+
+export async function rejectRental(values) {
+  assertRentalMockMode();
+  return rejectMockRental(values);
+}
+
+export async function getAdminRentalStatuses(params = {}) {
+  assertRentalMockMode();
+  return queryMockAdminRentalStatuses({
+    ...normalizeListParams(params),
+    signal: params.signal,
+  });
+}
+
+export async function getAdminRentalStatusCounts(options = {}) {
+  assertRentalMockMode();
+  return getMockAdminRentalStatusCounts(options);
+}
+
+export async function pickupRental(values) {
+  assertRentalMockMode();
+  return pickupMockRental(values);
+}
+
+export async function returnRental(values) {
+  assertRentalMockMode();
+  return returnMockRental(values);
+}
+
+export async function getAdminRentalHistory(params = {}) {
+  assertRentalMockMode();
+  return queryMockAdminRentalHistory({
+    ...normalizeListParams(params),
+    signal: params.signal,
+  });
+}
+
+export async function getAdminRentalHistoryCounts(options = {}) {
+  assertRentalMockMode();
+  return getMockAdminRentalHistoryCounts(options);
+}
+
+export async function getAdminRentalDashboard(options = {}) {
+  assertRentalMockMode();
+  return getMockAdminRentalDashboard(options);
+}
+
+export async function getMemberRentalHistory(memberId, params = {}) {
+  assertRentalMockMode();
+  return queryMockMemberRentalHistory({
+    memberId,
+    ...normalizeListParams(params),
+    signal: params.signal,
+  });
+}
+
+export async function getMemberRentalCount(memberId, options = {}) {
+  assertRentalMockMode();
+
+  if (options.signal?.aborted) {
+    const error = new Error("요청이 취소되었습니다.");
+    error.name = "AbortError";
+    throw error;
+  }
+
+  return getMockMemberRentalCount(memberId);
 }

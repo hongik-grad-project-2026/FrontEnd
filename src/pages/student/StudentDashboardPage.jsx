@@ -4,9 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isMockMode } from "../../api/client";
 import { fetchNotices, noticeKeys } from '../../api/noticeApi';
 import {
+  createStudentRental,
   getStudentRentalDashboard,
+  rentalKeys,
   studentRentalKeys,
 } from "../../api/rentalApi";
+import { categoryKeys, fetchCategories, toCategoryOption } from "../../api/categories";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll"
 
 import {
@@ -20,6 +23,8 @@ import EquipmentCard from "../../components/card/EquipmentCard"
 import PageHeader from "../../components/layout/PageHeader"
 import { IconTextButton } from "../../components/common/IconButton";
 import AccordionItem from "../../components/common/AccordionItem";
+import RentalApplyModal from "../../components/modal/RentalApplyModal";
+import { useUser } from "../../context/UserContext";
 
 
 import styles from "./StudentDashboardPage.module.css"
@@ -193,6 +198,10 @@ function RentalsLi({ rental }) {
 function StudentDashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useUser();
+  const rentalTriggerRef = useRef(null);
+  const rentalSubmitGuardRef = useRef(false);
+  const [rentalTarget, setRentalTarget] = useState(null);
   const pendingWishlistModelIdsRef = useRef(new Set());
   const [pendingWishlistModelIds, setPendingWishlistModelIds] = useState(
     () => new Set(),
@@ -208,6 +217,10 @@ function StudentDashboardPage() {
     pickupPending: [],
     renting: [],
   };
+  const categoryQuery = useQuery({
+    queryKey: categoryKeys.list(),
+    queryFn: ({ signal }) => fetchCategories({ signal }),
+  });
 
   const wishlistMutation = useMutation({
     mutationFn: setEquipmentModelWishlist,
@@ -224,6 +237,18 @@ function StudentDashboardPage() {
       );
     },
   });
+  const applicationMutation = useMutation({
+    mutationFn: createStudentRental,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rentalKeys.all }),
+        queryClient.invalidateQueries({ queryKey: studentRentalKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "members"] }),
+      ]);
+      setRentalTarget(null);
+    },
+    onSettled: () => { rentalSubmitGuardRef.current = false; },
+  });
 
   const handleWishChange = (modelId, isWish) => {
     if (
@@ -236,6 +261,16 @@ function StudentDashboardPage() {
     pendingWishlistModelIdsRef.current.add(modelId);
     setPendingWishlistModelIds(new Set(pendingWishlistModelIdsRef.current));
     wishlistMutation.mutate({ modelId, isWish });
+  };
+  const getCategoryLabel = (categoryId) =>
+    categoryQuery.data
+      ?.map((category) => toCategoryOption(category, { useMockKey: true }))
+      .find((category) => String(category.categoryId) === String(categoryId))
+      ?.label ?? "카테고리";
+  const handleSubmitRental = (values) => {
+    if (!rentalTarget || rentalSubmitGuardRef.current) return;
+    rentalSubmitGuardRef.current = true;
+    applicationMutation.mutate({ model: rentalTarget, user, ...values });
   };
 
   const {
@@ -356,6 +391,14 @@ function StudentDashboardPage() {
               <EquipmentCard
                 key={equipment.modelId}
                 {...equipment}
+                category={getCategoryLabel(equipment.categoryId)}
+                isRentPending={applicationMutation.isPending && rentalTarget?.modelId === equipment.modelId}
+                onRent={(event) => {
+                  if (rentalSubmitGuardRef.current) return;
+                  rentalTriggerRef.current = event.currentTarget;
+                  applicationMutation.reset();
+                  setRentalTarget({ ...equipment, category: getCategoryLabel(equipment.categoryId) });
+                }}
                 isWishPending={pendingWishlistModelIds.has(equipment.modelId)}
                 onWishChange={(nextIsWish) =>
                   handleWishChange(equipment.modelId, nextIsWish)
@@ -368,6 +411,16 @@ function StudentDashboardPage() {
           {isMockMode && !hasNextPage && items.length > 0 ? <p>마지막 찜 항목입니다.</p> : null}
         </div>
       </section>
+
+      <RentalApplyModal
+        isOpen={Boolean(rentalTarget)}
+        equipment={rentalTarget}
+        isPending={applicationMutation.isPending}
+        error={applicationMutation.error}
+        onClose={() => { if (!applicationMutation.isPending) setRentalTarget(null); }}
+        onSubmit={handleSubmitRental}
+        returnFocusRef={rentalTriggerRef}
+      />
 
     </main>
 

@@ -13,16 +13,24 @@ import {
   getEquipmentModels,
   setEquipmentModelWishlist,
 } from "../../api/equipmentApi";
+import {
+  createStudentRental,
+  rentalKeys,
+  studentRentalKeys,
+} from "../../api/rentalApi";
 import Button from "../../components/common/Button";
 import SearchBar from "../../components/common/SearchBar";
 import Tabs from "../../components/common/Tabs";
 import EquipmentCard from "../../components/card/EquipmentCard";
 import PageHeader from "../../components/layout/PageHeader";
+import RentalApplyModal from "../../components/modal/RentalApplyModal";
+import { useUser } from "../../context/UserContext";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import styles from "./StudentEquipmentListPage.module.css";
 
 function StudentEquipmentListPage() {
   const queryClient = useQueryClient();
+  const { user } = useUser();
   const [selectedCategory, setSelectedCategory] = useState(
     ALL_CATEGORY_OPTION.value,
   );
@@ -31,6 +39,9 @@ function StudentEquipmentListPage() {
   const [pendingWishlistModelIds, setPendingWishlistModelIds] = useState(
     () => new Set(),
   );
+  const rentalTriggerRef = useRef(null);
+  const rentalSubmitGuardRef = useRef(false);
+  const [rentalTarget, setRentalTarget] = useState(null);
 
   const categoryQuery = useQuery({
     queryKey: categoryKeys.list(),
@@ -76,6 +87,21 @@ function StudentEquipmentListPage() {
     },
   });
 
+  const rentalMutation = useMutation({
+    mutationFn: createStudentRental,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rentalKeys.all }),
+        queryClient.invalidateQueries({ queryKey: studentRentalKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "members"] }),
+      ]);
+      setRentalTarget(null);
+    },
+    onSettled: () => {
+      rentalSubmitGuardRef.current = false;
+    },
+  });
+
   const handleWishChange = (modelId, isWish) => {
     if (
       !isMockMode ||
@@ -87,6 +113,25 @@ function StudentEquipmentListPage() {
     pendingWishlistModelIdsRef.current.add(modelId);
     setPendingWishlistModelIds(new Set(pendingWishlistModelIdsRef.current));
     wishlistMutation.mutate({ modelId, isWish });
+  };
+
+  const handleOpenRental = (equipment, category, event) => {
+    if (!isMockMode || rentalSubmitGuardRef.current) {
+      return;
+    }
+
+    rentalTriggerRef.current = event.currentTarget;
+    rentalMutation.reset();
+    setRentalTarget({ ...equipment, category });
+  };
+
+  const handleSubmitRental = (values) => {
+    if (!rentalTarget || rentalSubmitGuardRef.current) {
+      return;
+    }
+
+    rentalSubmitGuardRef.current = true;
+    rentalMutation.mutate({ model: rentalTarget, user, ...values });
   };
 
   const {
@@ -200,25 +245,35 @@ function StudentEquipmentListPage() {
             ) : null}
 
             {isMockMode
-              ? items.map((equipment) => (
-                  <EquipmentCard
+              ? items.map((equipment) => {
+                  const categoryLabel =
+                    categoryOptions.find(
+                      (category) =>
+                        String(category.categoryId) ===
+                        String(equipment.categoryId),
+                    )?.label ?? "카테고리";
+
+                  return (
+                    <EquipmentCard
                     key={equipment.modelId}
-                    category={
-                      categoryOptions.find(
-                        (category) =>
-                          String(category.categoryId) ===
-                          String(equipment.categoryId),
-                      )?.label ?? "카테고리"
-                    }
+                    category={categoryLabel}
                     {...equipment}
+                    isRentPending={
+                      rentalMutation.isPending &&
+                      rentalTarget?.modelId === equipment.modelId
+                    }
+                    onRent={(event) =>
+                      handleOpenRental(equipment, categoryLabel, event)
+                    }
                     isWishPending={
                       pendingWishlistModelIds.has(equipment.modelId)
                     }
                     onWishChange={(nextIsWish) =>
                       handleWishChange(equipment.modelId, nextIsWish)
                     }
-                  />
-                ))
+                    />
+                  );
+                })
               : null}
 
             {isMockMode ? (
@@ -233,6 +288,20 @@ function StudentEquipmentListPage() {
           </div>
         ) : null}
       </div>
+
+      <RentalApplyModal
+        isOpen={Boolean(rentalTarget)}
+        equipment={rentalTarget}
+        isPending={rentalMutation.isPending}
+        error={rentalMutation.error}
+        onClose={() => {
+          if (!rentalMutation.isPending) {
+            setRentalTarget(null);
+          }
+        }}
+        onSubmit={handleSubmitRental}
+        returnFocusRef={rentalTriggerRef}
+      />
     </main>
   );
 }

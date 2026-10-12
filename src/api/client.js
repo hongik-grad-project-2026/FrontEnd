@@ -71,19 +71,26 @@ async function parseResponseBody(response, responseType) {
   const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
 
   if (!isJsonContentType(contentType)) {
-    const contentLength = response.headers.get("content-length");
+    const text = await response.text();
 
-    if (contentLength === "0") {
+    if (text === "") {
       return null;
     }
 
-    if (contentType.startsWith("text/")) {
-      const text = await response.text();
-      return text === "" ? null : text;
+    // HTTP 오류의 일반 텍스트 본문은 아래 공통 HTTP 오류 처리에서 메시지로 사용해.
+    if (!response.ok) {
+      return text;
     }
 
-    const blob = await response.blob();
-    return blob.size === 0 ? null : blob;
+    // 일반 API 요청은 JSON 계약이야. HTML 같은 응답을 성공 데이터로 넘기지 않아.
+    throw new ApiError({
+      status: response.status,
+      code: "UNEXPECTED_CONTENT_TYPE",
+      message: "서버가 예상하지 않은 형식으로 응답했습니다.",
+      data: text,
+      response,
+      errorType: "PARSE_ERROR",
+    });
   }
 
   const text = await response.text();

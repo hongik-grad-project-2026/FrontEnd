@@ -1,4 +1,5 @@
 import { api, isMockMode } from "./client";
+import { getMemberRentalHistory } from "./rentalApi";
 
 // 화면 확인용 임시 데이터
 // 실제 서버 응답 구조 아님
@@ -518,7 +519,6 @@ function toMemberDetail(member) {
       member.profileImageUrl || "/images/hongikLogo-circle.png",
     createdAt: member.createdAt ?? null,
     updatedAt: member.updatedAt ?? null,
-    rentalCount: isMockMode ? getMemberRentals(member.userId).length : null,
   };
 }
 
@@ -723,19 +723,9 @@ export async function getAdminMemberRentalHistory({
 } = {}) {
   requireMockOnlyFeature();
   requireMember(memberId);
-
-  const resolvedSize = resolveSize(size, 10);
-  const normalizedKeyword = normalizeSearch(keyword);
-
-  const filteredRentals = getMemberRentals(memberId).filter((rental) => {
-    if (!normalizedKeyword) {
-      return true;
-    }
-
-    return [rental.equipmentName, rental.modelName, rental.assetNumber].some(
-      (value) => normalizeSearch(value).includes(normalizedKeyword),
-    );
+  return getMemberRentalHistory(memberId, {
+    page,
+    size: resolveSize(size, 10),
+    keyword,
   });
-
-  return createPage(filteredRentals, page, resolvedSize);
 }

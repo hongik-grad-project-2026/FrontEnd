@@ -5,6 +5,7 @@ import {
   getStudentRentalCounts,
   getStudentRentals,
   studentRentalKeys,
+  rentalKeys,
 } from "../../api/rentalApi";
 import RentalCard from "../../components/card/RentalCard";
 import RentalCardInfo from "../../components/card/RentalCardInfo";
@@ -276,6 +277,8 @@ function StudentRentalHistoryPage() {
       );
 
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rentalKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "members"] }),
         queryClient.invalidateQueries({ queryKey: studentRentalKeys.lists() }),
         queryClient.invalidateQueries({ queryKey: studentRentalKeys.counts() }),
         queryClient.invalidateQueries({

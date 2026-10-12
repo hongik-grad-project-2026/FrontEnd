@@ -27,6 +27,8 @@ function RentalRejectModal({
   onRejectionReasonChange,
   request,
   returnFocusRef,
+  isPending = false,
+  error,
 }) {
   const generatedId = useId();
   const firstReasonRef = useRef(null);
@@ -40,17 +42,19 @@ function RentalRejectModal({
   const reasonGroupName = `${generatedId}-rejection-reason`;
 
   const handleBack = (event) => {
-    onClose?.("cancel", event);
+    if (!isPending) onClose?.("cancel", event);
   };
 
   const handleConfirm = (event) => {
-    onConfirm?.(request, rejectionReason, event);
+    if (!isPending) onConfirm?.(request, rejectionReason, event);
   };
 
   return (
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
+      closeOnEscape={!isPending}
+      closeOnOverlay={!isPending}
       className={styles.modal}
       ariaLabelledBy={titleId}
       ariaDescribedBy={warningId}
@@ -118,7 +122,7 @@ function RentalRejectModal({
             신청 반려는 되돌릴 수 없습니다.
           </p>
 
-          <fieldset className={styles.reasonFieldset}>
+          <fieldset className={styles.reasonFieldset} disabled={isPending}>
             <legend className={styles.reasonTitle}>반려 사유</legend>
 
             <div className={styles.reasonList}>
@@ -141,6 +145,7 @@ function RentalRejectModal({
               ))}
             </div>
           </fieldset>
+          {error ? <p role="alert">{error.message || "대여 신청을 반려하지 못했습니다."}</p> : null}
         </section>
       </div>
 
@@ -154,6 +159,7 @@ function RentalRejectModal({
           text="돌아가기"
           type="button"
           onClick={handleBack}
+          disabled={isPending}
         />
 
         <Button
@@ -162,9 +168,10 @@ function RentalRejectModal({
           size="Default"
           color="Danger"
           status="Default"
-          text="신청 반려 처리"
+          text={isPending ? "처리 중" : "신청 반려 처리"}
           type="button"
           onClick={handleConfirm}
+          disabled={isPending}
         />
       </footer>
     </BaseModal>
