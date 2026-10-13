@@ -13,6 +13,7 @@ import {
   studentRoutes,
   commonRoutes,
   authRoutes,
+  notFoundRoute,
 } from "./routes/RoutesConfig.jsx";
 import { UserProvider } from "./context/UserProvider.jsx";
 
@@ -54,6 +55,9 @@ const router = createBrowserRouter([
 
   // 학생 모드 라우트를 등록함.
   studentRoutes,
+
+  // 일치하는 경로가 없는 경우 마지막에 처리함.
+  notFoundRoute,
 ]);
 enableMocking().then(() => {
   createRoot(document.getElementById("root")).render(

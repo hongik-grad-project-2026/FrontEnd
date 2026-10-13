@@ -62,7 +62,7 @@ function IconTextButton({
       aria-label={ariaLabel ?? "아이콘 버튼"}
     >
       <IconImage icon={icon} />
-      {text && <span className={styles.iconButtonText}>{text}</span>}
+      {text && <span>{text}</span>}
     </button>
   );
 }

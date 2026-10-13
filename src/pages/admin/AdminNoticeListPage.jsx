@@ -108,7 +108,7 @@ function AdminNoticeListPage() {
   return (
     <div className={styles.noticeListPage}>
       <PageHeader customTitle="공지사항" />
-      <div className={styles.contentArea}>
+      <div>
         <DataTable
           ariaLabel="공지사항 목록 표"
           bulkAction={

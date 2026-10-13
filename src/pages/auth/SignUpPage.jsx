@@ -549,7 +549,6 @@ function SignUpPage() {
 
                     <div className={styles.buttonCon}>
                         <Button
-                            className={styles.backButton}
                             color="Neutral"
                             kind="border"
                             size="Default"

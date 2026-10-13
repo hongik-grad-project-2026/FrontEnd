@@ -30,7 +30,7 @@ function NavItem({
           }}
         />
 
-        <span className={styles.itemName}>{itemName}</span>
+        <span>{itemName}</span>
       </NavLink>
     </li>
   );

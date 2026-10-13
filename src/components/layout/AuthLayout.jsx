@@ -24,7 +24,7 @@ function AuthLayout() {
                     <span>멀티미디어실</span>
                 </div>
             ) : ''}
-            <section className={`${styles.contentSection} ${titleConfig === '회원가입' ? styles.signupSection : ''}`}>
+            <section className={styles.contentSection}>
                 {titleConfig === '로그인' ? (
                     <h1 className={styles.logoArea}>
                         <img src="/images/h1.png" alt="홍익대학교" />
