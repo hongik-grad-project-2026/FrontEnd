@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import {
   cancelStudentRental,
   getStudentRentalCounts,
@@ -21,6 +22,14 @@ import styles from "./StudentRentalHistoryPage.module.css";
 
 const LIST_PAGE = 0;
 const LIST_SIZE = 50;
+const RENTAL_TAB_VALUES = new Set([
+  "all",
+  "approvalPending",
+  "pickupPending",
+  "renting",
+  "canceled",
+  "returned",
+]);
 
 const BADGE_STATUS = {
   approvalPending: "대여-승인대기",
@@ -139,11 +148,25 @@ function HighlightedEquipmentName({ name, searchTerm }) {
 
 function StudentRentalHistoryPage() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const modalTriggerRef = useRef(null);
   const cancelGuardRef = useRef(false);
-  const [activeTab, setActiveTab] = useState("all");
+  const requestedTab = searchParams.get("status") ?? "all";
+  const activeTab = RENTAL_TAB_VALUES.has(requestedTab) ? requestedTab : "all";
   const [searchTerm, setSearchTerm] = useState("");
   const [modalState, setModalState] = useState(null);
+
+  const handleTabChange = (nextTab) => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (nextTab === "all") {
+      nextSearchParams.delete("status");
+    } else {
+      nextSearchParams.set("status", nextTab);
+    }
+
+    setSearchParams(nextSearchParams);
+  };
 
   const listParams = useMemo(
     () => ({
@@ -348,7 +371,7 @@ function StudentRentalHistoryPage() {
                 className={layoutStyles.statusTabs}
                 items={rentalTabs}
                 value={activeTab}
-                onChange={setActiveTab}
+                onChange={handleTabChange}
                 ariaLabel="학생 대여내역 상태"
               />
 

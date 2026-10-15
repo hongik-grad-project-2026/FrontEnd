@@ -272,6 +272,15 @@ function StudentDashboardPage() {
     rentalSubmitGuardRef.current = true;
     applicationMutation.mutate({ model: rentalTarget, user, ...values });
   };
+  const navigateToRentalHistory = (status) => {
+    navigate(`/student/history?status=${status}`);
+  };
+  const handleRentalStatusKeyDown = (event, status) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+    navigateToRentalHistory(status);
+  };
 
   const {
     items,
@@ -349,7 +358,14 @@ function StudentDashboardPage() {
           <p className={styles.noticeState}>대여 내역이 없습니다.</p>
         ) : null}
         {isMockMode && rentalQuery.isSuccess && !isEmptyRentalDashboard ? <div className={styles.rentalsGrid}>
-          <div className={`${styles.contentArea} ${styles.rentalStatusBox}`}>
+          <div
+            className={`${styles.contentArea} ${styles.rentalStatusBox}`}
+            role="link"
+            tabIndex={0}
+            aria-label="승인대기 대여내역 보기"
+            onClick={() => navigateToRentalHistory("approvalPending")}
+            onKeyDown={(event) => handleRentalStatusKeyDown(event, "approvalPending")}
+          >
             <StatusBadge status='대여-승인대기' size='md' />
             <ul>
               {rentalGroups.approvalPending.slice(0, 2).map((rental) => (
@@ -358,7 +374,14 @@ function StudentDashboardPage() {
               {rentalGroups.approvalPending.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.approvalPending.length - 2}건</span></li> : ''}
             </ul>
           </div>
-          <div className={`${styles.contentArea} ${styles.rentalStatusBox}`}>
+          <div
+            className={`${styles.contentArea} ${styles.rentalStatusBox}`}
+            role="link"
+            tabIndex={0}
+            aria-label="수령대기 대여내역 보기"
+            onClick={() => navigateToRentalHistory("pickupPending")}
+            onKeyDown={(event) => handleRentalStatusKeyDown(event, "pickupPending")}
+          >
             <StatusBadge status='대여-수령대기' size='md' />
             <ul>
               {rentalGroups.pickupPending.slice(0, 2).map((rental) => (
@@ -368,7 +391,14 @@ function StudentDashboardPage() {
             </ul>
 
           </div>
-          <div className={`${styles.contentArea} ${styles.rentalStatusBox}`}>
+          <div
+            className={`${styles.contentArea} ${styles.rentalStatusBox}`}
+            role="link"
+            tabIndex={0}
+            aria-label="대여중 대여내역 보기"
+            onClick={() => navigateToRentalHistory("renting")}
+            onKeyDown={(event) => handleRentalStatusKeyDown(event, "renting")}
+          >
             <StatusBadge status='대여-대여중' size='md' />
             <ul>
               {rentalGroups.renting.slice(0, 2).map((rental) => (

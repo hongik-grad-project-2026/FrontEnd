@@ -17,7 +17,6 @@ import {
 } from "./routes/RoutesConfig.jsx";
 import { UserProvider } from "./context/UserProvider.jsx";
 
-
 async function enableMocking() {
   const mockMode = import.meta.env.VITE_USE_MOCK;
 
@@ -31,17 +30,14 @@ async function enableMocking() {
   return startMockWorker();
 }
 
-
-const queryClient = new QueryClient(/*{
+const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false, // 브라우저 탭이나 창에 포커스할 때의 자동 재요청을 비활성화함.
-      retry: 1,                    // API 요청 실패 시 한 번 재시도함.
+      retry: 1, // API 요청 실패 시 한 번 재시도함.
     },
-  }
-}
-비활성 QueryClient 기본 옵션을 보관함.
-*/);
+  },
+});
 
 const router = createBrowserRouter([
   // 공통 라우트를 등록함.
@@ -70,6 +66,6 @@ enableMocking().then(() => {
         <ReactQueryDevtools initialIsOpen={false} />{" "}
         {/* 개발용 패널이며 프로덕션 빌드에서는 비활성 상태임. */}
       </QueryClientProvider>
-    </StrictMode>
+    </StrictMode>,
   );
 });
