@@ -93,8 +93,14 @@ function LoginPage() {
                     />
                     <span className={styles.labelText}> 학번 기억하기</span>
                 </label>
-                <div >
-                    <span className={styles.gotoText}>비밀번호 찾기</span>
+                <div>
+                    <button
+                        className={`${styles.gotoText} ${styles.forgotPasswordLink}`}
+                        type="button"
+                        onClick={() => navigate('/forgot-password')}
+                    >
+                        비밀번호 찾기
+                    </button>
                     <span className={styles.gotoText} onClick={() => navigate('/signup')}>회원가입</span>
                 </div>
             </div>

@@ -40,6 +40,7 @@ import StudentNoticeDetailPage from "../pages/student/StudentNoticeDetailPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpPage from "../pages/auth/SignUpPage";
 import SignUpCompletePage from "../pages/auth/SignUpCompletePage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 
 async function loadAdminEquipmentModel({ params }) {
   try {
@@ -81,6 +82,14 @@ const authRoutes = {
       element: <SignUpCompletePage />,
       handle: {
         title: "회원가입 완료",
+      },
+    },
+    {
+      path: "/forgot-password",
+      element: <ForgotPasswordPage />,
+      handle: {
+        title: "비밀번호 찾기",
+        authLayout: "passwordReset",
       },
     },
   ],

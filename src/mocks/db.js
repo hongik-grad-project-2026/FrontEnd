@@ -42,6 +42,23 @@ export const makeToken = (id) => `mock-token-${id}`;
 // 구조 분해로 password를 제외하고 나머지를 새 객체로 구성함.
 export const toPublicUser = ({ password, ...user }) => user;
 
+// 비밀번호 재설정 mock이 로그인과 같은 자격 증명 저장소를 사용하도록 계정을 조회함.
+export function findMockUserByLoginId(loginId) {
+    return users.find((user) => user.id === loginId) ?? null;
+}
+
+// 비밀번호 재설정 결과가 같은 브라우저 실행 중 mock 로그인에 반영되도록 비밀번호를 변경함.
+export function updateMockUserPassword(loginId, password) {
+    const user = findMockUserByLoginId(loginId);
+
+    if (!user) {
+        return null;
+    }
+
+    user.password = password;
+    return toPublicUser(user);
+}
+
 export const parseToken = (header) => {
     if (!header?.startsWith(TOKEN_PREFIX)) return null;
     return header.slice(TOKEN_PREFIX.length) || null;
