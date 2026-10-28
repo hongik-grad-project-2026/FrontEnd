@@ -7,7 +7,7 @@ import InputBar from "../../components/common/Input";
 import { InputLayout } from "../../components/layout/AuthLayout";
 import {
     invalidatePasswordResetFlow,
-    passwordResetAvailability,
+    // passwordResetAvailability,
     resetPassword,
     sendPasswordResetCode,
     verifyPasswordResetCode,
@@ -82,9 +82,11 @@ function ForgotPasswordPage() {
     const [touchedFields, setTouchedFields] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
     const [errorMessage, setErrorMessage] = useState("");
-    const [verificationCode, setVerificationCode] = useState("");
+    const [verificationCode, setVerificationCode] = useState("");    // 사용자가 입력한 인증번호를 보관
     const [verificationId, setVerificationId] = useState(null);
+    const [hasVerificationRequest, setHasVerificationRequest] = useState(false); //인증번호 발송 성공 여부
     const [resetToken, setResetToken] = useState(null);
+    // 인증번호 5분 만료 시각과 재전송 가능 시각을 Unix timestamp로 저장함.
     const [expiresAt, setExpiresAt] = useState(0);
     const [resendAvailableAt, setResendAvailableAt] = useState(0);
     const [now, setNow] = useState(Date.now());
@@ -103,14 +105,15 @@ function ForgotPasswordPage() {
     const verifyMutation = useMutation({ mutationFn: verifyPasswordResetCode });
     const resetMutation = useMutation({ mutationFn: resetPassword });
 
-    const isSupported = passwordResetAvailability.isSupported;
+    // const isSupported = passwordResetAvailability.isSupported;
     const isStudentIdValid = STUDENT_ID_PATTERN.test(identity.studentId.trim());
     const isNameValid = NAME_PATTERN.test(identity.name.trim());
     const isEmailValid = EMAIL_PATTERN.test(identity.email.trim());
     const areIdentityFieldsValid = isStudentIdValid && isNameValid && isEmailValid;
     const verificationRemaining = Math.max(0, expiresAt - now);
     const resendRemaining = Math.max(0, resendAvailableAt - now);
-    const isVerificationExpired = Boolean(verificationId) && verificationRemaining <= 0;
+    // 발송 요청은 성공했지만 만료 시각이 지난 상태인지 계산함.
+    const isVerificationExpired = hasVerificationRequest && verificationRemaining <= 0;
     const isVerified = Boolean(resetToken);
     const isPasswordValid =
         password.length >= PASSWORD_MIN_LENGTH &&
@@ -126,7 +129,7 @@ function ForgotPasswordPage() {
     }, []);
 
     useEffect(() => {
-        if (!verificationId || isVerified || step !== "verification") {
+        if (!hasVerificationRequest || isVerified || step !== "verification") {
             return undefined;
         }
 
@@ -135,7 +138,7 @@ function ForgotPasswordPage() {
         const timerId = window.setInterval(updateNow, 1000);
 
         return () => window.clearInterval(timerId);
-    }, [isVerified, step, verificationId]);
+    }, [hasVerificationRequest, isVerified, step]);
 
     useEffect(() => {
         if (!isVerificationExpired || isVerified) {
@@ -180,6 +183,7 @@ function ForgotPasswordPage() {
         invalidatePasswordResetFlow({ verificationId, resetToken });
         setVerificationCode("");
         setVerificationId(null);
+        setHasVerificationRequest(false);
         setResetToken(null);
         setExpiresAt(0);
         setResendAvailableAt(0);
@@ -188,7 +192,7 @@ function ForgotPasswordPage() {
     }
 
     function handleIdentityChange(field, value) {
-        if (verificationId || resetToken) {
+        if (hasVerificationRequest || resetToken) {
             clearVerificationState();
         }
 
@@ -214,10 +218,9 @@ function ForgotPasswordPage() {
 
         const localErrors = getLocalFieldErrors();
         if (
-            !isSupported ||
             Object.keys(localErrors).length > 0 ||
             sendGuardRef.current ||
-            (verificationId && resendRemaining > 0) ||
+            (hasVerificationRequest && resendRemaining > 0) ||
             isVerified
         ) {
             setFieldErrors((currentErrors) => ({ ...currentErrors, ...localErrors }));
@@ -230,7 +233,8 @@ function ForgotPasswordPage() {
 
         try {
             const result = await sendMutation.mutateAsync(identity);
-            setVerificationId(result.verificationId);
+            setVerificationId(result.verificationId ?? null);
+            setHasVerificationRequest(true);
             setExpiresAt(result.expiresAt);
             setResendAvailableAt(result.resendAvailableAt);
             setVerificationCode("");
@@ -244,10 +248,10 @@ function ForgotPasswordPage() {
         }
     }
 
+    // 2단계: 발송 때와 같은 가입 정보 및 인증번호를 확인 API로 보내고, 성공 시 resetToken을 저장함.
     async function handleVerifyCode() {
         if (
-            !isSupported ||
-            !verificationId ||
+            !hasVerificationRequest ||
             verificationCode.trim() === "" ||
             isVerificationExpired ||
             verifyGuardRef.current ||
@@ -265,7 +269,9 @@ function ForgotPasswordPage() {
         });
 
         try {
+            // mock에는 verificationId도 전달하고, 실제 API 어댑터는 identity와 code를 Swagger body로 변환함.
             const result = await verifyMutation.mutateAsync({
+                identity,
                 verificationId,
                 code: verificationCode,
             });
@@ -284,7 +290,7 @@ function ForgotPasswordPage() {
     function handleVerificationSubmit(event) {
         event.preventDefault();
 
-        if (verificationId) {
+        if (hasVerificationRequest) {
             handleVerifyCode();
             return;
         }
@@ -305,10 +311,12 @@ function ForgotPasswordPage() {
     function handleReturnToLogin(options) {
         invalidatePasswordResetFlow({ verificationId, resetToken });
         setVerificationId(null);
+        setHasVerificationRequest(false);
         setResetToken(null);
         navigate("/login", options);
     }
 
+    // 3단계: 새 비밀번호 형식과 확인값 일치를 검사하고, resetToken과 함께 변경 API를 호출함.
     async function handleResetPassword(event) {
         event.preventDefault();
 
@@ -321,7 +329,6 @@ function ForgotPasswordPage() {
         }
 
         if (
-            !isSupported ||
             !resetToken ||
             Object.keys(nextErrors).length > 0 ||
             resetGuardRef.current
@@ -335,10 +342,16 @@ function ForgotPasswordPage() {
         setFieldErrors({});
 
         try {
-            const account = await resetMutation.mutateAsync({ resetToken, password });
+            // API 어댑터가 화면의 password/passwordConfirm을 Swagger의 newPassword 필드로 매핑함.
+            const account = await resetMutation.mutateAsync({
+                resetToken,
+                password,
+                passwordConfirm,
+            });
             setCompletedAccount(account);
             setResetToken(null);
             setVerificationId(null);
+            setHasVerificationRequest(false);
             setVerificationCode("");
             setPassword("");
             setPasswordConfirm("");
@@ -353,26 +366,23 @@ function ForgotPasswordPage() {
 
     const sendButtonText = sendMutation.isPending
         ? "발송 중"
-        : verificationId && resendRemaining > 0
+        : hasVerificationRequest && resendRemaining > 0
             ? formatRemainingTime(resendRemaining)
-            : verificationId
+            : hasVerificationRequest
                 ? "재전송"
                 : "인증번호 발송";
     const canSendCode =
-        isSupported &&
         areIdentityFieldsValid &&
         !sendMutation.isPending &&
         !isVerified &&
-        (!verificationId || resendRemaining <= 0);
+        (!hasVerificationRequest || resendRemaining <= 0);
     const canVerifyCode =
-        isSupported &&
-        Boolean(verificationId) &&
+        hasVerificationRequest &&
         verificationCode.trim() !== "" &&
         !isVerificationExpired &&
         !verifyMutation.isPending &&
         !isVerified;
     const canResetPassword =
-        isSupported &&
         Boolean(resetToken) &&
         isPasswordValid &&
         isPasswordMatched &&
@@ -514,11 +524,11 @@ function ForgotPasswordPage() {
         <form className={styles.verificationPage} onSubmit={handleVerificationSubmit}>
             <h2 className={styles.pageTitle}>비밀번호 찾기</h2>
 
-            {!isSupported ? (
+            {/* {!isSupported ? (
                 <p className={styles.unsupportedMessage} role="status">
                     {passwordResetAvailability.message}
                 </p>
-            ) : null}
+            ) : null} */}
 
             <InputLayout id="password-reset-student-id" title="학번">
                 <InputBar
@@ -529,7 +539,7 @@ function ForgotPasswordPage() {
                     helperText={fieldErrors.studentId || getVisibleLocalError("studentId")}
                     value={identity.studentId}
                     width="100%"
-                    disabled={!isSupported || sendMutation.isPending || verifyMutation.isPending}
+                    disabled={sendMutation.isPending || verifyMutation.isPending}
                     onBlur={() => setTouchedFields((current) => ({ ...current, studentId: true }))}
                     onChange={(event) => handleIdentityChange("studentId", event.target.value)}
                 />
@@ -543,7 +553,7 @@ function ForgotPasswordPage() {
                     helperText={fieldErrors.name || getVisibleLocalError("name")}
                     value={identity.name}
                     width="100%"
-                    disabled={!isSupported || sendMutation.isPending || verifyMutation.isPending}
+                    disabled={sendMutation.isPending || verifyMutation.isPending}
                     onBlur={() => setTouchedFields((current) => ({ ...current, name: true }))}
                     onChange={(event) => handleIdentityChange("name", event.target.value)}
                 />
@@ -559,7 +569,7 @@ function ForgotPasswordPage() {
                         helperText={fieldErrors.email || getVisibleLocalError("email")}
                         value={identity.email}
                         width="100%"
-                        disabled={!isSupported || sendMutation.isPending || verifyMutation.isPending}
+                        disabled={sendMutation.isPending || verifyMutation.isPending}
                         onBlur={() => setTouchedFields((current) => ({ ...current, email: true }))}
                         onChange={(event) => handleIdentityChange("email", event.target.value)}
                     />
@@ -587,8 +597,7 @@ function ForgotPasswordPage() {
                         value={verificationCode}
                         width="100%"
                         disabled={
-                            !isSupported ||
-                            !verificationId ||
+                            !hasVerificationRequest ||
                             isVerificationExpired ||
                             isVerified ||
                             verifyMutation.isPending
@@ -615,7 +624,7 @@ function ForgotPasswordPage() {
                 </div>
             </InputLayout>
 
-            {verificationId && !isVerified ? (
+            {hasVerificationRequest && !isVerified ? (
                 <p className={styles.timerDescription} aria-live="polite">
                     인증번호 유효시간 {formatRemainingTime(verificationRemaining)}
                 </p>

@@ -1,9 +1,11 @@
 import { findMockUserByLoginId, updateMockUserPassword } from "./db.js";
+import {
+  PASSWORD_RESET_RESEND_COOLDOWN_MS,
+  PASSWORD_RESET_VERIFICATION_TTL_MS,
+} from "../utils/passwordResetConfig.js";
 
 const MOCK_VERIFICATION_CODE = "123456";
-const VERIFICATION_TTL_MS = 5 * 60 * 1000;
-const RESEND_COOLDOWN_MS = 3 * 60 * 1000;
-const RESET_PERMISSION_TTL_MS = 5 * 60 * 1000;
+const RESET_PERMISSION_TTL_MS = 5 * 60 * 1000; // mock 전용 resetToken 유효기간
 
 const verificationSessions = new Map();
 const resetPermissions = new Map();
@@ -112,8 +114,8 @@ export async function sendMockPasswordResetCode(identity) {
 
   const verificationId = createMemoryId("verification");
   const issuedAt = Date.now();
-  const expiresAt = issuedAt + VERIFICATION_TTL_MS;
-  const resendAvailableAt = issuedAt + RESEND_COOLDOWN_MS;
+  const expiresAt = issuedAt + PASSWORD_RESET_VERIFICATION_TTL_MS;
+  const resendAvailableAt = issuedAt + PASSWORD_RESET_RESEND_COOLDOWN_MS;
 
   verificationSessions.set(verificationId, {
     verificationId,
