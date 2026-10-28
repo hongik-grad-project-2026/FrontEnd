@@ -98,12 +98,6 @@ function EquipmentCell({ rental }) {
         <strong className={styles.equipmentName} title={rental.equipmentName}>
           {rental.equipmentName}
         </strong>
-
-        {rental.modelName ? (
-          <span className={styles.secondaryText} title={rental.modelName}>
-            {rental.modelName}
-          </span>
-        ) : null}
       </span>
     </div>
   );
@@ -212,7 +206,7 @@ const RENTAL_COLUMNS = [
   },
   {
     key: "category",
-    header: "카테고리 / OS",
+    header: "카테고리",
     width: 140,
     render: (rental) => <CategoryCell rental={rental} />,
   },
@@ -338,10 +332,10 @@ function AdminMemberDetailPage() {
 
   const rentalQuery = useQuery({
     queryKey: rentalKeys.memberHistory(userId, {
-        page: rentalPage - 1,
-        size: RENTAL_PAGE_SIZE,
-        keyword: rentalKeyword,
-      }),
+      page: rentalPage - 1,
+      size: RENTAL_PAGE_SIZE,
+      keyword: rentalKeyword,
+    }),
     queryFn: () =>
       getAdminMemberRentalHistory({
         memberId: userId,

@@ -121,7 +121,6 @@ function AssetFormModalContent({
   const quantityId = `${generatedId}-quantity`;
   const statusId = `${generatedId}-status`;
   const labelNumberId = `${generatedId}-label-number`;
-  const assetNumberId = `${generatedId}-asset-number`;
   const notesId = `${generatedId}-notes`;
 
   const isCreateMode = mode === "create";
@@ -131,7 +130,6 @@ function AssetFormModalContent({
   const hasRequiredValues =
     Boolean(formValues.status) &&
     Boolean(normalizeText(formValues.labelSuffix)) &&
-    Boolean(normalizeText(formValues.assetNumber)) &&
     (!isCreateMode ||
       (Number.isInteger(quantity) &&
         quantity > 0 &&
@@ -230,7 +228,7 @@ function AssetFormModalContent({
 
           <div className={styles.fields}>
             {isCreateMode ? (
-              <div className={styles.pairRow}>
+              <>
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor={quantityId}>
                     등록할 수량*
@@ -271,7 +269,7 @@ function AssetFormModalContent({
                     }
                   />
                 </div>
-              </div>
+              </>
             ) : (
               <div className={styles.editStatusRow}>
                 <div className={styles.field}>
@@ -296,49 +294,30 @@ function AssetFormModalContent({
               </div>
             )}
 
-            <div className={styles.pairRow}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={labelNumberId}>
-                  {isCreateMode ? "라벨 시작 번호*" : "라벨 번호*"}
-                </label>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={labelNumberId}>
+                {isCreateMode ? "라벨 시작 번호*" : "라벨 번호*"}
+              </label>
 
-                <div className={styles.prefixedInput}>
-                  {labelPrefix ? (
-                    <strong className={styles.prefix}>{labelPrefix}-</strong>
-                  ) : null}
-
-                  <InputBar
-                    id={labelNumberId}
-                    width="100%"
-                    height="md"
-                    inputMode="numeric"
-                    name="labelNumber"
-                    value={formValues.labelSuffix}
-                    placeholder={isCreateMode ? "예) 001" : "라벨 번호"}
-                    disabled={isPending}
-                    onChange={handleTextChange("labelSuffix")}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={assetNumberId}>
-                  {isCreateMode ? "비품 번호 시작 번호*" : "비품 번호*"}
-                </label>
+              <div className={styles.prefixedInput}>
+                {labelPrefix ? (
+                  <strong className={styles.prefix}>{labelPrefix}-</strong>
+                ) : null}
 
                 <InputBar
-                  id={assetNumberId}
+                  id={labelNumberId}
                   width="100%"
                   height="md"
                   inputMode="numeric"
-                  name="assetNumber"
-                  value={formValues.assetNumber}
-                  placeholder={isCreateMode ? "예) 1111111" : "비품 번호"}
+                  name="labelNumber"
+                  value={formValues.labelSuffix}
+                  placeholder={isCreateMode ? "예) 001" : "라벨 번호"}
                   disabled={isPending}
-                  onChange={handleTextChange("assetNumber")}
+                  onChange={handleTextChange("labelSuffix")}
                 />
               </div>
             </div>
+
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor={notesId}>
@@ -384,7 +363,7 @@ function AssetFormModalContent({
           />
         </footer>
       </form>
-    </BaseModal>
+    </BaseModal >
   );
 }
 

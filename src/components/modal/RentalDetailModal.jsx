@@ -9,6 +9,7 @@ import InputBar from "../common/Input";
 import StatusBadge from "../common/StatusBadge";
 import BaseModal from "./BaseModal";
 import styles from "./RentalDetailModal.module.css";
+import { isPickupPhotoRequired } from "../../utils/rentalRules";
 
 const BADGE_STATUS = {
   waiting: "대여-수령대기",
@@ -103,6 +104,9 @@ function RentalDetailModal({
 
   const processType = isWaiting ? "pickup" : "return";
   const processTitle = isWaiting ? "수령" : "반납";
+  // 반납 사진은 항상 필수이며, 수령 사진만 기자재 카테고리 규칙을 따름.
+  const isProcessPhotoRequired =
+    processType === "return" || isPickupPhotoRequired(rental.category);
   const completeButtonText = `${processTitle} 처리 완료`;
 
   const resetProcessPhoto = () => {
@@ -142,7 +146,7 @@ function RentalDetailModal({
   };
 
   const handleComplete = (event) => {
-    if (!processPhoto || isPending) {
+    if ((isProcessPhotoRequired && !processPhoto) || isPending) {
       return;
     }
 
@@ -237,7 +241,7 @@ function RentalDetailModal({
           <InfoSection title="대여 정보">
             <dl className={styles.infoGrid}>
               <ModalInfoCell label="승인일" value={rental.approvedAt} />
-              <ModalInfoCell label="비품번호" value={rental.assetNumber} />
+              <ModalInfoCell label="라벨번호" value={rental.labelNumber} />
 
               {!isWaiting ? (
                 <ModalInfoCell label="수령일" value={rental.actualPickupAt} />
@@ -264,6 +268,7 @@ function RentalDetailModal({
               <div className={styles.processField}>
                 <label className={styles.processLabel} htmlFor={processPhotoId}>
                   {processTitle} 사진 첨부
+                  {isProcessPhotoRequired ? "*" : " (선택)"}
                 </label>
 
                 <input
@@ -272,6 +277,7 @@ function RentalDetailModal({
                   className={styles.fileInput}
                   type="file"
                   accept="image/*"
+                  required={isProcessPhotoRequired}
                   onChange={handleFileSelect}
                   disabled={isPending}
                 />
@@ -335,7 +341,7 @@ function RentalDetailModal({
               status="Default"
               text={isPending ? "처리 중" : completeButtonText}
               type="button"
-              disabled={!processPhoto || isPending}
+              disabled={(isProcessPhotoRequired && !processPhoto) || isPending}
               onClick={handleComplete}
             />
           </footer>

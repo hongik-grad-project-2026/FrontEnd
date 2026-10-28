@@ -1,4 +1,4 @@
-// 기자재 모델 등록 모달임.
+// 모델 등록 모달임.
 import { useId, useRef, useState } from "react";
 import Button from "../common/Button";
 import IconButton, { IconTextButton } from "../common/IconButton";
@@ -19,14 +19,25 @@ const STATUS_OPTIONS = [
   },
 ];
 
+const RENTAL_POLICY_OPTIONS = [
+  { value: "regular", label: "정기" },
+  { value: "always", label: "상시" },
+];
+
+const FLEXIBLE_POLICY_CATEGORY_LABELS = new Set(["노트북", "태블릿"]);
+
+function allowsFlexibleRentalPolicies(categoryOption) {
+  return FLEXIBLE_POLICY_CATEGORY_LABELS.has(categoryOption?.label);
+}
+
 function createEmptyForm() {
   return {
     category: "",
     status: "",
+    rentalPolicies: [],
     receivedDate: null,
     disposalDate: null,
     name: "",
-    modelName: "",
     accessories: "",
     specification: "",
     description: "",
@@ -75,19 +86,27 @@ function EquipmentCreateModal({
   const titleId = `${generatedId}-title`;
   const categoryId = `${generatedId}-category`;
   const statusId = `${generatedId}-status`;
+  const rentalPolicyId = `${generatedId}-rental-policy`;
   const receivedDateId = `${generatedId}-received-date`;
   const disposalDateId = `${generatedId}-disposal-date`;
   const nameId = `${generatedId}-name`;
-  const modelNameId = `${generatedId}-model-name`;
   const accessoriesId = `${generatedId}-accessories`;
   const specificationId = `${generatedId}-specification`;
   const descriptionId = `${generatedId}-description`;
   const labelPrefixId = `${generatedId}-label-prefix`;
   const imageFileId = `${generatedId}-image-file`;
 
+  const selectedCategoryOption = categoryOptions.find(
+    (option) => option.value === formValues.category,
+  );
+  const allowsFlexiblePolicies = allowsFlexibleRentalPolicies(
+    selectedCategoryOption,
+  );
+
   const isRequiredFormComplete =
     Boolean(formValues.category) &&
     Boolean(formValues.status) &&
+    formValues.rentalPolicies.length > 0 &&
     isValidDate(formValues.receivedDate) &&
     isValidDate(formValues.disposalDate) &&
     Boolean(formValues.name.trim()) &&
@@ -104,6 +123,40 @@ function EquipmentCreateModal({
 
   const handleTextChange = (field) => (event) => {
     updateFormValue(field, event.target.value);
+  };
+
+  const handleCategoryChange = (nextCategory) => {
+    const nextCategoryOption = categoryOptions.find(
+      (option) => option.value === nextCategory,
+    );
+    const nextAllowsFlexiblePolicies = allowsFlexibleRentalPolicies(
+      nextCategoryOption,
+    );
+
+    setFormValues((previousValues) => {
+      const previousCategoryOption = categoryOptions.find(
+        (option) => option.value === previousValues.category,
+      );
+      const previousAllowsFlexiblePolicies = allowsFlexibleRentalPolicies(
+        previousCategoryOption,
+      );
+
+      return {
+        ...previousValues,
+        category: nextCategory,
+        rentalPolicies: nextAllowsFlexiblePolicies
+          ? previousAllowsFlexiblePolicies
+            ? previousValues.rentalPolicies
+            : []
+          : nextCategory
+            ? ["always"]
+            : [],
+      };
+    });
+  };
+
+  const handleRentalPolicyChange = (nextPolicies) => {
+    updateFormValue("rentalPolicies", nextPolicies);
   };
 
   const resetForm = () => {
@@ -170,7 +223,6 @@ function EquipmentCreateModal({
       ...otherFormValues,
       categoryKey: category,
       name: formValues.name.trim(),
-      modelName: formValues.modelName.trim(),
       accessories: formValues.accessories.trim(),
       specification: formValues.specification.trim(),
       description: formValues.description.trim(),
@@ -199,17 +251,17 @@ function EquipmentCreateModal({
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <header className={styles.header}>
             <h2 id={titleId} className={styles.title}>
-              기자재 등록
+              모델 등록
             </h2>
           </header>
 
           <div className={styles.content}>
             <div className={styles.pairRow}>
+
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={categoryId}>
                   카테고리*
                 </label>
-
                 <Select
                   id={categoryId}
                   className={styles.select}
@@ -217,18 +269,55 @@ function EquipmentCreateModal({
                   options={categoryOptions}
                   value={formValues.category}
                   placeholder="카테고리를 선택하세요."
-                  ariaLabel="기자재 카테고리"
-                  onChange={(nextValue) =>
-                    updateFormValue("category", nextValue)
-                  }
+                  ariaLabel="모델 카테고리"
+                  onChange={handleCategoryChange}
                 />
               </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor={labelPrefixId}>
+                  라벨 번호 접두사*
+                </label>
 
+                <div className={styles.inputWrap}>
+                  <InputBar
+                    id={labelPrefixId}
+                    width="100%"
+                    height="md"
+                    name="labelPrefix"
+                    value={formValues.labelPrefix}
+                    placeholder="예) ABC"
+                    required
+                    onChange={handleTextChange("labelPrefix")}
+                  />
+                </div>
+              </div>
+            </div>
+
+
+            <div className={styles.pairRow}>
+
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor={rentalPolicyId}>
+                  대여정책*
+                </label>
+                <Select
+                  id={rentalPolicyId}
+                  className={styles.select}
+                  width="100%"
+                  options={RENTAL_POLICY_OPTIONS}
+                  value={formValues.rentalPolicies}
+                  multiple
+                  disabled={!allowsFlexiblePolicies}
+                  placeholder="대여정책을 선택하세요"
+                  ariaLabel="대여정책"
+                  onChange={handleRentalPolicyChange}
+                />
+              </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={statusId}>
                   상태*
                 </label>
-
                 <Select
                   id={statusId}
                   className={styles.select}
@@ -236,10 +325,11 @@ function EquipmentCreateModal({
                   options={STATUS_OPTIONS}
                   value={formValues.status}
                   placeholder="대여 상태를 선택하세요."
-                  ariaLabel="기자재 대여 상태"
+                  ariaLabel="모델 대여 상태"
                   onChange={(nextValue) => updateFormValue("status", nextValue)}
                 />
               </div>
+
             </div>
 
             <div className={styles.pairRow}>
@@ -247,7 +337,6 @@ function EquipmentCreateModal({
                 <label className={styles.label} htmlFor={receivedDateId}>
                   입고일*
                 </label>
-
                 <Select
                   id={receivedDateId}
                   className={styles.select}
@@ -255,7 +344,7 @@ function EquipmentCreateModal({
                   width="100%"
                   value={formValues.receivedDate}
                   placeholder="날짜를 선택하세요."
-                  ariaLabel="기자재 입고일"
+                  ariaLabel="모델 입고일"
                   onChange={(nextDate) =>
                     updateFormValue("receivedDate", nextDate)
                   }
@@ -266,7 +355,6 @@ function EquipmentCreateModal({
                 <label className={styles.label} htmlFor={disposalDateId}>
                   폐기일*
                 </label>
-
                 <Select
                   id={disposalDateId}
                   className={styles.select}
@@ -274,7 +362,7 @@ function EquipmentCreateModal({
                   width="100%"
                   value={formValues.disposalDate}
                   placeholder="날짜를 선택하세요."
-                  ariaLabel="기자재 폐기일"
+                  ariaLabel="모델 폐기일"
                   onChange={(nextDate) =>
                     updateFormValue("disposalDate", nextDate)
                   }
@@ -284,7 +372,7 @@ function EquipmentCreateModal({
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor={nameId}>
-                기자재명*
+                모델명*
               </label>
 
               <div className={styles.inputWrap}>
@@ -294,27 +382,9 @@ function EquipmentCreateModal({
                   height="md"
                   name="equipmentName"
                   value={formValues.name}
-                  placeholder="기자재명을 입력하세요"
+                  placeholder="모델명을 입력하세요"
                   required
                   onChange={handleTextChange("name")}
-                />
-              </div>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor={modelNameId}>
-                모델명
-              </label>
-
-              <div className={styles.inputWrap}>
-                <InputBar
-                  id={modelNameId}
-                  width="100%"
-                  height="md"
-                  name="modelName"
-                  value={formValues.modelName}
-                  placeholder="모델명을 입력하세요 (선택)"
-                  onChange={handleTextChange("modelName")}
                 />
               </div>
             </div>
@@ -374,74 +444,57 @@ function EquipmentCreateModal({
               </div>
             </div>
 
-            <div className={styles.pairRow}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={labelPrefixId}>
-                  라벨 번호 접두사*
-                </label>
 
-                <div className={styles.inputWrap}>
-                  <InputBar
-                    id={labelPrefixId}
-                    width="100%"
-                    height="md"
-                    name="labelPrefix"
-                    value={formValues.labelPrefix}
-                    placeholder="예) ABC"
-                    required
-                    onChange={handleTextChange("labelPrefix")}
+
+
+            <div className={styles.field}>
+              <span className={styles.label}>모델 사진*</span>
+
+              <input
+                ref={fileInputRef}
+                id={imageFileId}
+                className={styles.fileInput}
+                type="file"
+                name="imageFile"
+                accept="image/*"
+                required
+                onChange={handleFileSelect}
+              />
+
+              {formValues.imageFile ? (
+                <div className={styles.fileItem}>
+                  <span
+                    className={styles.fileName}
+                    title={formValues.imageFile.name}
+                  >
+                    {formValues.imageFile.name}
+                  </span>
+
+                  <span className={styles.fileSize}>
+                    {formatFileSize(formValues.imageFile.size)}
+                  </span>
+
+                  <IconButton
+                    icon="trash"
+                    size={24}
+                    type="button"
+                    ariaLabel={`${formValues.imageFile.name} 파일 제거`}
+                    onClick={handleRemoveFile}
                   />
                 </div>
-              </div>
-
-              <div className={styles.field}>
-                <span className={styles.label}>기자재 모델 사진*</span>
-
-                <input
-                  ref={fileInputRef}
-                  id={imageFileId}
-                  className={styles.fileInput}
-                  type="file"
-                  name="imageFile"
-                  accept="image/*"
-                  required
-                  onChange={handleFileSelect}
+              ) : (
+                <IconTextButton
+                  className={styles.fileSelectButton}
+                  icon="paperclip"
+                  border
+                  type="button"
+                  text="파일 선택"
+                  ariaLabel="모델 사진 선택"
+                  onClick={() => fileInputRef.current?.click()}
                 />
-
-                {formValues.imageFile ? (
-                  <div className={styles.fileItem}>
-                    <span
-                      className={styles.fileName}
-                      title={formValues.imageFile.name}
-                    >
-                      {formValues.imageFile.name}
-                    </span>
-
-                    <span className={styles.fileSize}>
-                      {formatFileSize(formValues.imageFile.size)}
-                    </span>
-
-                    <IconButton
-                      icon="trash"
-                      size={24}
-                      type="button"
-                      ariaLabel={`${formValues.imageFile.name} 파일 제거`}
-                      onClick={handleRemoveFile}
-                    />
-                  </div>
-                ) : (
-                  <IconTextButton
-                    className={styles.fileSelectButton}
-                    icon="paperclip"
-                    border
-                    type="button"
-                    text="파일 선택"
-                    ariaLabel="기자재 모델 사진 선택"
-                    onClick={() => fileInputRef.current?.click()}
-                  />
-                )}
-              </div>
+              )}
             </div>
+
           </div>
 
           <footer className={styles.actions}>

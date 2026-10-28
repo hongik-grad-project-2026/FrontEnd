@@ -1,18 +1,54 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import BaseModal from "./BaseModal";
 import Button from "../common/Button";
 import styles from "./RentalApplyModal.module.css";
+import { SEMESTER_END_DATE } from "../../utils/rentalRules";
 
-const INITIAL_FORM = {
-  rentalType: "short",
-  pickupDate: "",
-  pickupTime: "",
-  returnDate: "",
-  returnTime: "",
-  reason: "",
-};
+const SEMESTER_END_DATE_VALUE = SEMESTER_END_DATE.toISOString().slice(0, 10);
 
-function RentalApplyModal({
+function createInitialForm(equipment) {
+  return {
+    rentalType: equipment?.rentalPolicies?.[0] ?? "",
+    pickupDate: "",
+    pickupTime: "",
+    returnDate: "",
+    returnTime: "",
+    reason: "",
+  };
+}
+
+function getNextDayDate(dateValue) {
+  if (!dateValue) {
+    return "";
+  }
+
+  const date = new Date(`${dateValue}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  date.setDate(date.getDate() + 1);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function RentalApplyModal(props) {
+  const { equipment, isOpen = false } = props;
+
+  if (!equipment) {
+    return null;
+  }
+
+  const modalKey = `${equipment.modelId}:${isOpen}`;
+
+  return <RentalApplyModalContent key={modalKey} {...props} />;
+}
+
+function RentalApplyModalContent({
   equipment,
   error,
   isOpen = false,
@@ -23,17 +59,15 @@ function RentalApplyModal({
 }) {
   const titleId = `${useId()}-title`;
   const firstInputRef = useRef(null);
-  const [form, setForm] = useState(INITIAL_FORM);
-
-  useEffect(() => {
-    if (isOpen) {
-      setForm(INITIAL_FORM);
-    }
-  }, [equipment?.modelId, isOpen]);
-
-  if (!equipment) {
-    return null;
-  }
+  const [form, setForm] = useState(() => createInitialForm(equipment));
+  const isRegularRental = form.rentalType === "regular";
+  const isAlwaysRental = form.rentalType === "always";
+  const isReturnDateFixed = isRegularRental || isAlwaysRental;
+  const resolvedReturnDate = isRegularRental
+    ? SEMESTER_END_DATE_VALUE
+    : isAlwaysRental
+      ? getNextDayDate(form.pickupDate)
+      : form.returnDate;
 
   const updateField = (event) => {
     const { name, value } = event.target;
@@ -49,7 +83,7 @@ function RentalApplyModal({
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!isPending) {
-      onSubmit?.(form);
+      onSubmit?.({ ...form, returnDate: resolvedReturnDate });
     }
   };
 
@@ -86,8 +120,11 @@ function RentalApplyModal({
               <label>
                 <span>대여 유형</span>
                 <select ref={firstInputRef} name="rentalType" value={form.rentalType} onChange={updateField} disabled={isPending}>
-                  <option value="short">단기 대여</option>
-                  <option value="long">장기 대여</option>
+                  {equipment.rentalPolicies?.map((type) => (
+                    <option key={type} value={type}>
+                      {type === "regular" ? "정기" : type === "always" ? "상시" : type}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label>
@@ -98,9 +135,16 @@ function RentalApplyModal({
                 </span>
               </label>
               <label>
-                <span>반납 예정일</span>
+                <span>
+                  반납 예정일
+                  {isRegularRental
+                    ? " (학기말)"
+                    : isAlwaysRental
+                      ? " (수령일 다음 날)"
+                      : ""}
+                </span>
                 <span className={styles.dateTime}>
-                  <input required type="date" name="returnDate" value={form.returnDate} onChange={updateField} disabled={isPending} />
+                  <input required type="date" name="returnDate" value={resolvedReturnDate} onChange={updateField} disabled={isPending || isReturnDateFixed} />
                   <input required type="time" name="returnTime" value={form.returnTime} onChange={updateField} disabled={isPending} />
                 </span>
               </label>

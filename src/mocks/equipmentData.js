@@ -23,6 +23,7 @@ const MOCK_STATUS_NOTES = {
   disposalScheduled: "폐기 예정 기기",
 };
 
+// categoryId와 categoryKey는 src/api/categories.js의 mock 카테고리 정의와 일치시킴.
 const MOCK_MODEL_DEFINITIONS = [
   {
     modelId: "mock-equipment-001",
@@ -30,6 +31,7 @@ const MOCK_MODEL_DEFINITIONS = [
     modelName: "MOCK-LAPTOP-A",
     categoryId: 1,
     categoryKey: "laptop",
+    rentalPolicies: ["regular"],
     os: "Windows",
     accessories: "본체, 파우치, 충전 케이블",
     specification: "화면 확인용 성능 정보",
@@ -47,6 +49,7 @@ const MOCK_MODEL_DEFINITIONS = [
     modelName: "MOCK-LAPTOP-B-LONG-MODEL-NAME",
     categoryId: 1,
     categoryKey: "laptop",
+    rentalPolicies: ["regular", "always"],
     os: "macOS",
     accessories: "본체, 보호 케이스, 파우치, 어댑터, 충전 케이블",
     specification: "긴 성능 정보가 두 줄을 초과할 때 표시를 확인합니다.",
@@ -63,8 +66,9 @@ const MOCK_MODEL_DEFINITIONS = [
     modelId: "mock-equipment-003",
     name: "화면 확인용 태블릿 A",
     modelName: "MOCK-TABLET-A",
-    categoryId: 3,
+    categoryId: 2,
     categoryKey: "tablet",
+    rentalPolicies: ["always"],
     os: "Android",
     accessories: "본체, 케이스, 충전 케이블",
     specification: "화면 확인용 성능 정보",
@@ -80,8 +84,9 @@ const MOCK_MODEL_DEFINITIONS = [
     modelId: "mock-equipment-004",
     name: "화면 확인용 태블릿 B",
     modelName: "MOCK-TABLET-B",
-    categoryId: 3,
+    categoryId: 2,
     categoryKey: "tablet",
+    rentalPolicies: ["regular"],
     os: "iPadOS",
     accessories: "본체, 케이스",
     specification: "",
@@ -98,7 +103,8 @@ const MOCK_MODEL_DEFINITIONS = [
     name: "화면 확인용 키보드/마우스 A",
     modelName: "",
     categoryId: 4,
-    categoryKey: "keyboard-mouse",
+    categoryKey: "others",
+    rentalPolicies: ["always"],
     os: "",
     accessories: "키보드, 마우스",
     specification: "",
@@ -115,7 +121,8 @@ const MOCK_MODEL_DEFINITIONS = [
     name: "화면 확인용 키보드/마우스 B",
     modelName: "MOCK-INPUT-B",
     categoryId: 4,
-    categoryKey: "keyboard-mouse",
+    categoryKey: "others",
+    rentalPolicies: ["always"],
     os: "",
     accessories: "키보드, 마우스, 수신기",
     specification: "화면 확인용 연결 정보",
@@ -131,8 +138,9 @@ const MOCK_MODEL_DEFINITIONS = [
     modelId: "mock-equipment-007",
     name: "화면 확인용 보조배터리 A",
     modelName: "MOCK-BATTERY-A",
-    categoryId: 2,
+    categoryId: 3,
     categoryKey: "power-bank",
+    rentalPolicies: ["always"],
     os: "",
     accessories: "본체, 충전 케이블",
     specification: "화면 확인용 용량 정보",
@@ -148,8 +156,9 @@ const MOCK_MODEL_DEFINITIONS = [
     modelId: "mock-equipment-008",
     name: "화면 확인용 보조배터리 B",
     modelName: "MOCK-BATTERY-B",
-    categoryId: 2,
+    categoryId: 3,
     categoryKey: "power-bank",
+    rentalPolicies: ["always"],
     os: "",
     accessories: "본체, 파우치, 충전 케이블",
     specification: "화면 확인용 용량 정보",
@@ -165,8 +174,9 @@ const MOCK_MODEL_DEFINITIONS = [
     modelId: "mock-equipment-009",
     name: "화면 확인용 노트북 거치대 A",
     modelName: "MOCK-LAPTOP-STAND-A",
-    categoryId: 5,
-    categoryKey: "laptop-stand",
+    categoryId: 4,
+    categoryKey: "others",
+    rentalPolicies: ["always"],
     os: "",
     accessories: "거치대, 보관 파우치",
     specification: "",
@@ -182,8 +192,9 @@ const MOCK_MODEL_DEFINITIONS = [
     modelId: "mock-equipment-010",
     name: "화면 확인용 노트북 거치대 B",
     modelName: "MOCK-LAPTOP-STAND-B",
-    categoryId: 5,
-    categoryKey: "laptop-stand",
+    categoryId: 4,
+    categoryKey: "others",
+    rentalPolicies: ["always"],
     os: "",
     accessories: "거치대",
     specification: "",
@@ -199,8 +210,9 @@ const MOCK_MODEL_DEFINITIONS = [
     modelId: "mock-equipment-011",
     name: "화면 확인용 독서대 A",
     modelName: "MOCK-BOOK-STAND-A",
-    categoryId: 6,
-    categoryKey: "book-stand",
+    categoryId: 4,
+    categoryKey: "others",
+    rentalPolicies: ["always"],
     os: "",
     accessories: "독서대",
     specification: "",
@@ -216,8 +228,9 @@ const MOCK_MODEL_DEFINITIONS = [
     modelId: "mock-equipment-012",
     name: "화면 확인용 독서대 B",
     modelName: "MOCK-BOOK-STAND-B",
-    categoryId: 6,
-    categoryKey: "book-stand",
+    categoryId: 4,
+    categoryKey: "others",
+    rentalPolicies: ["always"],
     os: "",
     accessories: "독서대, 보관 가방",
     specification: "",
@@ -246,8 +259,8 @@ const mockEquipmentItems = new Map(
         index < definition.availableCount
           ? "available"
           : MOCK_EQUIPMENT_ITEM_STATUSES[
-              (index % (MOCK_EQUIPMENT_ITEM_STATUSES.length - 1)) + 1
-            ];
+          (index % (MOCK_EQUIPMENT_ITEM_STATUSES.length - 1)) + 1
+          ];
       const displayNumber = String(index + 1).padStart(3, "0");
 
       return {
@@ -355,6 +368,7 @@ function toStudentModel(model) {
     modelId: `mock-catalog-model-${model.id}`,
     modelImageUrl: model.modelImageUrl,
     categoryId: model.categoryId,
+    rentalPolicies: [...(model.rentalPolicies ?? [])],
     modelName: model.modelName,
     specification: model.specification,
     components: model.components,
@@ -516,6 +530,7 @@ export async function createMockAdminEquipmentModel(values) {
     categoryId: values.categoryId,
     categoryKey: values.categoryKey,
     status: values.status,
+    rentalPolicies: [...values.rentalPolicies],
     receivedDate: values.receivedDate,
     disposalDate: values.disposalDate,
     name: normalizeText(values.name),
@@ -542,6 +557,7 @@ export async function updateMockAdminEquipmentModel(values) {
     categoryId: values.categoryId,
     categoryKey: values.categoryKey,
     status: values.status,
+    rentalPolicies: [...values.rentalPolicies],
     receivedDate: values.receivedDate,
     disposalDate: values.disposalDate,
     name: normalizeText(values.name),
@@ -635,7 +651,7 @@ export async function getMockAdminEquipmentItemCounts(
 }
 
 export async function createMockAdminEquipmentItems({
-  assetNumberStart,
+  // assetNumberStart,
   labelPrefix,
   labelStart,
   modelId,
@@ -653,20 +669,20 @@ export async function createMockAdminEquipmentItems({
 
   const resolvedLabelPrefix = normalizeText(labelPrefix);
   const resolvedLabelStart = assertDigitText(labelStart, "라벨 시작 번호");
-  const resolvedAssetNumberStart = assertDigitText(
-    assetNumberStart,
-    "비품 번호 시작 번호",
-  );
+  // const resolvedAssetNumberStart = assertDigitText(
+  //   assetNumberStart,
+  //   "비품 번호 시작 번호",
+  // );
 
   const generatedItems = Array.from({ length: quantity }, (_, index) => {
     const labelSuffix = createSequentialNumber(resolvedLabelStart, index);
-    const assetNumber = createSequentialNumber(resolvedAssetNumberStart, index);
+    // const assetNumber = createSequentialNumber(resolvedAssetNumberStart, index);
 
     return {
       itemId: `${modelId}-created-${nextItemSequence++}`,
       modelId,
       labelNumber: `${resolvedLabelPrefix}-${labelSuffix}`,
-      assetNumber,
+      // assetNumber,
       status,
       notes: normalizeText(notes),
     };
@@ -679,9 +695,9 @@ export async function createMockAdminEquipmentItems({
         normalizeSearch(candidate.labelNumber),
     ),
   );
-  const duplicatedAssetNumber = generatedItems.find((candidate) =>
-    items.some((item) => item.assetNumber === candidate.assetNumber),
-  );
+  // const duplicatedAssetNumber = generatedItems.find((candidate) =>
+  //   items.some((item) => item.assetNumber === candidate.assetNumber),
+  // );
 
   if (duplicatedLabel) {
     throw createMockError(
@@ -690,12 +706,12 @@ export async function createMockAdminEquipmentItems({
     );
   }
 
-  if (duplicatedAssetNumber) {
-    throw createMockError(
-      `${duplicatedAssetNumber.assetNumber} 비품 번호가 이미 존재합니다.`,
-      "DUPLICATED_ASSET_NUMBER",
-    );
-  }
+  // if (duplicatedAssetNumber) {
+  //   throw createMockError(
+  //     `${duplicatedAssetNumber.assetNumber} 비품 번호가 이미 존재합니다.`,
+  //     "DUPLICATED_ASSET_NUMBER",
+  //   );
+  // }
 
   items.push(...generatedItems);
   const firstItem = generatedItems[0];
@@ -707,8 +723,8 @@ export async function createMockAdminEquipmentItems({
     status,
     labelStart: firstItem.labelNumber,
     labelEnd: lastItem.labelNumber,
-    assetNumberStart: firstItem.assetNumber,
-    assetNumberEnd: lastItem.assetNumber,
+    // assetNumberStart: firstItem.assetNumber,
+    // assetNumberEnd: lastItem.assetNumber,
   };
 }
 

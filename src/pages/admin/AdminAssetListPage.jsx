@@ -311,12 +311,12 @@ function AdminAssetListPage() {
   };
 
   const columns = [
-    {
-      key: "assetNumber",
-      header: "비품 번호",
-      width: 120,
-      render: (item) => <SingleLineCell text={item.assetNumber} />,
-    },
+    // {
+    //   key: "assetNumber",
+    //   header: "비품 번호",
+    //   width: 120,
+    //   render: (item) => <SingleLineCell text={item.assetNumber} />,
+    // },
     {
       key: "labelNumber",
       header: "라벨 번호",
@@ -393,7 +393,7 @@ function AdminAssetListPage() {
                 value={keyword}
                 onChange={handleSearchChange}
                 onSubmit={handleSearchSubmit}
-                ariaLabel="비품 번호 또는 라벨 번호 검색"
+                ariaLabel="라벨 번호 검색"
                 placeholder="검색어를 입력하세요."
                 disabled={!isMockMode}
               />

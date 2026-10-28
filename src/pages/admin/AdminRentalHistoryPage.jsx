@@ -39,12 +39,6 @@ function EquipmentCell({ record }) {
         <strong className={styles.equipmentName} title={record.equipmentName}>
           {record.equipmentName}
         </strong>
-
-        {record.modelName ? (
-          <span className={styles.secondaryText} title={record.modelName}>
-            {record.modelName}
-          </span>
-        ) : null}
       </span>
     </div>
   );
@@ -150,7 +144,7 @@ const HISTORY_COLUMNS = [
   },
   {
     key: "category",
-    header: "카테고리 / OS",
+    header: "카테고리",
     width: 128,
     render: (record) => <CategoryCell record={record} />,
   },

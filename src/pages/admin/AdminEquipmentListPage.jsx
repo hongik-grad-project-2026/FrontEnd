@@ -37,6 +37,11 @@ const STATUS_BADGES = {
   paused: "기자재-대여중지",
 };
 
+const RENTAL_POLICY_LABELS = {
+  regular: "정기",
+  always: "상시",
+};
+
 function getErrorMessage(error, fallbackMessage) {
   return error instanceof Error && error.message ? error.message : fallbackMessage;
 }
@@ -63,14 +68,18 @@ function EquipmentImageCell() {
 }
 
 function EquipmentNameCell({ equipment }) {
+  const rentalPolicyText = equipment.rentalPolicies
+    ?.map((policy) => RENTAL_POLICY_LABELS[policy] ?? policy)
+    .join(", ");
+
   return (
     <span className={styles.cellStack}>
       <strong className={styles.equipmentName} title={equipment.name}>
         {equipment.name}
       </strong>
-      {equipment.modelName ? (
-        <span className={styles.secondaryText} title={equipment.modelName}>
-          {equipment.modelName}
+      {equipment.rentalPolicies ? (
+        <span className={styles.secondaryText} title={rentalPolicyText}>
+          {rentalPolicyText}
         </span>
       ) : null}
     </span>
@@ -405,13 +414,13 @@ function AdminEquipmentListPage() {
     },
     {
       key: "name",
-      header: "기자재 정보 / 모델명",
+      header: "기자재 모델명 / 대여정책",
       width: 222,
       render: (equipment) => <EquipmentNameCell equipment={equipment} />,
     },
     {
       key: "category",
-      header: "카테고리 / OS",
+      header: "카테고리",
       width: 102,
       render: (equipment) => (
         <CategoryCell

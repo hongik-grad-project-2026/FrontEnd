@@ -47,6 +47,7 @@ function Select({
   id,
   maxDate,
   minDate,
+  multiple = false,
   onChange,
   options = [],
   placeholder,
@@ -66,16 +67,21 @@ function Select({
 
   const selectedValue = isControlled ? value : internalValue;
 
-  const selectedOption = isCalendar
+  const selectedOption = isCalendar || multiple
     ? undefined
     : options.find((option) => option.value === selectedValue);
+  const selectedOptions = multiple && Array.isArray(selectedValue)
+    ? options.filter((option) => selectedValue.includes(option.value))
+    : [];
 
   const selectedDate =
     isCalendar && isValidDate(selectedValue) ? selectedValue : null;
 
   const isFilled = isCalendar
     ? selectedDate !== null
-    : selectedOption !== undefined;
+    : multiple
+      ? selectedOptions.length > 0
+      : selectedOption !== undefined;
 
   const canOpen = !disabled && (isCalendar || options.length > 0);
 
@@ -92,7 +98,9 @@ function Select({
 
   const displayText = isCalendar
     ? formatDate(selectedDate) || resolvedPlaceholder
-    : (selectedOption?.label ?? resolvedPlaceholder);
+    : multiple
+      ? selectedOptions.map((option) => option.label).join(", ") || resolvedPlaceholder
+      : (selectedOption?.label ?? resolvedPlaceholder);
 
   const updateValue = (nextValue, detail) => {
     if (!isControlled) {
@@ -132,6 +140,16 @@ function Select({
   };
 
   const handleOptionSelect = (option) => {
+    if (multiple) {
+      const currentValues = Array.isArray(selectedValue) ? selectedValue : [];
+      const nextValues = currentValues.includes(option.value)
+        ? currentValues.filter((value) => value !== option.value)
+        : [...currentValues, option.value];
+
+      updateValue(nextValues, option);
+      return;
+    }
+
     const isSelected = option.value === selectedValue;
 
     if (isSelected && clearable) {
@@ -270,10 +288,13 @@ function Select({
               // className={joinClassNames(styles.popupContent, styles.optionList)}
               className={styles.optionList}
               role="group"
+              aria-multiselectable={multiple || undefined}
               aria-label={ariaLabel ? `${ariaLabel} 옵션` : "선택 옵션"}
             >
               {options.map((option) => {
-                const isSelected = option.value === selectedValue;
+                const isSelected = multiple
+                  ? Array.isArray(selectedValue) && selectedValue.includes(option.value)
+                  : option.value === selectedValue;
 
                 return (
                   <Button
