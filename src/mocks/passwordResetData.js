@@ -5,7 +5,8 @@ import {
 } from "../utils/passwordResetConfig.js";
 
 const MOCK_VERIFICATION_CODE = "123456";
-const RESET_PERMISSION_TTL_MS = 5 * 60 * 1000; // mock 전용 resetToken 유효기간
+const RESET_PERMISSION_TTL_MS = 5 * 60 * 1000; // mock 전용 resetToken 유효기간임.
+const RESET_PERMISSION_TTL_SECONDS = RESET_PERMISSION_TTL_MS / 1000;
 
 const verificationSessions = new Map();
 const resetPermissions = new Map();
@@ -164,7 +165,13 @@ export async function verifyMockPasswordResetCode({ verificationId, code }) {
   }
 
   if (session.resetToken && resetPermissions.has(session.resetToken)) {
-    return { resetToken: session.resetToken };
+    const permission = resetPermissions.get(session.resetToken);
+    const expiresInSeconds = Math.max(
+      1,
+      Math.ceil((permission.expiresAt - Date.now()) / 1000),
+    );
+
+    return { resetToken: session.resetToken, expiresInSeconds };
   }
 
   session.verified = true;
@@ -177,7 +184,10 @@ export async function verifyMockPasswordResetCode({ verificationId, code }) {
     expiresAt: Date.now() + RESET_PERMISSION_TTL_MS,
   });
 
-  return { resetToken };
+  return {
+    resetToken,
+    expiresInSeconds: RESET_PERMISSION_TTL_SECONDS,
+  };
 }
 
 export async function resetMockPassword({ resetToken, password }) {

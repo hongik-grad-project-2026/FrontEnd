@@ -7,7 +7,6 @@ import InputBar from "../../components/common/Input";
 import { InputLayout } from "../../components/layout/AuthLayout";
 import {
     invalidatePasswordResetFlow,
-    // passwordResetAvailability,
     resetPassword,
     sendPasswordResetCode,
     verifyPasswordResetCode,
@@ -82,10 +81,11 @@ function ForgotPasswordPage() {
     const [touchedFields, setTouchedFields] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
     const [errorMessage, setErrorMessage] = useState("");
-    const [verificationCode, setVerificationCode] = useState("");    // 사용자가 입력한 인증번호를 보관
+    const [verificationCode, setVerificationCode] = useState("");
     const [verificationId, setVerificationId] = useState(null);
-    const [hasVerificationRequest, setHasVerificationRequest] = useState(false); //인증번호 발송 성공 여부
+    const [hasVerificationRequest, setHasVerificationRequest] = useState(false);
     const [resetToken, setResetToken] = useState(null);
+    const [resetTokenExpiresAt, setResetTokenExpiresAt] = useState(0);
     // 인증번호 5분 만료 시각과 재전송 가능 시각을 Unix timestamp로 저장함.
     const [expiresAt, setExpiresAt] = useState(0);
     const [resendAvailableAt, setResendAvailableAt] = useState(0);
@@ -105,7 +105,6 @@ function ForgotPasswordPage() {
     const verifyMutation = useMutation({ mutationFn: verifyPasswordResetCode });
     const resetMutation = useMutation({ mutationFn: resetPassword });
 
-    // const isSupported = passwordResetAvailability.isSupported;
     const isStudentIdValid = STUDENT_ID_PATTERN.test(identity.studentId.trim());
     const isNameValid = NAME_PATTERN.test(identity.name.trim());
     const isEmailValid = EMAIL_PATTERN.test(identity.email.trim());
@@ -114,7 +113,9 @@ function ForgotPasswordPage() {
     const resendRemaining = Math.max(0, resendAvailableAt - now);
     // 발송 요청은 성공했지만 만료 시각이 지난 상태인지 계산함.
     const isVerificationExpired = hasVerificationRequest && verificationRemaining <= 0;
-    const isVerified = Boolean(resetToken);
+    const resetTokenRemaining = Math.max(0, resetTokenExpiresAt - now);
+    const isResetTokenExpired = Boolean(resetToken) && resetTokenRemaining <= 0;
+    const isVerified = Boolean(resetToken) && !isResetTokenExpired;
     const isPasswordValid =
         password.length >= PASSWORD_MIN_LENGTH &&
         password.length <= PASSWORD_MAX_LENGTH;
@@ -129,7 +130,11 @@ function ForgotPasswordPage() {
     }, []);
 
     useEffect(() => {
-        if (!hasVerificationRequest || isVerified || step !== "verification") {
+        const shouldTrackVerification =
+            hasVerificationRequest && !resetToken && step === "verification";
+        const shouldTrackResetToken = Boolean(resetToken);
+
+        if (!shouldTrackVerification && !shouldTrackResetToken) {
             return undefined;
         }
 
@@ -138,7 +143,7 @@ function ForgotPasswordPage() {
         const timerId = window.setInterval(updateNow, 1000);
 
         return () => window.clearInterval(timerId);
-    }, [hasVerificationRequest, isVerified, step]);
+    }, [hasVerificationRequest, resetToken, step]);
 
     useEffect(() => {
         if (!isVerificationExpired || isVerified) {
@@ -152,6 +157,16 @@ function ForgotPasswordPage() {
                 "인증번호가 만료되었습니다. 다시 발송해 주세요.",
         }));
     }, [isVerificationExpired, isVerified]);
+
+    useEffect(() => {
+        if (!isResetTokenExpired) {
+            return;
+        }
+
+        setErrorMessage((currentMessage) => (
+            currentMessage || "비밀번호 재설정 인증이 만료되었습니다. 로그인 화면으로 돌아가 비밀번호 찾기를 다시 진행해 주세요."
+        ));
+    }, [isResetTokenExpired]);
 
     function getLocalFieldErrors() {
         const errors = {};
@@ -185,6 +200,7 @@ function ForgotPasswordPage() {
         setVerificationId(null);
         setHasVerificationRequest(false);
         setResetToken(null);
+        setResetTokenExpiresAt(0);
         setExpiresAt(0);
         setResendAvailableAt(0);
         setNow(Date.now());
@@ -276,6 +292,8 @@ function ForgotPasswordPage() {
                 code: verificationCode,
             });
             setResetToken(result.resetToken);
+            setResetTokenExpiresAt(result.resetTokenExpiresAt);
+            setNow(Date.now());
         } catch (error) {
             setFieldErrors((currentErrors) => ({
                 ...currentErrors,
@@ -299,7 +317,12 @@ function ForgotPasswordPage() {
     }
 
     function handleOpenResetStep() {
-        if (!resetToken || !isVerified) {
+        if (
+            !resetToken ||
+            !resetTokenExpiresAt ||
+            Date.now() >= resetTokenExpiresAt
+        ) {
+            setErrorMessage("비밀번호 재설정 인증이 만료되었습니다. 로그인 화면으로 돌아가 비밀번호 찾기를 다시 진행해 주세요.");
             return;
         }
 
@@ -313,6 +336,7 @@ function ForgotPasswordPage() {
         setVerificationId(null);
         setHasVerificationRequest(false);
         setResetToken(null);
+        setResetTokenExpiresAt(0);
         navigate("/login", options);
     }
 
@@ -326,6 +350,14 @@ function ForgotPasswordPage() {
         }
         if (!isPasswordMatched) {
             nextErrors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
+        }
+
+        const isExpiredBeforeSubmit =
+            !resetTokenExpiresAt || Date.now() >= resetTokenExpiresAt;
+
+        if (isExpiredBeforeSubmit) {
+            setErrorMessage("비밀번호 재설정 인증이 만료되었습니다. 로그인 화면으로 돌아가 비밀번호 찾기를 다시 진행해 주세요.");
+            return;
         }
 
         if (
@@ -350,6 +382,7 @@ function ForgotPasswordPage() {
             });
             setCompletedAccount(account);
             setResetToken(null);
+            setResetTokenExpiresAt(0);
             setVerificationId(null);
             setHasVerificationRequest(false);
             setVerificationCode("");
@@ -384,6 +417,7 @@ function ForgotPasswordPage() {
         !isVerified;
     const canResetPassword =
         Boolean(resetToken) &&
+        !isResetTokenExpired &&
         isPasswordValid &&
         isPasswordMatched &&
         !resetMutation.isPending;
@@ -457,7 +491,9 @@ function ForgotPasswordPage() {
                     disabled={resetMutation.isPending}
                     onChange={(event) => {
                         setPassword(event.target.value);
-                        setErrorMessage("");
+                        if (!isResetTokenExpired) {
+                            setErrorMessage("");
+                        }
                         setFieldErrors((currentErrors) => ({
                             ...currentErrors,
                             password: "",
@@ -480,7 +516,9 @@ function ForgotPasswordPage() {
                     disabled={resetMutation.isPending}
                     onChange={(event) => {
                         setPasswordConfirm(event.target.value);
-                        setErrorMessage("");
+                        if (!isResetTokenExpired) {
+                            setErrorMessage("");
+                        }
                         setFieldErrors((currentErrors) => ({
                             ...currentErrors,
                             passwordConfirm: "",
@@ -523,12 +561,6 @@ function ForgotPasswordPage() {
     return (
         <form className={styles.verificationPage} onSubmit={handleVerificationSubmit}>
             <h2 className={styles.pageTitle}>비밀번호 찾기</h2>
-
-            {/* {!isSupported ? (
-                <p className={styles.unsupportedMessage} role="status">
-                    {passwordResetAvailability.message}
-                </p>
-            ) : null} */}
 
             <InputLayout id="password-reset-student-id" title="학번">
                 <InputBar

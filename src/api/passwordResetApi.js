@@ -4,42 +4,77 @@ import {
     PASSWORD_RESET_VERIFICATION_TTL_MS,
 } from "../utils/passwordResetConfig.js";
 
-const UNSUPPORTED_MESSAGE = "비밀번호 재설정 API가 아직 제공되지 않았습니다.";
-
-// 화면이 재설정 절차를 활성화할지 결정함. 현재는 mock과 실제 API 양쪽을 사용할 수 있어 활성화 상태임.
-// export const passwordResetAvailability = Object.freeze({
-//     // isSupported: isMockMode,
-//     // message: isMockMode ? "" : UNSUPPORTED_MESSAGE,
-//     isSupported: true,
-//     message: "",
-// });
+const FIELD_NAME_MAP = Object.freeze({
+    studentId: "studentId",
+    name: "name",
+    email: "email",
+    verificationCode: "verificationCode",
+    password: "password",
+    passwordConfirm: "passwordConfirm",
+    newPassword: "password",
+    newPasswordConfirm: "passwordConfirm",
+});
 
 export class PasswordResetError extends Error {
-    constructor(message, { code = null, fieldErrors = {}, cause } = {}) {
+    constructor(
+        message,
+        {
+            status = null,
+            code = null,
+            errorType = null,
+            fieldErrors = {},
+            errors = null,
+            isNetworkError = false,
+            cause,
+        } = {},
+    ) {
         super(message, cause ? { cause } : undefined);
         this.name = "PasswordResetError";
+        this.status = status;
         this.code = code;
+        this.errorType = errorType;
         this.fieldErrors = fieldErrors;
+        this.errors = errors;
+        this.isNetworkError = isNetworkError || errorType === "NETWORK_ERROR";
+        this.isContractError = errorType === "CONTRACT_ERROR";
     }
 }
 
-// function assertPasswordResetSupported() {
-//     if (!passwordResetAvailability.isSupported) {
-//         throw new PasswordResetError(UNSUPPORTED_MESSAGE, {
-//             code: "PASSWORD_RESET_API_UNSUPPORTED",
-//         });
-//     }
-// }
-
 async function loadMockPasswordResetApi() {
     if (!import.meta.env.DEV || !isMockMode) {
-        throw new PasswordResetError(UNSUPPORTED_MESSAGE, {
-            code: "PASSWORD_RESET_API_UNSUPPORTED",
-        });
+        throw new PasswordResetError("mock 모드에서만 사용할 수 있습니다.");
     }
 
-    // assertPasswordResetSupported();
     return import("../mocks/passwordResetData.js");
+}
+
+function normalizeFieldErrorValue(value) {
+    if (typeof value === "string") {
+        return value;
+    }
+
+    if (Array.isArray(value)) {
+        return value.filter((item) => typeof item === "string").join(" ");
+    }
+
+    return "";
+}
+
+function normalizeFieldErrors(errors) {
+    if (!errors || typeof errors !== "object" || Array.isArray(errors)) {
+        return {};
+    }
+
+    return Object.entries(errors).reduce((normalizedErrors, [field, value]) => {
+        const screenField = FIELD_NAME_MAP[field];
+        const message = normalizeFieldErrorValue(value);
+
+        if (screenField && message) {
+            normalizedErrors[screenField] = message;
+        }
+
+        return normalizedErrors;
+    }, {});
 }
 
 function normalizeError(error) {
@@ -47,27 +82,75 @@ function normalizeError(error) {
         return error;
     }
 
-    // ApiError와 mock 오류의 필드명 차이를 정규화해 화면에서 같은 방식으로 처리하게 함.
+    const sourceErrors = error?.fieldErrors ?? error?.errors ?? null;
+
     return new PasswordResetError(
         error?.message || "비밀번호 재설정 요청에 실패했습니다.",
         {
+            status: error?.status ?? null,
             code: error?.code ?? null,
-            fieldErrors: error?.fieldErrors ?? error?.errors ?? {},
+            errorType: error?.errorType ?? null,
+            fieldErrors: normalizeFieldErrors(sourceErrors),
+            errors: error?.errors ?? sourceErrors,
+            isNetworkError: Boolean(error?.isNetworkError),
             cause: error,
         },
     );
 }
 
+function createContractError(message) {
+    return new PasswordResetError(message, {
+        errorType: "CONTRACT_ERROR",
+    });
+}
+
+function normalizeVerificationResult(result) {
+    if (!result || typeof result !== "object" || Array.isArray(result)) {
+        throw createContractError("인증 확인 응답을 확인할 수 없습니다. 다시 시도해 주세요.");
+    }
+
+    const resetToken = typeof result.resetToken === "string"
+        ? result.resetToken.trim()
+        : "";
+    const { expiresInSeconds } = result;
+
+    if (!resetToken) {
+        throw createContractError("비밀번호 재설정 권한을 확인할 수 없습니다. 다시 인증해 주세요.");
+    }
+
+    if (!Number.isSafeInteger(expiresInSeconds) || expiresInSeconds <= 0) {
+        throw createContractError("비밀번호 재설정 권한의 만료시간을 확인할 수 없습니다.");
+    }
+
+    return {
+        resetToken,
+        expiresInSeconds,
+        resetTokenExpiresAt: Date.now() + expiresInSeconds * 1000,
+    };
+}
+
+function normalizeResetResult(result) {
+    const account = result && typeof result === "object" && !Array.isArray(result)
+        ? result
+        : {};
+
+    return {
+        studentId: account.studentId ?? null,
+        name: account.name ?? null,
+        email: account.email ?? null,
+        college: account.college ?? null,
+        department: account.department ?? null,
+    };
+}
+
 export async function sendPasswordResetCode(identity) {
     try {
-        // 1단계: 학번·이름·이메일을 서버에 보내 가입 정보가 맞는지 확인하고,
-        // 해당 계정의 이메일로 인증번호 발송을 요청함. 비밀번호를 잊은 사용자는 로그인 전이므로 auth를 끔.
         if (isMockMode) {
             const { sendMockPasswordResetCode } = await loadMockPasswordResetApi();
             return await sendMockPasswordResetCode(identity);
         }
 
-        const result = await api.post(
+        await api.post(
             "/password-reset/verifications",
             {
                 studentId: identity.studentId.trim(),
@@ -79,8 +162,6 @@ export async function sendPasswordResetCode(identity) {
 
         const issuedAt = Date.now();
         return {
-            message: result,
-            verificationId: null,//실제 API에서는 사용 X. mock에서만 사용.
             expiresAt: issuedAt + PASSWORD_RESET_VERIFICATION_TTL_MS,
             resendAvailableAt: issuedAt + PASSWORD_RESET_RESEND_COOLDOWN_MS,
         };
@@ -91,25 +172,26 @@ export async function sendPasswordResetCode(identity) {
 
 export async function verifyPasswordResetCode(payload) {
     try {
-        // 2단계: 1단계에서 사용한 학번·이름·이메일과 사용자가 받은 인증번호를 서버에 다시 보냄.
-        // 서버는 코드를 검증하고, 성공하면 비밀번호 변경 권한인 resetToken과 만료시간을 반환함.
+        let result;
+
         if (isMockMode) {
             const { verifyMockPasswordResetCode } = await loadMockPasswordResetApi();
-            return await verifyMockPasswordResetCode(payload);
+            result = await verifyMockPasswordResetCode(payload);
+        } else {
+            const { identity, code } = payload;
+            result = await api.post(
+                "/password-reset/verifications/confirm",
+                {
+                    studentId: identity.studentId.trim(),
+                    name: identity.name.trim(),
+                    email: identity.email.trim(),
+                    verificationCode: code.trim(),
+                },
+                { auth: false },
+            );
         }
 
-        const { identity, code } = payload;
-        // mock은 verificationId를 쓰지만 Swagger 실제 API는 이 네 필드로 인증 세션을 찾으므로 요청 형식을 분기함.
-        return await api.post(
-            "/password-reset/verifications/confirm",
-            {
-                studentId: identity.studentId.trim(),
-                name: identity.name.trim(),
-                email: identity.email.trim(),
-                verificationCode: code.trim(),
-            },
-            { auth: false },
-        );
+        return normalizeVerificationResult(result);
     } catch (error) {
         throw normalizeError(error);
     }
@@ -117,25 +199,27 @@ export async function verifyPasswordResetCode(payload) {
 
 export async function resetPassword(payload) {
     try {
-        // 3단계: 인증 성공 응답의 resetToken과 새 비밀번호를 보내 실제 계정 비밀번호 변경을 요청함.
-        // 서버는 resetToken 유효기간(10분)과 1회 사용 여부를 검증해야 함.
+        let result;
+
         if (isMockMode) {
             const { resetMockPassword } = await loadMockPasswordResetApi();
-            return await resetMockPassword({
+            result = await resetMockPassword({
                 resetToken: payload.resetToken,
                 password: payload.password,
             });
+        } else {
+            result = await api.post(
+                "/password-reset",
+                {
+                    resetToken: payload.resetToken,
+                    newPassword: payload.password,
+                    newPasswordConfirm: payload.passwordConfirm,
+                },
+                { auth: false },
+            );
         }
 
-        return await api.post(
-            "/password-reset",
-            {
-                resetToken: payload.resetToken,
-                newPassword: payload.password,
-                newPasswordConfirm: payload.passwordConfirm,
-            },
-            { auth: false },
-        );
+        return normalizeResetResult(result);
     } catch (error) {
         throw normalizeError(error);
     }
