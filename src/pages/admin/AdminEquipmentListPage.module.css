@@ -32,7 +32,8 @@
   align-items: center;
 }
 
-.categoryState {
+.categoryState,
+.modelState {
   min-height: 48px;
   margin: 0;
   display: flex;
@@ -40,6 +41,10 @@
   justify-content: center;
   gap: var(--spacing-8);
   color: var(--color-neutral-60);
+}
+
+.modelState p {
+  margin: 0;
 }
 
 .categoryTabs {
@@ -99,6 +104,13 @@
   mask-size: contain;
 }
 
+.modelImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .cellStack {
   display: flex;
   width: 100%;
@@ -150,6 +162,11 @@
   display: block;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.unknownStatus {
+  color: var(--color-neutral-60);
+  white-space: nowrap;
 }
 
 .actionButtons {

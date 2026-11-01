@@ -1,4 +1,4 @@
-import { isMockMode } from "./client";
+import { api, ApiError, isMockMode } from "./client";
 import {
   createMockAdminEquipmentItems,
   createMockAdminEquipmentModel,
@@ -31,6 +31,197 @@ function normalizeItemParams(params = {}) {
     keyword: params.keyword?.trim() ?? "",
     page: params.page ?? 0,
     size: params.size ?? 10,
+  };
+}
+
+function createEquipmentListContractError(message, data) {
+  return new ApiError({
+    status: null,
+    code: "INVALID_EQUIPMENT_MODEL_LIST_RESPONSE",
+    message,
+    data,
+    errorType: "CONTRACT_ERROR",
+  });
+}
+
+function normalizeRequiredInteger(value, fieldName, result) {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && !value.trim())
+  ) {
+    throw createEquipmentListContractError(
+      `기자재 목록의 ${fieldName} 값이 누락되었습니다.`,
+      result,
+    );
+  }
+
+  const normalizedValue =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : Number.NaN;
+
+  if (
+    !Number.isFinite(normalizedValue) ||
+    !Number.isInteger(normalizedValue) ||
+    normalizedValue < 0
+  ) {
+    throw createEquipmentListContractError(
+      `기자재 목록의 ${fieldName} 값이 올바르지 않습니다.`,
+      result,
+    );
+  }
+
+  return normalizedValue;
+}
+
+function normalizeOptionalCount(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && !value.trim())
+  ) {
+    return null;
+  }
+
+  const normalizedValue =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : Number.NaN;
+
+  return Number.isFinite(normalizedValue) &&
+    Number.isInteger(normalizedValue) &&
+    normalizedValue >= 0
+    ? normalizedValue
+    : null;
+}
+
+function normalizeDisplayText(value) {
+  return typeof value === "string" && value.trim() ? value.trim() : "-";
+}
+
+function normalizeOptionalText(value) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeDisplayDate(value) {
+  const normalizedValue = normalizeOptionalText(value);
+
+  if (!normalizedValue) {
+    return "-";
+  }
+
+  const dateMatch = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  return dateMatch ? `${dateMatch[1]}.${dateMatch[2]}.${dateMatch[3]}` : "-";
+}
+
+function normalizeAdminEquipmentModel(model, result) {
+  if (
+    !model ||
+    typeof model !== "object" ||
+    Array.isArray(model) ||
+    model.modelId === undefined ||
+    model.modelId === null ||
+    (typeof model.modelId === "string" && !model.modelId.trim())
+  ) {
+    throw createEquipmentListContractError(
+      "기자재 모델 식별자가 누락되었습니다.",
+      result,
+    );
+  }
+
+  const availableCount = normalizeOptionalCount(model.availableCount);
+  const totalCount = normalizeOptionalCount(model.totalCount);
+  const status =
+    model.rentalStatus === "AVAILABLE"
+      ? "active"
+      : model.rentalStatus === "UNAVAILABLE"
+        ? "paused"
+        : "unknown";
+
+  return {
+    modelId: model.modelId,
+    modelImageUrl: normalizeOptionalText(model.modelImageUrl),
+    name: normalizeDisplayText(model.name),
+    categoryId: model.categoryId ?? null,
+    categoryName: normalizeDisplayText(model.categoryName),
+    accessories: normalizeDisplayText(model.components),
+    specification: normalizeDisplayText(model.specification),
+    description: normalizeDisplayText(model.description),
+    stockText:
+      availableCount === null || totalCount === null
+        ? "-"
+        : `${availableCount} / ${totalCount}`,
+    status,
+    receivedDate: normalizeDisplayDate(model.receivedDate),
+    disposalDate: normalizeDisplayDate(model.disposalDate),
+  };
+}
+
+function normalizeCategoryCounts(categoryCounts) {
+  if (
+    !categoryCounts ||
+    typeof categoryCounts !== "object" ||
+    Array.isArray(categoryCounts)
+  ) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(categoryCounts).flatMap(([key, value]) => {
+      const count = normalizeOptionalCount(value);
+
+      return count === null ? [] : [[key, count]];
+    }),
+  );
+}
+
+function normalizeAdminEquipmentModelPage(result) {
+  if (!result || typeof result !== "object" || Array.isArray(result)) {
+    throw createEquipmentListContractError(
+      "기자재 모델 목록 응답 형식이 올바르지 않습니다.",
+      result,
+    );
+  }
+
+  if (!Array.isArray(result.models)) {
+    throw createEquipmentListContractError(
+      "기자재 모델 목록 배열이 누락되었습니다.",
+      result,
+    );
+  }
+
+  if (typeof result.hasNext !== "boolean") {
+    throw createEquipmentListContractError(
+      "기자재 목록의 다음 페이지 정보가 올바르지 않습니다.",
+      result,
+    );
+  }
+
+  return {
+    content: result.models.map((model) =>
+      normalizeAdminEquipmentModel(model, result),
+    ),
+    page: normalizeRequiredInteger(result.page, "page", result),
+    size: normalizeRequiredInteger(result.size, "size", result),
+    totalElements: normalizeRequiredInteger(
+      result.totalElements,
+      "totalElements",
+      result,
+    ),
+    totalPages: normalizeRequiredInteger(
+      result.totalPages,
+      "totalPages",
+      result,
+    ),
+    hasNext: result.hasNext,
+    last: !result.hasNext,
+    categoryCounts: normalizeCategoryCounts(result.categoryCounts),
   };
 }
 
@@ -90,8 +281,7 @@ function assertMockMode() {
   throw error;
 }
 
-// 아래 함수는 Swagger에 기자재 API가 추가되면 실제 요청으로 교체할 경계임.
-// 현재는 mock 모드에서만 src/mocks의 상태를 사용하며 실제 서버로 요청하지 않음.
+// 학생 기자재와 찜은 실제 API가 없어 mock 모드에서만 사용함.
 export async function getEquipmentModels(params = {}) {
   assertMockMode();
   return queryMockEquipmentModels(params);
@@ -107,11 +297,40 @@ export async function setEquipmentModelWishlist(values) {
   return updateMockEquipmentWishlist(values);
 }
 
+// 관리자 모델 목록만 현재 확인된 실제 조회 계약을 사용함.
 export async function getAdminEquipmentModels(params = {}) {
-  assertMockMode();
-  return queryMockAdminEquipmentModels(params);
+  if (isMockMode) {
+    return queryMockAdminEquipmentModels(params);
+  }
+
+  const { signal, ...listParams } = params;
+  const normalizedParams = normalizeListParams(listParams);
+  const searchParams = new URLSearchParams({
+    page: String(normalizedParams.page),
+    size: String(normalizedParams.size),
+  });
+
+  if (normalizedParams.keyword) {
+    searchParams.set("keyword", normalizedParams.keyword);
+  }
+
+  if (
+    normalizedParams.categoryId !== null &&
+    normalizedParams.categoryId !== undefined &&
+    normalizedParams.categoryId !== ""
+  ) {
+    searchParams.set("categoryId", String(normalizedParams.categoryId));
+  }
+
+  const result = await api.get(
+    `/admin/equipment-models?${searchParams.toString()}`,
+    { signal },
+  );
+
+  return normalizeAdminEquipmentModelPage(result);
 }
 
+// 모델 mutation과 개별 기기 업무는 실제 API 연결 전까지 mock 모드로 제한함.
 export async function createAdminEquipmentModel(values) {
   assertMockMode();
   return createMockAdminEquipmentModel(values);
