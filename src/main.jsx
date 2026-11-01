@@ -16,6 +16,7 @@ import {
   notFoundRoute,
 } from "./routes/RoutesConfig.jsx";
 import { UserProvider } from "./context/UserProvider.jsx";
+import { SemesterProvider } from "./context/SemesterProvider.jsx";
 
 async function enableMocking() {
   const mockMode = import.meta.env.VITE_USE_MOCK;
@@ -61,7 +62,9 @@ enableMocking().then(() => {
       {/* <App /> */}
       <QueryClientProvider client={queryClient}>
         <UserProvider>
-          <RouterProvider router={router} />
+          <SemesterProvider>
+            <RouterProvider router={router} />
+          </SemesterProvider>
         </UserProvider>
         <ReactQueryDevtools initialIsOpen={false} />{" "}
         {/* 개발용 패널이며 프로덕션 빌드에서는 비활성 상태임. */}
