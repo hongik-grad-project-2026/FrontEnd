@@ -8,7 +8,7 @@ const SEMESTER_END_DATE_VALUE = SEMESTER_END_DATE.toISOString().slice(0, 10);
 
 function createInitialForm(equipment) {
   return {
-    rentalType: equipment?.rentalPolicies?.[0] ?? "",
+    rentalType: equipment?.rentalPolicies ?? "",
     pickupDate: "",
     pickupTime: "",
     returnDate: "",
@@ -119,12 +119,14 @@ function RentalApplyModalContent({
             <div className={styles.fields}>
               <label>
                 <span>대여 유형</span>
-                <select ref={firstInputRef} name="rentalType" value={form.rentalType} onChange={updateField} disabled={isPending}>
-                  {equipment.rentalPolicies?.map((type) => (
-                    <option key={type} value={type}>
-                      {type === "regular" ? "정기" : type === "always" ? "상시" : type}
-                    </option>
-                  ))}
+                <select ref={firstInputRef} name="rentalType" value={form.rentalType} onChange={updateField} disabled={true}>
+                  <option value={equipment.rentalPolicies ?? ""}>
+                    {equipment.rentalPolicies === "regular"
+                      ? "정기"
+                      : equipment.rentalPolicies === "always"
+                        ? "상시"
+                        : equipment.rentalPolicies ?? ""}
+                  </option>
                 </select>
               </label>
               <label>

@@ -68,10 +68,7 @@ function hasChangedValues(currentValues, initialValues) {
   return (
     currentValues.category !== initialValues.category ||
     currentValues.status !== initialValues.status ||
-    currentValues.rentalPolicies.length !== initialValues.rentalPolicies.length ||
-    currentValues.rentalPolicies.some(
-      (policy) => !initialValues.rentalPolicies.includes(policy),
-    ) ||
+    currentValues.rentalPolicies !== initialValues.rentalPolicies ||
     getDateTimestamp(currentValues.receivedDate) !==
     getDateTimestamp(initialValues.receivedDate) ||
     getDateTimestamp(currentValues.disposalDate) !==
@@ -113,9 +110,7 @@ function createInitialForm(equipment) {
   return {
     category: equipment.categoryKey ?? "",
     status: equipment.status ?? "",
-    rentalPolicies: Array.isArray(equipment.rentalPolicies)
-      ? [...equipment.rentalPolicies]
-      : [],
+    rentalPolicies: equipment.rentalPolicies ?? "",
     receivedDate: parseDisplayDate(equipment.receivedDate),
     disposalDate: parseDisplayDate(equipment.disposalDate),
     name: equipment.name ?? "",
@@ -168,7 +163,7 @@ function EquipmentItemEditModal({
   const allowsFlexiblePolicies = allowsFlexibleRentalPolicies(
     selectedCategoryOption,
   );
-  const hasRentalPolicies = formValues.rentalPolicies.length > 0;
+  const hasRentalPolicies = Boolean(formValues.rentalPolicies);
 
   const hasFormChanges = hasChangedValues(formValues, initialFormValues);
 
@@ -205,16 +200,16 @@ function EquipmentItemEditModal({
         rentalPolicies: nextAllowsFlexiblePolicies
           ? previousAllowsFlexiblePolicies
             ? previousValues.rentalPolicies
-            : []
+            : ""
           : nextCategory
-            ? ["always"]
-            : [],
+            ? "always"
+            : "",
       };
     });
   };
 
-  const handleRentalPolicyChange = (nextPolicies) => {
-    updateFormValue("rentalPolicies", nextPolicies);
+  const handleRentalPolicyChange = (nextPolicy) => {
+    updateFormValue("rentalPolicies", nextPolicy);
   };
 
   const handleRequestClose = () => {
@@ -271,7 +266,7 @@ function EquipmentItemEditModal({
       modelId: equipment.modelId,
       categoryKey: formValues.category,
       status: formValues.status,
-      rentalPolicies: [...formValues.rentalPolicies],
+      rentalPolicies: formValues.rentalPolicies,
       receivedDate: formValues.receivedDate,
       disposalDate: formValues.disposalDate,
       name: normalizeText(formValues.name),
@@ -359,7 +354,6 @@ function EquipmentItemEditModal({
                   width="100%"
                   options={RENTAL_POLICY_OPTIONS}
                   value={formValues.rentalPolicies}
-                  multiple
                   disabled={!allowsFlexiblePolicies}
                   placeholder="대여정책을 선택하세요"
                   ariaLabel="대여정책"

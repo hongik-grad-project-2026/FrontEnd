@@ -167,7 +167,7 @@ function EuipmentSettingModal({
                             <span className={styles.noticeText}>학기 시작일부터 2주간 진행됩니다.</span>
                         </li>
                         <li>
-                            <span> • 정기 신청 기간</span>
+                            <span> • 상시 신청 기간</span>
                             <span className={styles.periodBox}>{formatPeriod(regularApplyPeriod)}</span>
                             <span className={styles.noticeText}>사전 신청 종료 후 학기 종료일까지 진행됩니다.</span>
                         </li>

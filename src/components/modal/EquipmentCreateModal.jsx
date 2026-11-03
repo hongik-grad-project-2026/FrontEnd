@@ -34,7 +34,7 @@ function createEmptyForm() {
   return {
     category: "",
     status: "",
-    rentalPolicies: [],
+    rentalPolicies: "",
     receivedDate: null,
     disposalDate: null,
     name: "",
@@ -106,7 +106,7 @@ function EquipmentCreateModal({
   const isRequiredFormComplete =
     Boolean(formValues.category) &&
     Boolean(formValues.status) &&
-    formValues.rentalPolicies.length > 0 &&
+    Boolean(formValues.rentalPolicies) &&
     isValidDate(formValues.receivedDate) &&
     isValidDate(formValues.disposalDate) &&
     Boolean(formValues.name.trim()) &&
@@ -147,16 +147,16 @@ function EquipmentCreateModal({
         rentalPolicies: nextAllowsFlexiblePolicies
           ? previousAllowsFlexiblePolicies
             ? previousValues.rentalPolicies
-            : []
+            : ""
           : nextCategory
-            ? ["always"]
-            : [],
+            ? "always"
+            : "",
       };
     });
   };
 
-  const handleRentalPolicyChange = (nextPolicies) => {
-    updateFormValue("rentalPolicies", nextPolicies);
+  const handleRentalPolicyChange = (nextPolicy) => {
+    updateFormValue("rentalPolicies", nextPolicy);
   };
 
   const resetForm = () => {
@@ -307,7 +307,6 @@ function EquipmentCreateModal({
                   width="100%"
                   options={RENTAL_POLICY_OPTIONS}
                   value={formValues.rentalPolicies}
-                  multiple
                   disabled={!allowsFlexiblePolicies}
                   placeholder="대여정책을 선택하세요"
                   ariaLabel="대여정책"

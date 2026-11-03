@@ -71,8 +71,8 @@ function EquipmentImageCell() {
 
 function EquipmentNameCell({ equipment }) {
   const rentalPolicyText = equipment.rentalPolicies
-    ?.map((policy) => RENTAL_POLICY_LABELS[policy] ?? policy)
-    .join(", ");
+    ? RENTAL_POLICY_LABELS[equipment.rentalPolicies] ?? equipment.rentalPolicies
+    : "";
 
   return (
     <span className={styles.cellStack}>
