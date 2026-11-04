@@ -13,6 +13,7 @@ import {
   disposeAdminEquipmentModel,
   equipmentKeys,
   getAdminEquipmentModels,
+  uploadAdminEquipmentModelImage,
   updateAdminEquipmentModel,
 } from "../../api/equipmentApi";
 import Button from "../../components/common/Button";
@@ -196,6 +197,7 @@ function AdminEquipmentListPage() {
   const panelId = useId();
   const registerButtonRef = useRef(null);
   const createSubmissionGuardRef = useRef(false);
+  const pendingImageUploadModelIdRef = useRef(null);
   const editButtonRef = useRef(null);
   const disposeButtonRef = useRef(null);
 
@@ -205,6 +207,8 @@ function AdminEquipmentListPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [pendingImageUploadModelId, setPendingImageUploadModelId] =
+    useState(null);
   const [editTargetEquipment, setEditTargetEquipment] = useState(null);
   const [disposeTargetEquipment, setDisposeTargetEquipment] = useState(null);
   const [feedback, setFeedback] = useState(null);
@@ -238,28 +242,30 @@ function AdminEquipmentListPage() {
     refetchOnWindowFocus: false,
   });
 
-  const invalidateEquipmentQueries = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: equipmentKeys.adminModelLists(),
-    });
+  const invalidateEquipmentQueries = async (modelId) => {
+    const invalidations = [
+      queryClient.invalidateQueries({
+        queryKey: equipmentKeys.adminModelLists(),
+      }),
+    ];
+
+    if (Number.isInteger(modelId)) {
+      invalidations.push(
+        queryClient.invalidateQueries({
+          queryKey: equipmentKeys.adminModel(modelId),
+        }),
+      );
+    }
+
+    await Promise.allSettled(invalidations);
   };
 
   const createMutation = useMutation({
     mutationFn: createAdminEquipmentModel,
-    onSuccess: async (createdModel) => {
-      await invalidateEquipmentQueries();
-      setIsCreateModalOpen(false);
-      setFeedback({
-        type: "create-success",
-        modelId: createdModel.modelId,
-      });
-    },
-    onError: (error) => {
-      setFeedback({
-        type: "operation-error",
-        message: getErrorMessage(error, "기자재를 등록하지 못했습니다."),
-      });
-    },
+  });
+
+  const imageUploadMutation = useMutation({
+    mutationFn: uploadAdminEquipmentModelImage,
   });
 
   const updateMutation = useMutation({
@@ -295,8 +301,10 @@ function AdminEquipmentListPage() {
     },
   });
 
+  const isCreateFlowPending =
+    createMutation.isPending || imageUploadMutation.isPending;
   const isMutationPending =
-    createMutation.isPending ||
+    isCreateFlowPending ||
     updateMutation.isPending ||
     disposeMutation.isPending;
   const categoryLabels = Object.fromEntries(
@@ -361,9 +369,19 @@ function AdminEquipmentListPage() {
   };
 
   const handleCloseCreateModal = () => {
-    if (!createMutation.isPending) {
-      setIsCreateModalOpen(false);
+    if (isCreateFlowPending || createSubmissionGuardRef.current) {
+      return;
     }
+
+    const registeredModelId = pendingImageUploadModelIdRef.current;
+
+    if (Number.isInteger(registeredModelId)) {
+      void invalidateEquipmentQueries(registeredModelId);
+    }
+
+    pendingImageUploadModelIdRef.current = null;
+    setPendingImageUploadModelId(null);
+    setIsCreateModalOpen(false);
   };
 
   const handleOpenCreateModal = () => {
@@ -397,14 +415,77 @@ function AdminEquipmentListPage() {
   };
 
   const handleCreateEquipment = async (values) => {
-    if (createMutation.isPending || createSubmissionGuardRef.current) {
+    if (isCreateFlowPending || createSubmissionGuardRef.current) {
       throw new Error("모델 등록 요청이 진행 중입니다.");
     }
 
     createSubmissionGuardRef.current = true;
 
     try {
-      return await createMutation.mutateAsync(toMutationValues(values));
+      if (isMockMode) {
+        try {
+          const mutationValues = toMutationValues(values);
+          const createdModel = await createMutation.mutateAsync(mutationValues);
+
+          await invalidateEquipmentQueries();
+          setIsCreateModalOpen(false);
+          setFeedback({
+            type: "create-success",
+            modelId: createdModel.modelId,
+          });
+
+          return createdModel;
+        } catch (error) {
+          setFeedback({
+            type: "operation-error",
+            message: getErrorMessage(error, "기자재를 등록하지 못했습니다."),
+          });
+          throw error;
+        }
+      }
+
+      let modelId = pendingImageUploadModelIdRef.current;
+
+      if (!Number.isInteger(modelId)) {
+        try {
+          const mutationValues = toMutationValues(values);
+          const createdModel = await createMutation.mutateAsync(mutationValues);
+
+          modelId = createdModel.modelId;
+          pendingImageUploadModelIdRef.current = modelId;
+          setPendingImageUploadModelId(modelId);
+        } catch (error) {
+          setFeedback({
+            type: "operation-error",
+            message: getErrorMessage(error, "기자재를 등록하지 못했습니다."),
+          });
+          throw error;
+        }
+      }
+
+      let uploadedModel;
+
+      try {
+        uploadedModel = await imageUploadMutation.mutateAsync({
+          modelId,
+          imageFile: values.imageFile,
+        });
+      } catch (error) {
+        await invalidateEquipmentQueries(modelId);
+        setFeedback({
+          type: "image-upload-error",
+          message: getErrorMessage(error, "모델 이미지를 업로드하지 못했습니다."),
+        });
+        throw error;
+      }
+
+      await invalidateEquipmentQueries(modelId);
+      pendingImageUploadModelIdRef.current = null;
+      setPendingImageUploadModelId(null);
+      setIsCreateModalOpen(false);
+      setFeedback({ type: "create-success", modelId });
+
+      return uploadedModel;
     } finally {
       createSubmissionGuardRef.current = false;
     }
@@ -655,7 +736,8 @@ function AdminEquipmentListPage() {
 
       <EquipmentCreateModal
         isOpen={isCreateModalOpen}
-        isPending={createMutation.isPending}
+        isPending={isCreateFlowPending}
+        isMetadataLocked={Number.isInteger(pendingImageUploadModelId)}
         categoryOptions={categoryOptions}
         onClose={handleCloseCreateModal}
         onConfirm={handleCreateEquipment}
@@ -691,21 +773,29 @@ function AdminEquipmentListPage() {
         isOpen={feedback?.type === "create-success"}
         icon="checkmark"
         title="등록 완료"
-        description={
-          isMockMode
-            ? "정상적으로 등록되었습니다."
-            : "기자재 모델 정보가 등록되었습니다."
-        }
+        description="정상적으로 등록되었습니다."
         secondaryDescription={
           isMockMode
             ? "기자재 모델 상세페이지에서 기기를 등록해주세요."
-            : "선택한 이미지는 아직 서버에 업로드되지 않았습니다."
+            : undefined
         }
         confirmText="확인"
         showCancel={false}
         onClose={() => setFeedback(null)}
         onConfirm={() => setFeedback(null)}
         returnFocusRef={registerButtonRef}
+      />
+      <ConfirmModal
+        isOpen={feedback?.type === "image-upload-error"}
+        icon="warning"
+        title="이미지 업로드 실패"
+        description="모델 정보는 등록됐지만 이미지 업로드에 실패했습니다."
+        secondaryDescription={feedback?.message}
+        confirmText="확인"
+        confirmColor="Danger"
+        showCancel={false}
+        onClose={() => setFeedback(null)}
+        onConfirm={() => setFeedback(null)}
       />
       <ConfirmModal
         isOpen={feedback?.type === "edit-success"}

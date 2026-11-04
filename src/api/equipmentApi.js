@@ -235,6 +235,16 @@ function createEquipmentModelContractError(message, data) {
   });
 }
 
+function createEquipmentModelImageContractError(message, data) {
+  return new ApiError({
+    status: null,
+    code: "INVALID_EQUIPMENT_MODEL_IMAGE_RESPONSE",
+    message,
+    data,
+    errorType: "CONTRACT_ERROR",
+  });
+}
+
 function normalizeCreateCategoryId(value) {
   const categoryId =
     typeof value === "number"
@@ -328,6 +338,24 @@ function normalizeCreatedEquipmentModel(result) {
   ) {
     throw createEquipmentModelContractError(
       "등록된 기자재 모델 식별자를 확인할 수 없습니다.",
+      result,
+    );
+  }
+
+  return { modelId: result.modelId };
+}
+
+function normalizeUploadedEquipmentModelImage(result, requestedModelId) {
+  if (
+    !result ||
+    typeof result !== "object" ||
+    Array.isArray(result) ||
+    typeof result.modelId !== "number" ||
+    !Number.isInteger(result.modelId) ||
+    result.modelId !== requestedModelId
+  ) {
+    throw createEquipmentModelImageContractError(
+      "이미지가 등록된 기자재 모델 식별자를 확인할 수 없습니다.",
       result,
     );
   }
@@ -451,6 +479,38 @@ export async function createAdminEquipmentModel(values) {
   );
 
   return normalizeCreatedEquipmentModel(result);
+}
+
+export async function uploadAdminEquipmentModelImage({ modelId, imageFile }) {
+  if (isMockMode) {
+    const error = new Error(
+      "모델 이미지 업로드 API는 실제 서버 모드에서만 사용합니다.",
+    );
+    error.code = "EQUIPMENT_MODEL_IMAGE_UPLOAD_NOT_REQUIRED";
+    throw error;
+  }
+
+  if (!Number.isInteger(modelId)) {
+    throw new Error("이미지를 등록할 기자재 모델을 확인할 수 없습니다.");
+  }
+
+  if (
+    !imageFile ||
+    typeof Blob === "undefined" ||
+    !(imageFile instanceof Blob)
+  ) {
+    throw new Error("등록할 모델 이미지를 선택해 주세요.");
+  }
+
+  const formData = new FormData();
+  formData.append("image", imageFile);
+
+  const result = await api.patch(
+    `/admin/equipment-models/${encodeURIComponent(String(modelId))}/image`,
+    formData,
+  );
+
+  return normalizeUploadedEquipmentModelImage(result, modelId);
 }
 
 // 모델 수정·폐기와 개별 기기 업무는 실제 API 연결 전까지 mock 모드로 제한함.

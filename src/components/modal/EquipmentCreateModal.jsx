@@ -78,6 +78,7 @@ function formatFileSize(size) {
 function EquipmentCreateModal({
   categoryOptions = [],
   isOpen = false,
+  isMetadataLocked = false,
   isPending = false,
   onClose,
   onConfirm,
@@ -111,6 +112,7 @@ function EquipmentCreateModal({
     selectedCategoryOption,
   );
   const isOtherCategorySelected = isOtherCategory(selectedCategoryOption);
+  const metadataInputsDisabled = isPending || isMetadataLocked;
 
   const isRequiredFormComplete =
     Boolean(formValues.category) &&
@@ -124,6 +126,10 @@ function EquipmentCreateModal({
     formValues.imageFile !== null;
 
   const updateFormValue = (field, value) => {
+    if (isPending || (isMetadataLocked && field !== "imageFile")) {
+      return;
+    }
+
     setFormValues((previousValues) => ({
       ...previousValues,
       [field]: value,
@@ -135,6 +141,10 @@ function EquipmentCreateModal({
   };
 
   const handleCategoryChange = (nextCategory) => {
+    if (metadataInputsDisabled) {
+      return;
+    }
+
     const nextCategoryOption = categoryOptions.find(
       (option) => option.value === nextCategory,
     );
@@ -167,6 +177,10 @@ function EquipmentCreateModal({
   };
 
   const handleRentalPolicyChange = (nextPolicies) => {
+    if (metadataInputsDisabled) {
+      return;
+    }
+
     updateFormValue("rentalPolicies", nextPolicies);
   };
 
@@ -213,12 +227,20 @@ function EquipmentCreateModal({
   };
 
   const handleFileSelect = (event) => {
+    if (isPending) {
+      return;
+    }
+
     const [selectedFile] = Array.from(event.target.files ?? []);
 
     updateFormValue("imageFile", selectedFile ?? null);
   };
 
   const handleRemoveFile = () => {
+    if (isPending) {
+      return;
+    }
+
     updateFormValue("imageFile", null);
 
     if (fileInputRef.current) {
@@ -295,6 +317,7 @@ function EquipmentCreateModal({
                   value={formValues.category}
                   placeholder="카테고리를 선택하세요."
                   ariaLabel="모델 카테고리"
+                  disabled={metadataInputsDisabled}
                   onChange={handleCategoryChange}
                 />
               </div>
@@ -314,6 +337,7 @@ function EquipmentCreateModal({
                       placeholder="예) ABC"
                       required
                       maxLength={10}
+                      status={metadataInputsDisabled ? "disabled" : "default"}
                       onChange={handleTextChange("labelPrefix")}
                     />
                   </div>
@@ -336,7 +360,7 @@ function EquipmentCreateModal({
                   options={RENTAL_POLICY_OPTIONS}
                   value={formValues.rentalPolicies}
                   multiple
-                  disabled={!allowsFlexiblePolicies}
+                  disabled={metadataInputsDisabled || !allowsFlexiblePolicies}
                   placeholder="대여정책을 선택하세요"
                   ariaLabel="대여정책"
                   onChange={handleRentalPolicyChange}
@@ -354,6 +378,7 @@ function EquipmentCreateModal({
                   value={formValues.status}
                   placeholder="대여 상태를 선택하세요."
                   ariaLabel="모델 대여 상태"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextValue) => updateFormValue("status", nextValue)}
                 />
               </div>
@@ -373,6 +398,7 @@ function EquipmentCreateModal({
                   value={formValues.receivedDate}
                   placeholder="날짜를 선택하세요."
                   ariaLabel="모델 입고일"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextDate) =>
                     updateFormValue("receivedDate", nextDate)
                   }
@@ -391,6 +417,7 @@ function EquipmentCreateModal({
                   value={formValues.disposalDate}
                   placeholder="날짜를 선택하세요."
                   ariaLabel="모델 폐기일"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextDate) =>
                     updateFormValue("disposalDate", nextDate)
                   }
@@ -413,6 +440,7 @@ function EquipmentCreateModal({
                   placeholder="모델명을 입력하세요"
                   required
                   maxLength={100}
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("name")}
                 />
               </div>
@@ -432,6 +460,7 @@ function EquipmentCreateModal({
                   value={formValues.accessories}
                   placeholder="구성품을 입력하세요"
                   required
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("accessories")}
                 />
               </div>
@@ -450,6 +479,7 @@ function EquipmentCreateModal({
                   name="specification"
                   value={formValues.specification}
                   placeholder="성능을 입력하세요 (선택)"
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("specification")}
                 />
               </div>
@@ -468,6 +498,7 @@ function EquipmentCreateModal({
                   name="description"
                   value={formValues.description}
                   placeholder="설명을 입력하세요 (선택)"
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("description")}
                 />
               </div>
@@ -487,6 +518,7 @@ function EquipmentCreateModal({
                 name="imageFile"
                 accept="image/*"
                 required
+                disabled={isPending}
                 onChange={handleFileSelect}
               />
 
@@ -508,6 +540,7 @@ function EquipmentCreateModal({
                     size={24}
                     type="button"
                     ariaLabel={`${formValues.imageFile.name} 파일 제거`}
+                    disabled={isPending}
                     onClick={handleRemoveFile}
                   />
                 </div>
@@ -519,6 +552,7 @@ function EquipmentCreateModal({
                   type="button"
                   text="파일 선택"
                   ariaLabel="모델 사진 선택"
+                  disabled={isPending}
                   onClick={() => fileInputRef.current?.click()}
                 />
               )}
@@ -546,7 +580,13 @@ function EquipmentCreateModal({
               size="Default"
               color="Primary"
               status="Default"
-              text={isPending ? "처리 중" : "등록"}
+              text={
+                isPending
+                  ? "처리 중"
+                  : isMetadataLocked
+                    ? "이미지 업로드 재시도"
+                    : "등록"
+              }
               type="submit"
               disabled={!isRequiredFormComplete || isPending}
             />
@@ -558,7 +598,11 @@ function EquipmentCreateModal({
         isOpen={isCancelConfirmOpen}
         icon="warning"
         title="취소하고 나가시겠습니까?"
-        description="작성 중이던 내용이 모두 초기화됩니다."
+        description={
+          isMetadataLocked
+            ? "모델 정보는 이미 서버에 등록되었습니다. 닫으면 이미지 없이 등록된 상태가 유지됩니다."
+            : "작성 중이던 내용이 모두 초기화됩니다."
+        }
         cancelText="취소"
         confirmText="확인"
         confirmColor="Danger"
