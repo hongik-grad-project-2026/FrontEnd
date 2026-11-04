@@ -30,6 +30,13 @@ function allowsFlexibleRentalPolicies(categoryOption) {
   return FLEXIBLE_POLICY_CATEGORY_LABELS.has(categoryOption?.label);
 }
 
+function isOtherCategory(categoryOption) {
+  return (
+    typeof categoryOption?.label === "string" &&
+    categoryOption.label.trim() === "기타"
+  );
+}
+
 function createEmptyForm() {
   return {
     category: "",
@@ -79,6 +86,7 @@ function EquipmentCreateModal({
   const generatedId = useId();
   const fileInputRef = useRef(null);
   const cancelButtonRef = useRef(null);
+  const submitGuardRef = useRef(false);
 
   const [formValues, setFormValues] = useState(createEmptyForm);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
@@ -102,6 +110,7 @@ function EquipmentCreateModal({
   const allowsFlexiblePolicies = allowsFlexibleRentalPolicies(
     selectedCategoryOption,
   );
+  const isOtherCategorySelected = isOtherCategory(selectedCategoryOption);
 
   const isRequiredFormComplete =
     Boolean(formValues.category) &&
@@ -111,7 +120,7 @@ function EquipmentCreateModal({
     isValidDate(formValues.disposalDate) &&
     Boolean(formValues.name.trim()) &&
     Boolean(formValues.accessories.trim()) &&
-    Boolean(formValues.labelPrefix.trim()) &&
+    (isOtherCategorySelected || Boolean(formValues.labelPrefix.trim())) &&
     formValues.imageFile !== null;
 
   const updateFormValue = (field, value) => {
@@ -132,6 +141,7 @@ function EquipmentCreateModal({
     const nextAllowsFlexiblePolicies = allowsFlexibleRentalPolicies(
       nextCategoryOption,
     );
+    const nextIsOtherCategory = isOtherCategory(nextCategoryOption);
 
     setFormValues((previousValues) => {
       const previousCategoryOption = categoryOptions.find(
@@ -144,6 +154,7 @@ function EquipmentCreateModal({
       return {
         ...previousValues,
         category: nextCategory,
+        labelPrefix: nextIsOtherCategory ? "" : previousValues.labelPrefix,
         rentalPolicies: nextAllowsFlexiblePolicies
           ? previousAllowsFlexiblePolicies
             ? previousValues.rentalPolicies
@@ -168,7 +179,7 @@ function EquipmentCreateModal({
   };
 
   const handleRequestClose = () => {
-    if (isPending) {
+    if (isPending || submitGuardRef.current) {
       return;
     }
 
@@ -176,7 +187,7 @@ function EquipmentCreateModal({
   };
 
   const handleCancel = () => {
-    if (isPending) {
+    if (isPending || submitGuardRef.current) {
       return;
     }
 
@@ -184,11 +195,15 @@ function EquipmentCreateModal({
   };
 
   const handleCloseCancelConfirm = () => {
+    if (isPending || submitGuardRef.current) {
+      return;
+    }
+
     setIsCancelConfirmOpen(false);
   };
 
   const handleConfirmCancel = (event) => {
-    if (isPending) {
+    if (isPending || submitGuardRef.current) {
       return;
     }
 
@@ -214,9 +229,11 @@ function EquipmentCreateModal({
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!isRequiredFormComplete || isPending) {
+    if (!isRequiredFormComplete || isPending || submitGuardRef.current) {
       return;
     }
+
+    submitGuardRef.current = true;
 
     const { category, ...otherFormValues } = formValues;
     const submittedValues = {
@@ -226,7 +243,9 @@ function EquipmentCreateModal({
       accessories: formValues.accessories.trim(),
       specification: formValues.specification.trim(),
       description: formValues.description.trim(),
-      labelPrefix: formValues.labelPrefix.trim(),
+      labelPrefix: isOtherCategorySelected
+        ? ""
+        : formValues.labelPrefix.trim(),
     };
 
     try {
@@ -234,6 +253,8 @@ function EquipmentCreateModal({
       resetForm();
     } catch {
       // 실패 시 사용자가 입력한 값을 그대로 유지함.
+    } finally {
+      submitGuardRef.current = false;
     }
   };
 
@@ -256,7 +277,11 @@ function EquipmentCreateModal({
           </header>
 
           <div className={styles.content}>
-            <div className={styles.pairRow}>
+            <div
+              className={`${styles.pairRow} ${
+                isOtherCategorySelected ? styles.singleFieldRow : ""
+              }`}
+            >
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={categoryId}>
@@ -273,24 +298,27 @@ function EquipmentCreateModal({
                   onChange={handleCategoryChange}
                 />
               </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={labelPrefixId}>
-                  라벨 번호 접두사*
-                </label>
+              {!isOtherCategorySelected ? (
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor={labelPrefixId}>
+                    라벨 번호 접두사*
+                  </label>
 
-                <div className={styles.inputWrap}>
-                  <InputBar
-                    id={labelPrefixId}
-                    width="100%"
-                    height="md"
-                    name="labelPrefix"
-                    value={formValues.labelPrefix}
-                    placeholder="예) ABC"
-                    required
-                    onChange={handleTextChange("labelPrefix")}
-                  />
+                  <div className={styles.inputWrap}>
+                    <InputBar
+                      id={labelPrefixId}
+                      width="100%"
+                      height="md"
+                      name="labelPrefix"
+                      value={formValues.labelPrefix}
+                      placeholder="예) ABC"
+                      required
+                      maxLength={10}
+                      onChange={handleTextChange("labelPrefix")}
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
 
 
@@ -384,6 +412,7 @@ function EquipmentCreateModal({
                   value={formValues.name}
                   placeholder="모델명을 입력하세요"
                   required
+                  maxLength={100}
                   onChange={handleTextChange("name")}
                 />
               </div>

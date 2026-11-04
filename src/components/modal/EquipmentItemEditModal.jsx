@@ -30,6 +30,13 @@ function allowsFlexibleRentalPolicies(categoryOption) {
   return FLEXIBLE_POLICY_CATEGORY_LABELS.has(categoryOption?.label);
 }
 
+function isOtherCategory(categoryOption) {
+  return (
+    typeof categoryOption?.label === "string" &&
+    categoryOption.label.trim() === "기타"
+  );
+}
+
 function parseDisplayDate(value) {
   if (typeof value !== "string") {
     return null;
@@ -109,9 +116,14 @@ function formatFileSize(size) {
   return `${(kilobytes / 1024).toFixed(1)} MB`;
 }
 
-function createInitialForm(equipment) {
+function createInitialForm(equipment, categoryOptions) {
+  const initialCategory = equipment.categoryKey ?? "";
+  const initialCategoryOption = categoryOptions.find(
+    (option) => option.value === initialCategory,
+  );
+
   return {
-    category: equipment.categoryKey ?? "",
+    category: initialCategory,
     status: equipment.status ?? "",
     rentalPolicies: Array.isArray(equipment.rentalPolicies)
       ? [...equipment.rentalPolicies]
@@ -123,7 +135,9 @@ function createInitialForm(equipment) {
     accessories: equipment.accessories ?? "",
     specification: equipment.specification ?? "",
     description: equipment.description ?? "",
-    labelPrefix: equipment.labelPrefix ?? "",
+    labelPrefix: isOtherCategory(initialCategoryOption)
+      ? ""
+      : equipment.labelPrefix ?? "",
     replacementImageFile: null,
   };
 }
@@ -141,10 +155,12 @@ function EquipmentItemEditModal({
   const fileInputRef = useRef(null);
   const cancelButtonRef = useRef(null);
 
-  const [initialFormValues] = useState(() => createInitialForm(equipment));
+  const [initialFormValues] = useState(() =>
+    createInitialForm(equipment, categoryOptions),
+  );
 
   const [formValues, setFormValues] = useState(() =>
-    createInitialForm(equipment),
+    createInitialForm(equipment, categoryOptions),
   );
 
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
@@ -168,7 +184,10 @@ function EquipmentItemEditModal({
   const allowsFlexiblePolicies = allowsFlexibleRentalPolicies(
     selectedCategoryOption,
   );
+  const isOtherCategorySelected = isOtherCategory(selectedCategoryOption);
   const hasRentalPolicies = formValues.rentalPolicies.length > 0;
+  const hasRequiredLabelPrefix =
+    isOtherCategorySelected || Boolean(normalizeText(formValues.labelPrefix));
 
   const hasFormChanges = hasChangedValues(formValues, initialFormValues);
 
@@ -190,6 +209,7 @@ function EquipmentItemEditModal({
     const nextAllowsFlexiblePolicies = allowsFlexibleRentalPolicies(
       nextCategoryOption,
     );
+    const nextIsOtherCategory = isOtherCategory(nextCategoryOption);
 
     setFormValues((previousValues) => {
       const previousCategoryOption = categoryOptions.find(
@@ -202,6 +222,7 @@ function EquipmentItemEditModal({
       return {
         ...previousValues,
         category: nextCategory,
+        labelPrefix: nextIsOtherCategory ? "" : previousValues.labelPrefix,
         rentalPolicies: nextAllowsFlexiblePolicies
           ? previousAllowsFlexiblePolicies
             ? previousValues.rentalPolicies
@@ -263,7 +284,12 @@ function EquipmentItemEditModal({
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!hasFormChanges || !hasRentalPolicies || isPending) {
+    if (
+      !hasFormChanges ||
+      !hasRentalPolicies ||
+      !hasRequiredLabelPrefix ||
+      isPending
+    ) {
       return;
     }
 
@@ -279,7 +305,9 @@ function EquipmentItemEditModal({
       accessories: normalizeText(formValues.accessories),
       specification: normalizeText(formValues.specification),
       description: normalizeText(formValues.description),
-      labelPrefix: normalizeText(formValues.labelPrefix),
+      labelPrefix: isOtherCategorySelected
+        ? ""
+        : normalizeText(formValues.labelPrefix),
       replacementImageFile: formValues.replacementImageFile,
     };
 
@@ -309,7 +337,11 @@ function EquipmentItemEditModal({
           </header>
 
           <div className={styles.content}>
-            <div className={styles.pairRow}>
+            <div
+              className={`${styles.pairRow} ${
+                isOtherCategorySelected ? styles.singleFieldRow : ""
+              }`}
+            >
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={categoryId}>
@@ -327,23 +359,27 @@ function EquipmentItemEditModal({
                   onChange={handleCategoryChange}
                 />
               </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={labelPrefixId}>
-                  라벨 번호 접두사*
-                </label>
+              {!isOtherCategorySelected ? (
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor={labelPrefixId}>
+                    라벨 번호 접두사*
+                  </label>
 
-                <div className={styles.inputWrap}>
-                  <InputBar
-                    id={labelPrefixId}
-                    width="100%"
-                    height="md"
-                    name="labelPrefix"
-                    value={formValues.labelPrefix}
-                    placeholder="예) ABC"
-                    onChange={handleTextChange("labelPrefix")}
-                  />
+                  <div className={styles.inputWrap}>
+                    <InputBar
+                      id={labelPrefixId}
+                      width="100%"
+                      height="md"
+                      name="labelPrefix"
+                      value={formValues.labelPrefix}
+                      placeholder="예) ABC"
+                      required
+                      maxLength={10}
+                      onChange={handleTextChange("labelPrefix")}
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
 
 
@@ -569,7 +605,12 @@ function EquipmentItemEditModal({
               status="Default"
               text={isPending ? "처리 중" : "수정 완료"}
               type="submit"
-              disabled={!hasFormChanges || !hasRentalPolicies || isPending}
+              disabled={
+                !hasFormChanges ||
+                !hasRentalPolicies ||
+                !hasRequiredLabelPrefix ||
+                isPending
+              }
             />
           </footer>
         </form>

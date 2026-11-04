@@ -195,6 +195,7 @@ function AdminEquipmentListPage() {
   const queryClient = useQueryClient();
   const panelId = useId();
   const registerButtonRef = useRef(null);
+  const createSubmissionGuardRef = useRef(false);
   const editButtonRef = useRef(null);
   const disposeButtonRef = useRef(null);
 
@@ -245,10 +246,13 @@ function AdminEquipmentListPage() {
 
   const createMutation = useMutation({
     mutationFn: createAdminEquipmentModel,
-    onSuccess: async () => {
+    onSuccess: async (createdModel) => {
       await invalidateEquipmentQueries();
       setIsCreateModalOpen(false);
-      setFeedback({ type: "create-success" });
+      setFeedback({
+        type: "create-success",
+        modelId: createdModel.modelId,
+      });
     },
     onError: (error) => {
       setFeedback({
@@ -363,7 +367,7 @@ function AdminEquipmentListPage() {
   };
 
   const handleOpenCreateModal = () => {
-    if (!isMockMode || isMutationPending) return;
+    if (isMutationPending) return;
     setIsCreateModalOpen(true);
   };
 
@@ -392,9 +396,18 @@ function AdminEquipmentListPage() {
     };
   };
 
-  const handleCreateEquipment = (values) => {
-    if (!isMockMode || createMutation.isPending) return Promise.resolve();
-    return createMutation.mutateAsync(toMutationValues(values));
+  const handleCreateEquipment = async (values) => {
+    if (createMutation.isPending || createSubmissionGuardRef.current) {
+      throw new Error("모델 등록 요청이 진행 중입니다.");
+    }
+
+    createSubmissionGuardRef.current = true;
+
+    try {
+      return await createMutation.mutateAsync(toMutationValues(values));
+    } finally {
+      createSubmissionGuardRef.current = false;
+    }
   };
 
   const handleOpenEditModal = (equipment, event) => {
@@ -631,7 +644,7 @@ function AdminEquipmentListPage() {
                   status="Default"
                   type="button"
                   text="기자재 등록"
-                  disabled={!isMockMode || isMutationPending}
+                  disabled={isMutationPending}
                   onClick={handleOpenCreateModal}
                 />
               </div>
@@ -678,8 +691,16 @@ function AdminEquipmentListPage() {
         isOpen={feedback?.type === "create-success"}
         icon="checkmark"
         title="등록 완료"
-        description="정상적으로 등록되었습니다."
-        secondaryDescription="기자재 모델 상세페이지에서 기기를 등록해주세요."
+        description={
+          isMockMode
+            ? "정상적으로 등록되었습니다."
+            : "기자재 모델 정보가 등록되었습니다."
+        }
+        secondaryDescription={
+          isMockMode
+            ? "기자재 모델 상세페이지에서 기기를 등록해주세요."
+            : "선택한 이미지는 아직 서버에 업로드되지 않았습니다."
+        }
         confirmText="확인"
         showCancel={false}
         onClose={() => setFeedback(null)}

@@ -225,6 +225,116 @@ function normalizeAdminEquipmentModelPage(result) {
   };
 }
 
+function createEquipmentModelContractError(message, data) {
+  return new ApiError({
+    status: null,
+    code: "INVALID_EQUIPMENT_MODEL_CREATE_RESPONSE",
+    message,
+    data,
+    errorType: "CONTRACT_ERROR",
+  });
+}
+
+function normalizeCreateCategoryId(value) {
+  const categoryId =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && value.trim()
+        ? Number(value)
+        : Number.NaN;
+
+  if (!Number.isInteger(categoryId)) {
+    throw new Error("등록할 기자재 카테고리를 확인할 수 없습니다.");
+  }
+
+  return categoryId;
+}
+
+function normalizeCreateDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  if (typeof value === "string") {
+    const normalizedValue = value.trim();
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+      return normalizedValue;
+    }
+
+    if (/^\d{4}\.\d{2}\.\d{2}$/.test(normalizedValue)) {
+      return normalizedValue.replaceAll(".", "-");
+    }
+  }
+
+  throw new Error("폐기일 형식을 확인해 주세요.");
+}
+
+function createAdminEquipmentModelRequest(values = {}) {
+  const prefixCode = values.labelPrefix?.trim() ?? "";
+  const modelName = values.name?.trim() ?? "";
+  const components = values.accessories?.trim() ?? "";
+  const description = values.description?.trim() ?? "";
+  const specification = values.specification?.trim() ?? "";
+  const rentalStatus =
+    values.status === "active"
+      ? "AVAILABLE"
+      : values.status === "paused"
+        ? "UNAVAILABLE"
+        : null;
+
+  if (!modelName) {
+    throw new Error("모델명을 입력해 주세요.");
+  }
+
+  if (modelName.length > 100) {
+    throw new Error("모델명은 100자 이하로 입력해 주세요.");
+  }
+
+  if (!components) {
+    throw new Error("구성품을 입력해 주세요.");
+  }
+
+  if (prefixCode.length > 10) {
+    throw new Error("라벨 번호 접두사는 10자 이하로 입력해 주세요.");
+  }
+
+  if (!rentalStatus) {
+    throw new Error("대여 상태를 확인해 주세요.");
+  }
+
+  return {
+    categoryId: normalizeCreateCategoryId(values.categoryId),
+    ...(prefixCode && { prefixCode }),
+    modelName,
+    components,
+    ...(description && { description }),
+    ...(specification && { specification }),
+    rentalStatus,
+    disposalDate: normalizeCreateDate(values.disposalDate),
+  };
+}
+
+function normalizeCreatedEquipmentModel(result) {
+  if (
+    !result ||
+    typeof result !== "object" ||
+    Array.isArray(result) ||
+    typeof result.modelId !== "number" ||
+    !Number.isInteger(result.modelId)
+  ) {
+    throw createEquipmentModelContractError(
+      "등록된 기자재 모델 식별자를 확인할 수 없습니다.",
+      result,
+    );
+  }
+
+  return { modelId: result.modelId };
+}
+
 // 화면은 key만 사용하며 mock 데이터의 저장 위치를 알지 못하도록 구성함.
 export const equipmentKeys = {
   all: ["equipment"],
@@ -330,12 +440,20 @@ export async function getAdminEquipmentModels(params = {}) {
   return normalizeAdminEquipmentModelPage(result);
 }
 
-// 모델 mutation과 개별 기기 업무는 실제 API 연결 전까지 mock 모드로 제한함.
 export async function createAdminEquipmentModel(values) {
-  assertMockMode();
-  return createMockAdminEquipmentModel(values);
+  if (isMockMode) {
+    return createMockAdminEquipmentModel(values);
+  }
+
+  const result = await api.post(
+    "/admin/equipment-models",
+    createAdminEquipmentModelRequest(values),
+  );
+
+  return normalizeCreatedEquipmentModel(result);
 }
 
+// 모델 수정·폐기와 개별 기기 업무는 실제 API 연결 전까지 mock 모드로 제한함.
 export async function updateAdminEquipmentModel(values) {
   assertMockMode();
   return updateMockAdminEquipmentModel(values);
