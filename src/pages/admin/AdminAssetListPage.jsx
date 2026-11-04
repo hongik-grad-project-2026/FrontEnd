@@ -2,6 +2,8 @@ import { useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoaderData, useParams } from "react-router-dom";
 
+import { getAdminEquipmentModelByID, ITEM_STATUS_LABEL } from "../../api/equipmentApi";
+
 import { isMockMode } from "../../api/client";
 import {
   createAdminEquipmentItems,
@@ -29,11 +31,10 @@ const PAGE_SIZE = 10;
 
 const ASSET_TABS = [
   { value: "all", label: "전체" },
-  { value: "available", label: "대여 가능" },
-  { value: "rented", label: "대여 중" },
-  { value: "broken", label: "고장" },
-  { value: "disposalScheduled", label: "폐기 예정" },
-];
+  ...Object.entries(ITEM_STATUS_LABEL).map(([value, label]) => ({
+    value,
+    label,
+  }))];
 
 const ASSET_BADGE_STATUS = {
   available: "기기-대여가능",
@@ -311,12 +312,6 @@ function AdminAssetListPage() {
   };
 
   const columns = [
-    // {
-    //   key: "assetNumber",
-    //   header: "비품 번호",
-    //   width: 120,
-    //   render: (item) => <SingleLineCell text={item.assetNumber} />,
-    // },
     {
       key: "labelNumber",
       header: "라벨 번호",
