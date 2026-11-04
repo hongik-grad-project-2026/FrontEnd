@@ -1,6 +1,8 @@
 import { useId, useRef, useState } from "react";
 import BaseModal from "./BaseModal";
 import Button from "../common/Button";
+import Select from "../common/Select";
+import Input from "../common/Input";
 import styles from "./RentalApplyModal.module.css";
 import { SEMESTER_END_DATE } from "../../utils/rentalRules";
 
@@ -10,9 +12,7 @@ function createInitialForm(equipment) {
   return {
     rentalType: equipment?.rentalPolicies ?? "",
     pickupDate: "",
-    pickupTime: "",
     returnDate: "",
-    returnTime: "",
     reason: "",
   };
 }
@@ -57,9 +57,12 @@ function RentalApplyModalContent({
   onSubmit,
   returnFocusRef,
 }) {
+  const [form, setForm] = useState(() => createInitialForm(equipment));
+
+
+
   const titleId = `${useId()}-title`;
   const firstInputRef = useRef(null);
-  const [form, setForm] = useState(() => createInitialForm(equipment));
   const isRegularRental = form.rentalType === "regular";
   const isAlwaysRental = form.rentalType === "always";
   const isReturnDateFixed = isRegularRental || isAlwaysRental;
@@ -104,60 +107,82 @@ function RentalApplyModalContent({
         </header>
 
         <div className={styles.body}>
-          <section>
-            <h3>기자재 정보</h3>
-            <dl className={styles.infoGrid}>
-              <div><dt>카테고리</dt><dd>{equipment.category || "-"}</dd></div>
-              <div><dt>기자재명</dt><dd>{equipment.modelName || "-"}</dd></div>
-              <div><dt>설명</dt><dd>{equipment.description || "-"}</dd></div>
-              <div><dt>구성</dt><dd>{equipment.components || "-"}</dd></div>
-            </dl>
-          </section>
-
-          <section>
-            <h3>신청 정보</h3>
-            <div className={styles.fields}>
-              <label>
-                <span>대여 유형</span>
-                <select ref={firstInputRef} name="rentalType" value={form.rentalType} onChange={updateField} disabled={true}>
-                  <option value={equipment.rentalPolicies ?? ""}>
-                    {equipment.rentalPolicies === "regular"
-                      ? "정기"
-                      : equipment.rentalPolicies === "always"
-                        ? "상시"
-                        : equipment.rentalPolicies ?? ""}
-                  </option>
-                </select>
-              </label>
-              <label>
-                <span>수령 희망일</span>
-                <span className={styles.dateTime}>
-                  <input required type="date" name="pickupDate" value={form.pickupDate} onChange={updateField} disabled={isPending} />
-                  <input required type="time" name="pickupTime" value={form.pickupTime} onChange={updateField} disabled={isPending} />
-                </span>
-              </label>
-              <label>
-                <span>
-                  반납 예정일
-                  {isRegularRental
-                    ? " (학기말)"
-                    : isAlwaysRental
-                      ? " (수령일 다음 날)"
-                      : ""}
-                </span>
-                <span className={styles.dateTime}>
-                  <input required type="date" name="returnDate" value={resolvedReturnDate} onChange={updateField} disabled={isPending || isReturnDateFixed} />
-                  <input required type="time" name="returnTime" value={form.returnTime} onChange={updateField} disabled={isPending} />
-                </span>
-              </label>
-              <label className={styles.reasonField}>
-                <span>대여 사유</span>
-                <textarea required name="reason" value={form.reason} onChange={updateField} disabled={isPending} maxLength={500} />
-              </label>
+          <section className={styles.infoSection}>
+            <label className={styles.wideLabel}>기자재 정보</label>
+            <div className={styles.infoGrid}>
+              <div><span>카테고리</span>{equipment.category || "-"}</div>
+              <div><span>기자재명</span>{equipment.modelName || "-"}</div>
+              <div><span>설명</span>{equipment.description || "-"}</div>
+              <div><span>구성</span>{equipment.components || "-"}</div>
             </div>
           </section>
 
-          {error ? <p className={styles.error} role="alert">{error.message || "대여 신청에 실패했습니다."}</p> : null}
+          <section className={styles.fields}>
+
+            <div className={styles.field}>
+              <label className={styles.wideLabel}>대여 유형</label>
+              <Input
+                width="100%"
+                placeholder={
+                  equipment.rentalPolicies === "regular"
+                    ? "정기"
+                    : equipment.rentalPolicies === "always"
+                      ? "상시"
+                      : equipment.rentalPolicies ?? ""
+                }
+                ariaLabel="대여 유형"
+                disabled={true}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label>수령 희망일</label>
+              <label>
+                반납 예정일
+                {isRegularRental
+                  ? " (학기말)"
+                  : isAlwaysRental
+                    ? " (수령일 다음 날)"
+                    : ""}
+              </label>
+              <Select
+                // id={startDateId}
+                className={styles.select}
+                type="calendar"
+                width="100%"
+                // ref={}
+                value={form.pickupDate}
+                placeholder="날짜를 선택하세요."
+                ariaLabel="수령 희망일"
+                onChange={updateField}
+                disabled={isPending}
+              />
+
+              <Input
+                // id={startDateId}
+                // ref={}
+                width="100%"
+                value={resolvedReturnDate}
+                placeholder="수령 희망일을 선택하세요."
+                ariaLabel="수령 희망일"
+                onChange={updateField}
+                disabled={true}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.wideLabel}>대여 사유</label>
+              <Input
+                width={"100%"}
+                height={"md"}
+                placeholder="대여 사유를 입력하세요"
+                disabled={isPending}
+                onChange={updateField}
+              // value=
+              />
+            </div>
+          </section>
+
         </div>
 
         <footer className={styles.actions}>
