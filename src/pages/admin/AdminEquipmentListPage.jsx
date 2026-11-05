@@ -47,6 +47,14 @@ function getErrorMessage(error, fallbackMessage) {
   return error instanceof Error && error.message ? error.message : fallbackMessage;
 }
 
+function getCreateModelErrorMessage(error) {
+  if (error?.code === "LABELPREFIX404_1") {
+    return "등록할 수 없는 라벨 번호입니다.";
+  }
+
+  return getErrorMessage(error, "기자재를 등록하지 못했습니다.");
+}
+
 function formatDisplayDate(value) {
   if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
     return "";
@@ -438,7 +446,7 @@ function AdminEquipmentListPage() {
         } catch (error) {
           setFeedback({
             type: "operation-error",
-            message: getErrorMessage(error, "기자재를 등록하지 못했습니다."),
+            message: getCreateModelErrorMessage(error),
           });
           throw error;
         }
@@ -457,7 +465,7 @@ function AdminEquipmentListPage() {
         } catch (error) {
           setFeedback({
             type: "operation-error",
-            message: getErrorMessage(error, "기자재를 등록하지 못했습니다."),
+            message: getCreateModelErrorMessage(error),
           });
           throw error;
         }

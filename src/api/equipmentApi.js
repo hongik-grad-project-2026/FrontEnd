@@ -479,7 +479,7 @@ function normalizeCreateCategoryId(value) {
   return categoryId;
 }
 
-function normalizeCreateDate(value) {
+function normalizeCreateDate(value, fieldLabel) {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     const year = value.getFullYear();
     const month = String(value.getMonth() + 1).padStart(2, "0");
@@ -499,7 +499,7 @@ function normalizeCreateDate(value) {
     }
   }
 
-  throw new Error("폐기일 형식을 확인해 주세요.");
+  throw new Error(`${fieldLabel} 형식을 확인해 주세요.`);
 }
 
 function createAdminEquipmentModelRequest(values = {}) {
@@ -543,7 +543,8 @@ function createAdminEquipmentModelRequest(values = {}) {
     ...(description && { description }),
     ...(specification && { specification }),
     rentalStatus,
-    disposalDate: normalizeCreateDate(values.disposalDate),
+    receivedDate: normalizeCreateDate(values.receivedDate, "입고일"),
+    disposalDate: normalizeCreateDate(values.disposalDate, "폐기일"),
   };
 }
 
