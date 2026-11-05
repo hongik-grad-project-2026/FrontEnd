@@ -59,14 +59,24 @@ const badgeKinds = {
   },
 
   "기기-대여가능": {
-    innerText: "대여가능",
+    innerText: "대여 가능",
     bgColor: "brand-secondary",
     textColor: "brand-primary",
+  },
+  "기기-신청됨": {
+    innerText: "신청됨",
+    bgColor: "status-warning",
+    textColor: "status-warning-dark",
   },
   "기기-대여중": {
     innerText: "대여중",
     bgColor: "status-success-light",
     textColor: "status-success-dark",
+  },
+  "기기-고장": {
+    innerText: "고장",
+    bgColor: "status-danger-light",
+    textColor: "status-danger",
   },
   "기기-대여중지": {
     innerText: "대여중지",
@@ -77,6 +87,11 @@ const badgeKinds = {
     innerText: "폐기예정",
     bgColor: "neutral-30",
     textColor: "neutral-80",
+  },
+  "기기-상태미확인": {
+    innerText: "상태 미확인",
+    bgColor: "neutral-20",
+    textColor: "neutral-60",
   },
 };
 

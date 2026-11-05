@@ -16,8 +16,8 @@ import {
 } from "../mocks/equipmentData";
 
 
-// 기기 상태 정의. 상태를 추가하거나 바꿀 때는 이 배열만 수정함.
-// server: 서버 값, key: 화면에서 쓰는 키, label: 화면 표시 문구
+// 기기 상태 정의이며 상태 변경 시 이 배열만 수정함.
+// server는 서버 값, key는 화면 키, label은 화면 표시 문구임.
 const ITEM_STATUS_DEFS = [
   { server: "AVAILABLE", key: "available", label: "대여 가능" },
   { server: "RESERVED", key: "reserved", label: "신청됨" },
@@ -25,17 +25,17 @@ const ITEM_STATUS_DEFS = [
   { server: "BROKEN", key: "broken", label: "고장" },
 ];
 
-// 서버 값 -> 화면 키 (예: AVAILABLE -> "available")
+// 서버 값을 화면 키로 변환함.
 export const ITEM_STATUS = Object.freeze(
   Object.fromEntries(ITEM_STATUS_DEFS.map((def) => [def.server, def.key])),
 );
 
-// 화면 키 -> 한글 라벨
+// 화면 키를 한글 라벨로 변환함.
 export const ITEM_STATUS_LABEL = Object.freeze(
   Object.fromEntries(ITEM_STATUS_DEFS.map((def) => [def.key, def.label])),
 );
 
-// 화면 키 -> 서버 쿼리 값
+// 화면 키를 서버 쿼리 값으로 변환함.
 const ITEM_STATUS_REQUEST = Object.freeze(
   Object.fromEntries(ITEM_STATUS_DEFS.map((def) => [def.key, def.server])),
 );
@@ -77,6 +77,41 @@ function createEquipmentItemListContractError(message, data) {
     data,
     errorType: "CONTRACT_ERROR",
   });
+}
+
+function createEquipmentModelDetailContractError(message, data) {
+  return new ApiError({
+    status: null,
+    code: "INVALID_EQUIPMENT_MODEL_DETAIL_RESPONSE",
+    message,
+    data,
+    errorType: "CONTRACT_ERROR",
+  });
+}
+
+function normalizeRequestedModelId(modelId) {
+  const normalizedModelId =
+    typeof modelId === "number"
+      ? modelId
+      : typeof modelId === "string" && modelId.trim()
+        ? Number(modelId)
+        : Number.NaN;
+
+  if (
+    !Number.isFinite(normalizedModelId) ||
+    !Number.isInteger(normalizedModelId) ||
+    normalizedModelId <= 0
+  ) {
+    throw new ApiError({
+      status: null,
+      code: "INVALID_EQUIPMENT_MODEL_ID",
+      message: "기자재 모델 ID는 양의 정수여야 합니다.",
+      data: { modelId },
+      errorType: "VALIDATION_ERROR",
+    });
+  }
+
+  return normalizedModelId;
 }
 
 function normalizeRequiredInteger(value, fieldName, result, where = "기자재 목록") {
@@ -169,33 +204,41 @@ function normalizeDisplayDate(value) {
   return dateMatch ? `${dateMatch[1]}.${dateMatch[2]}.${dateMatch[3]}` : "-";
 }
 
-// %% 모델 단건 조회 정규화 함수
 function normalizeAdminEquipmentModelByID(result, requestedModelId) {
-  if (
-    !result ||
-    typeof result !== "object" ||
-    Array.isArray(result) ||
-    typeof result.modelId !== "number" ||
-    !Number.isInteger(result.modelId) ||
-    result.modelId !== requestedModelId ||
-    result.modelId === undefined ||
-    result.modelId === null ||
-    (typeof result.modelId === "string" && !result.modelId.trim())
-  ) {
-    throw createEquipmentListContractError(
-      "기자재 모델 식별자를 확인할 수 없습니다.",
+  if (!result || typeof result !== "object" || Array.isArray(result)) {
+    throw createEquipmentModelDetailContractError(
+      "기자재 모델 정보를 확인할 수 없습니다.",
       result,
     );
   }
+
+  const responseModelId =
+    typeof result.modelId === "number"
+      ? result.modelId
+      : typeof result.modelId === "string" && result.modelId.trim()
+        ? Number(result.modelId)
+        : Number.NaN;
+
+  if (
+    !Number.isFinite(responseModelId) ||
+    !Number.isInteger(responseModelId) ||
+    responseModelId <= 0 ||
+    responseModelId !== requestedModelId
+  ) {
+    throw createEquipmentModelDetailContractError(
+      "기자재 모델 식별자가 요청과 일치하지 않습니다.",
+      result,
+    );
+  }
+
   return {
-    modelId: result.modelId,
+    modelId: responseModelId,
     name: normalizeDisplayText(result.name),
-    labelPrefix: normalizeDisplayText(result.labelPrefix),
-    nextLabelNumber: normalizeOptionalCount(result.nextLabelNumber)
+    labelPrefix: normalizeOptionalText(result.labelPrefix) ?? "",
+    nextLabelNumber: normalizeOptionalCount(result.nextLabelNumber),
   };
 }
 
-// %% 모델별 기기 목록 조회 정규화 함수
 function normalizeAdminEquipmentItems(result) {
   if (!result || typeof result !== "object" || Array.isArray(result)) {
     throw createEquipmentItemListContractError(
@@ -219,7 +262,9 @@ function normalizeAdminEquipmentItems(result) {
   }
 
   return {
-    content: result.items.map(item => normalizeAdminEquipmentItem(item, result)),
+    content: result.items.map((item) =>
+      normalizeAdminEquipmentItem(item, result),
+    ),
     page: normalizeRequiredInteger(result.page, "page", result, "기기 목록"),
     size: normalizeRequiredInteger(result.size, "size", result, "기기 목록"),
     totalElements: normalizeRequiredInteger(result.totalElements, "totalElements", result, "기기 목록"),
@@ -244,11 +289,25 @@ function normalizeAdminEquipmentItem(item, result) {
     );
   }
 
+  const itemId = normalizeRequiredInteger(
+    item.itemId,
+    "itemId",
+    result,
+    "기기 목록",
+  );
+
+  if (itemId <= 0) {
+    throw createEquipmentItemListContractError(
+      "기기 식별자가 올바르지 않습니다.",
+      result,
+    );
+  }
+
   return {
-    itemId: item.itemId,
-    labelCode: normalizeDisplayText(item.labelCode),
+    itemId,
+    labelNumber: normalizeDisplayText(item.labelCode),
     status: ITEM_STATUS[item.status] ?? "unknown",
-    memo: normalizeDisplayText(item.memo),
+    notes: normalizeDisplayText(item.memo),
   };
 }
 
@@ -296,18 +355,29 @@ function normalizeAdminEquipmentModel(model, result) {
 }
 
 function normalizeItemStatusCounts(statusCounts) {
-  // 모든 상태를 0으로 초기화
-  const counts = Object.fromEntries(
-    Object.values(ITEM_STATUS).map((status) => [status, 0]),
+  const normalizedCounts = normalizeCategoryCounts(statusCounts);
+  const counts = {};
+
+  ITEM_STATUS_DEFS.forEach(({ server, key }) => {
+    if (Object.hasOwn(normalizedCounts, server)) {
+      counts[key] = normalizedCounts[server];
+    }
+  });
+
+  const explicitAllCount = normalizedCounts.all ?? normalizedCounts.ALL;
+  const hasAllDocumentedStatuses = ITEM_STATUS_DEFS.every(({ server }) =>
+    Object.hasOwn(normalizedCounts, server),
   );
 
-  // 서버 값이 유효하면 덮어쓰고, 모르는 상태는 무시
-  Object.entries(normalizeCategoryCounts(statusCounts)).forEach(
-    ([serverStatus, count]) => {
-      const status = ITEM_STATUS[serverStatus];
-      if (status) counts[status] = count;
-    },
-  );
+  if (explicitAllCount !== undefined) {
+    counts.all = explicitAllCount;
+  } else if (hasAllDocumentedStatuses) {
+    // OpenAPI에 정의된 네 상태가 모두 있을 때만 전체 건수를 계산함.
+    counts.all = ITEM_STATUS_DEFS.reduce(
+      (total, { server }) => total + normalizedCounts[server],
+      0,
+    );
+  }
 
   return counts;
 }
@@ -584,21 +654,28 @@ export async function setEquipmentModelWishlist(values) {
   return updateMockEquipmentWishlist(values);
 }
 
-// %% 모델 단건 조회
-export async function getAdminEquipmentModelByID(modelId) {
-  const result = await api.get(`/admin/equipment-models/${encodeURIComponent(String(modelId))}`);
-  return normalizeAdminEquipmentModelByID(result, modelId);
+export async function getAdminEquipmentModelByID(modelId, options = {}) {
+  if (isMockMode) {
+    return getMockAdminEquipmentModelSummary(modelId, options);
+  }
+
+  const normalizedModelId = normalizeRequestedModelId(modelId);
+  const result = await api.get(
+    `/admin/equipment-models/${encodeURIComponent(String(normalizedModelId))}`,
+    options,
+  );
+
+  return normalizeAdminEquipmentModelByID(result, normalizedModelId);
 }
 
-// %% 모델별 기기 목록 조회
 export async function getAdminEquipmentItems(params = {}) {
-
   if (isMockMode) {
     return queryMockAdminEquipmentItems(params);
   }
 
   const { signal, ...itemParams } = params;
   const { modelId, status, keyword, page, size } = normalizeItemParams(itemParams);
+  const normalizedModelId = normalizeRequestedModelId(modelId);
   const searchParams = new URLSearchParams({
     page: String(page),
     size: String(size),
@@ -614,7 +691,7 @@ export async function getAdminEquipmentItems(params = {}) {
   }
 
   const result = await api.get(
-    `/admin/equipment-models/${encodeURIComponent(String(modelId))}/items?${searchParams.toString()}`,
+    `/admin/equipment-models/${encodeURIComponent(String(normalizedModelId))}/items?${searchParams.toString()}`,
     { signal },
   );
   return normalizeAdminEquipmentItems(result);
@@ -712,8 +789,7 @@ export async function disposeAdminEquipmentModel(values) {
 }
 
 export async function getAdminEquipmentModelSummary(modelId, options) {
-  assertMockMode();
-  return getMockAdminEquipmentModelSummary(modelId, options);
+  return getAdminEquipmentModelByID(modelId, options);
 }
 
 export async function getAdminEquipmentItemCounts(modelId, options) {

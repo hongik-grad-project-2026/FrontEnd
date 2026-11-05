@@ -94,6 +94,12 @@
   line-height: var(--text-body-3-line-height);
 }
 
+.retryState {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
 .footer {
   position: relative;
   display: flex;
