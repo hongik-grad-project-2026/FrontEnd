@@ -945,9 +945,9 @@ export async function createMockStudentRental({
   user,
   rentalType,
   pickupDate,
-  pickupTime,
+  // pickupTime,
   returnDate,
-  returnTime,
+  // returnTime,
   reason,
 }) {
   await waitForMock();
@@ -957,9 +957,9 @@ export async function createMockStudentRental({
     !user?.id ||
     !rentalType ||
     !pickupDate ||
-    !pickupTime ||
+    // !pickupTime ||
     !returnDate ||
-    !returnTime ||
+    // !returnTime ||
     !String(reason ?? "").trim()
   ) {
     throw createMockError(
@@ -990,10 +990,10 @@ export async function createMockStudentRental({
     imageUrl: model.modelImageUrl ?? null,
     description: model.description ?? "",
     components: model.components ?? "",
-    rentalType: "상시",
+    rentalType: rentalType,
     requestedAt: formatMockDateTime(now),
-    expectedPickupAt: formatInputDateTime(pickupDate, pickupTime),
-    expectedReturnAt: formatInputDateTime(returnDate, returnTime),
+    // expectedPickupAt: formatInputDateTime(pickupDate, pickupTime),
+    // expectedReturnAt: formatInputDateTime(returnDate, returnTime),
     reason: String(reason).trim(),
     approvedAt: null,
     actualPickupAt: null,
