@@ -181,6 +181,8 @@
 .noticeContentWrap {
     color: var(--color-neutral-90);
     padding: var(--spacing-24) 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .PagenationCon {
