@@ -1149,7 +1149,7 @@ export async function pickupMockRental({ rentalId, processPhoto, workerName }) {
     );
   }
 
-  if (!processPhoto && isPickupPhotoRequired(rental.category)) {
+  if (isPickupPhotoRequired(rental.category) && (!processPhoto || processPhoto.length === 0)) {
     throw createMockError("수령 사진을 선택해 주세요.", "PHOTO_REQUIRED");
   }
 
@@ -1158,7 +1158,7 @@ export async function pickupMockRental({ rentalId, processPhoto, workerName }) {
     status: "renting",
     actualPickupAt: formatMockDateTime(),
     // 선택 카테고리는 사진 없이 처리할 수 있으므로 파일명이 없으면 null로 저장함.
-    checkoutPhotoName: processPhoto?.name ?? null,
+    checkoutPhotoName: (processPhoto ?? []).map((file) => file.name),
     pickupWorkerName: workerName ?? "",
   });
 }
@@ -1174,7 +1174,7 @@ export async function returnMockRental({ rentalId, processPhoto, workerName }) {
     );
   }
 
-  if (!processPhoto) {
+  if (processPhoto.length === 0) {
     throw createMockError("반납 사진을 선택해 주세요.", "PHOTO_REQUIRED");
   }
 
@@ -1182,7 +1182,7 @@ export async function returnMockRental({ rentalId, processPhoto, workerName }) {
     ...rental,
     status: "returned",
     actualReturnAt: formatMockDateTime(),
-    returnPhotoName: processPhoto.name,
+    returnPhotoName: (processPhoto ?? []).map((file) => file.name),
     returnWorkerName: workerName ?? "",
   });
 }
