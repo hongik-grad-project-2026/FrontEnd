@@ -156,6 +156,7 @@
   border-color: var(--color-brand-primary);
 }
 
+.button[data-kind="border"][data-size="Default"][data-color="Danger"][data-status="Disabled"],
 .button[data-kind="border"][data-size="Default"][data-color="Primary"][data-status="Disabled"] {
   color: var(--color-neutral-30);
   background-color: var(--color-neutral-10);

@@ -36,6 +36,9 @@ function ApplicantCell({ request }) {
     </div>
   );
 }
+function initializeRejectionReasonFrom() {
+  return { type: "INSUFFICIENT_STOCK", detail: "" };
+}
 
 function AdminRentalApprovalPage() {
   const queryClient = useQueryClient();
@@ -47,7 +50,7 @@ function AdminRentalApprovalPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [approvalTargetRequestIds, setApprovalTargetRequestIds] = useState([]);
   const [rejectTargetRequest, setRejectTargetRequest] = useState(null);
-  const [rejectionReason, setRejectionReason] = useState("out-of-stock");
+  const [rejectionReason, setRejectionReason] = useState(initializeRejectionReasonFrom());
   const [actionError, setActionError] = useState("");
   const params = { keyword: searchTerm, page: currentPage - 1, size: ROWS_PER_PAGE };
 
@@ -118,7 +121,7 @@ function AdminRentalApprovalPage() {
     { key: "rentalType", header: "유형", width: 96, getValue: (request) => request.rentalType },
     { key: "period", header: "대여 기간", width: 136, render: (request) => <CellStack><span>{request.startDate}</span><span>~{request.endDate}</span></CellStack> },
     { key: "requestedAt", header: "신청 일시", width: 136, render: (request) => <CellStack><span>{request.requestedDate}</span><span>{request.requestedTime}</span></CellStack> },
-    { key: "reject", header: "반려", width: 64, render: (request) => <Button kind="border" size="small" color="Danger" status="Default" text="반려" disabled={approvalMutation.isPending || rejectMutation.isPending} onClick={(event) => { rejectButtonRef.current = event.currentTarget; setRejectionReason("out-of-stock"); rejectMutation.reset(); setRejectTargetRequest(request); }} /> },
+    { key: "reject", header: "반려", width: 64, render: (request) => <Button kind="border" size="small" color="Danger" status="Default" text="반려" disabled={approvalMutation.isPending || rejectMutation.isPending} onClick={(event) => { rejectButtonRef.current = event.currentTarget; setRejectionReason(initializeRejectionReasonFrom()); rejectMutation.reset(); setRejectTargetRequest(request); }} /> },
   ];
 
   const pageData = approvalQuery.data;
