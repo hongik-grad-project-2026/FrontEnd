@@ -98,7 +98,7 @@ function RentalRejectModal({
               </div>
 
               <div className={styles.infoItem}>
-                <dt className={styles.infoLabel}>기자재명</dt>
+                <dt className={styles.infoLabel}>모델명</dt>
                 <dd className={styles.infoValue}>{request.equipmentName}</dd>
               </div>
             </dl>

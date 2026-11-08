@@ -105,7 +105,7 @@ function RentalApplyModalContent({
             <label className={styles.wideLabel}>기자재 정보</label>
             <div className={styles.infoGrid}>
               <div><span>카테고리</span>{equipment.category || "-"}</div>
-              <div><span>기자재명</span>{equipment.modelName || "-"}</div>
+              <div><span>모델명</span>{equipment.modelName || "-"}</div>
               <div><span>설명</span>{equipment.description || "-"}</div>
               <div><span>구성</span>{equipment.components || "-"}</div>
             </div>

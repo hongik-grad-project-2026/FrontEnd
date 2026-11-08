@@ -40,7 +40,7 @@ const STATUS_BADGES = {
 };
 
 const RENTAL_POLICY_LABELS = {
-  regular: "정기",
+  regular: "사전",
   always: "상시",
 };
 
@@ -439,7 +439,7 @@ function AdminEquipmentListPage() {
     },
     {
       key: "name",
-      header: "기자재 모델명 / 대여정책",
+      header: "모델명 / 대여정책",
       width: 222,
       render: (equipment) => <EquipmentNameCell equipment={equipment} />,
     },
@@ -512,7 +512,7 @@ function AdminEquipmentListPage() {
   return (
     <section className={styles.page}>
       <PageHeader />
-      <div className={styles.contentViewport} role="region" aria-label="기자재 목록 영역">
+      <div className={styles.contentViewport} role="region" aria-label="모델 목록 영역">
         <div className={styles.content}>
           <div className={styles.toolbar}>
             <Tabs
@@ -520,7 +520,7 @@ function AdminEquipmentListPage() {
               items={tabItems}
               value={selectedCategory}
               onChange={handleCategoryChange}
-              ariaLabel="기자재 카테고리"
+              ariaLabel="모델 카테고리"
             />
             <SearchBar
               className={styles.search}
@@ -529,8 +529,8 @@ function AdminEquipmentListPage() {
               value={searchTerm}
               onChange={handleSearchChange}
               onSubmit={handleSearchSubmit}
-              ariaLabel="기자재명 또는 모델명 검색"
-              placeholder="기자재명 또는 모델명으로 검색..."
+              ariaLabel="모델명 검색"
+              placeholder="모델명으로 검색..."
               disabled={!isMockMode || !hasCategories}
             />
           </div>
@@ -562,7 +562,7 @@ function AdminEquipmentListPage() {
                 id={panelId}
                 className={styles.tablePanel}
                 role="tabpanel"
-                aria-label={`${selectedCategoryLabel} 기자재 목록`}
+                aria-label={`${selectedCategoryLabel} 모델 목록`}
                 aria-busy={equipmentQuery.isFetching}
               >
                 <DataTable
@@ -593,7 +593,7 @@ function AdminEquipmentListPage() {
                     color="Primary"
                     status="Default"
                     type="button"
-                    text="기자재 통합 관리"
+                    text="학기 통합 관리"
                     // disabled={!isMockMode || isMutationPending}
                     onClick={() => setIsSettingModalOpen(true)}
                   />
@@ -605,7 +605,7 @@ function AdminEquipmentListPage() {
                     color="Primary"
                     status="Default"
                     type="button"
-                    text="기자재 등록"
+                    text="모델 등록"
                     disabled={!isMockMode || isMutationPending}
                     onClick={() => setIsCreateModalOpen(true)}
                   />

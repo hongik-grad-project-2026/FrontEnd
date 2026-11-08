@@ -226,7 +226,7 @@ function RentalDetailModal({
           <InfoSection title="기자재 정보">
             <dl className={styles.infoGrid}>
               <ModalInfoCell label="카테고리" value={rental.category} />
-              <ModalInfoCell label="기자재명" value={rental.equipmentName} />
+              <ModalInfoCell label="모델명" value={rental.equipmentName} />
               <ModalInfoCell label="설명" value={rental.description} />
               <ModalInfoCell label="구성" value={rental.accessories} />
             </dl>

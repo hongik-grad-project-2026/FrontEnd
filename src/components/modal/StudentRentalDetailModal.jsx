@@ -142,7 +142,7 @@ function StudentRentalDetailModal({
               {detailQuery.error?.code === "STUDENT_RENTAL_NOT_FOUND"
                 ? "존재하지 않는 대여내역입니다."
                 : detailQuery.error?.message ||
-                  "대여내역을 불러오지 못했습니다."}
+                "대여내역을 불러오지 못했습니다."}
             </p>
             {detailQuery.error?.code !== "STUDENT_RENTAL_NOT_FOUND" ? (
               <Button
@@ -173,7 +173,7 @@ function StudentRentalDetailModal({
                 <dl className={detailStyles.infoGrid}>
                   <ModalInfoCell label="카테고리" value={rental.category} />
                   <ModalInfoCell
-                    label="기자재명"
+                    label="모델명"
                     value={rental.equipmentName}
                   />
                   <ModalInfoCell label="설명" value={rental.description} />
@@ -209,7 +209,7 @@ function StudentRentalDetailModal({
                       <>
                         <ModalInfoCell label="승인일" value={rental.approvedAt} />
                         <ModalInfoCell
-                          label="비품번호"
+                          label="라벨번호"
                           value={rental.assetNumber}
                         />
                       </>
