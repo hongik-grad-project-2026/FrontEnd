@@ -12,10 +12,11 @@ import StatusBadge from "../../components/common/StatusBadge";
 import Tabs from "../../components/common/Tabs";
 import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
+import { RENTAL_STATUS } from "../../constants/status";
 import styles from "./AdminRentalHistoryPage.module.css";
 
 const ROWS_PER_PAGE = 10;
-const STATUS_BADGES = { canceled: "대여-신청취소", returned: "대여-반납완료" };
+// const STATUS_BADGES = { canceled: "대여-신청취소", returned: "대여-반납완료" };
 
 function EquipmentCell({ record }) {
   return (
@@ -122,7 +123,7 @@ function RequestDatesCell({ record }) {
 }
 
 function HistoryStatusCell({ record }) {
-  const badgeStatus = STATUS_BADGES[record.status];
+  const badgeStatus = RENTAL_STATUS[record.status];
 
   if (!badgeStatus) {
     return <span className={styles.primaryText}>-</span>;
@@ -130,7 +131,7 @@ function HistoryStatusCell({ record }) {
 
   return (
     <div className={styles.statusCell}>
-      <StatusBadge status={badgeStatus} size="md" />
+      <StatusBadge text={badgeStatus.label} color={badgeStatus.color} />
     </div>
   );
 }
@@ -218,8 +219,8 @@ function AdminRentalHistoryPage() {
   const counts = countQuery.data ?? {};
   const tabs = [
     { value: "all", label: "전체", count: counts.all ?? "-", controlsId: panelId },
-    { value: "canceled", label: "신청 취소", count: counts.canceled ?? "-", controlsId: panelId },
-    { value: "returned", label: "반납 완료", count: counts.returned ?? "-", controlsId: panelId },
+    { value: "canceled", label: RENTAL_STATUS.canceled.label, count: counts.canceled ?? "-", controlsId: panelId },
+    { value: "returned", label: RENTAL_STATUS.returned.label, count: counts.returned ?? "-", controlsId: panelId },
   ];
   const data = historyQuery.data;
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
