@@ -2,19 +2,20 @@
 import { useId, useRef } from "react";
 import BaseModal from "./BaseModal";
 import Button from "../common/Button";
+import Input from "../common/Input";
 import styles from "./RentalRejectModal.module.css";
 
 const REJECTION_REASON_OPTIONS = [
   {
-    value: "out-of-stock",
+    value: "INSUFFICIENT_STOCK",
     label: "기기 재고 부족",
   },
   {
-    value: "equipment-unavailable",
+    value: "RENTAL_SUSPENDED",
     label: "대여 중지된 기기 (기기 고장 등)",
   },
   {
-    value: "other",
+    value: "OTHER",
     label: "기타",
   },
 ];
@@ -41,6 +42,7 @@ function RentalRejectModal({
   const warningId = `${generatedId}-warning`;
   const reasonGroupName = `${generatedId}-rejection-reason`;
 
+
   const handleBack = (event) => {
     if (!isPending) onClose?.("cancel", event);
   };
@@ -48,6 +50,18 @@ function RentalRejectModal({
   const handleConfirm = (event) => {
     if (!isPending) onConfirm?.(request, rejectionReason, event);
   };
+
+  const isRejectionReasonTypeValid = REJECTION_REASON_OPTIONS.some(
+    (option) => option.value === rejectionReason?.type,
+  );
+
+  const isRejectionReasonDetailValid =
+    rejectionReason?.type !== "OTHER" ||
+    (typeof rejectionReason.detail === "string" &&
+      rejectionReason.detail.trim().length > 0);
+
+  const isRejectionReasonValid =
+    isRejectionReasonTypeValid && isRejectionReasonDetailValid;
 
   return (
     <BaseModal
@@ -134,13 +148,31 @@ function RentalRejectModal({
                     type="radio"
                     name={reasonGroupName}
                     value={option.value}
-                    checked={rejectionReason === option.value}
+                    checked={rejectionReason.type === option.value}
                     onChange={(event) =>
-                      onRejectionReasonChange?.(event.target.value)
+                      onRejectionReasonChange?.({
+                        type: event.target.value,
+                        detail: event.target.value === "OTHER" ? rejectionReason.detail : "",
+                      })
                     }
                   />
-
                   <span>{option.label}</span>
+                  {option.value === "OTHER" ? (
+                    <Input
+                      status="default"
+                      width="100%"
+                      height="md"
+                      placeholder="반려 사유를 입력하세요"
+                      helperText={
+                        rejectionReason?.type === "OTHER" && !isRejectionReasonDetailValid
+                          ? "반려 사유를 입력하세요"
+                          : ""
+                      }
+                      value={rejectionReason.detail}
+                      onFocus={() => onRejectionReasonChange?.({ type: "OTHER", detail: rejectionReason.detail })}
+                      onChange={(event) => onRejectionReasonChange?.({ type: "OTHER", detail: event.target.value })}
+                    />
+                  ) : null}
                 </label>
               ))}
             </div>
@@ -171,7 +203,7 @@ function RentalRejectModal({
           text={isPending ? "처리 중" : "신청 반려 처리"}
           type="button"
           onClick={handleConfirm}
-          disabled={isPending}
+          disabled={isPending || !isRejectionReasonValid}
         />
       </footer>
     </BaseModal>

@@ -460,7 +460,7 @@ const INITIAL_ADMIN_STATUS_RENTALS = ADMIN_STATUS_MOCK_DEFINITIONS.map(
     imageUrl: null,
     description: "관리자 대여 현황과 무한 스크롤 확인용 기자재입니다.",
     components: "본체, 전원 어댑터, 보관 케이스",
-    rentalType: index % 2 === 0 ? "상시" : "정기",
+    rentalType: "정기",
     reason: "수업 및 프로젝트 진행을 위한 기자재 대여",
     approvedAt: "2026.10.01. 09:00:00",
     actualPickupAt: null,
@@ -638,8 +638,19 @@ function formatMockDateTime(date = new Date()) {
   return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}. ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-function formatInputDateTime(date, time) {
-  return `${String(date).replaceAll("-", ".")}. ${time}`;
+function formatApplicationDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}.${month}.${day}`;
+  }
+
+  if (typeof value === "string" && /^\d{4}[-.]\d{2}[-.]\d{2}$/.test(value)) {
+    return value.replaceAll("-", ".");
+  }
+
+  return null;
 }
 
 function getDatePart(value) {
@@ -945,21 +956,20 @@ export async function createMockStudentRental({
   user,
   rentalType,
   pickupDate,
-  pickupTime,
   returnDate,
-  returnTime,
   reason,
 }) {
   await waitForMock();
+
+  const expectedPickupAt = formatApplicationDate(pickupDate);
+  const expectedReturnAt = formatApplicationDate(returnDate);
 
   if (
     !model?.modelId ||
     !user?.id ||
     !rentalType ||
-    !pickupDate ||
-    !pickupTime ||
-    !returnDate ||
-    !returnTime ||
+    !expectedPickupAt ||
+    !expectedReturnAt ||
     !String(reason ?? "").trim()
   ) {
     throw createMockError(
@@ -992,8 +1002,8 @@ export async function createMockStudentRental({
     components: model.components ?? "",
     rentalType: rentalType === "regular" ? "정기" : "상시",
     requestedAt: formatMockDateTime(now),
-    expectedPickupAt: formatInputDateTime(pickupDate, pickupTime),
-    expectedReturnAt: formatInputDateTime(returnDate, returnTime),
+    expectedPickupAt,
+    expectedReturnAt,
     reason: String(reason).trim(),
     approvedAt: null,
     actualPickupAt: null,
@@ -1149,7 +1159,7 @@ export async function pickupMockRental({ rentalId, processPhoto, workerName }) {
     );
   }
 
-  if (!processPhoto && isPickupPhotoRequired(rental.category)) {
+  if (isPickupPhotoRequired(rental.category) && (!processPhoto || processPhoto.length === 0)) {
     throw createMockError("수령 사진을 선택해 주세요.", "PHOTO_REQUIRED");
   }
 
@@ -1158,7 +1168,7 @@ export async function pickupMockRental({ rentalId, processPhoto, workerName }) {
     status: "renting",
     actualPickupAt: formatMockDateTime(),
     // 선택 카테고리는 사진 없이 처리할 수 있으므로 파일명이 없으면 null로 저장함.
-    checkoutPhotoName: processPhoto?.name ?? null,
+    checkoutPhotoName: (processPhoto ?? []).map((file) => file.name),
     pickupWorkerName: workerName ?? "",
   });
 }
@@ -1174,7 +1184,7 @@ export async function returnMockRental({ rentalId, processPhoto, workerName }) {
     );
   }
 
-  if (!processPhoto) {
+  if (processPhoto.length === 0) {
     throw createMockError("반납 사진을 선택해 주세요.", "PHOTO_REQUIRED");
   }
 
@@ -1182,7 +1192,7 @@ export async function returnMockRental({ rentalId, processPhoto, workerName }) {
     ...rental,
     status: "returned",
     actualReturnAt: formatMockDateTime(),
-    returnPhotoName: processPhoto.name,
+    returnPhotoName: (processPhoto ?? []).map((file) => file.name),
     returnWorkerName: workerName ?? "",
   });
 }

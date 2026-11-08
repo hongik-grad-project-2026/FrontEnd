@@ -89,7 +89,9 @@ function RentalDetailModal({
   const fileInputRef = useRef(null);
 
   const [mode, setMode] = useState(initialMode);
-  const [processPhoto, setProcessPhoto] = useState(null);
+  const [processPhoto, setProcessPhoto] = useState([]);
+  const [fileError, setFileError] = useState("");
+
 
   if (!rental) {
     return null;
@@ -110,7 +112,8 @@ function RentalDetailModal({
   const completeButtonText = `${processTitle} 처리 완료`;
 
   const resetProcessPhoto = () => {
-    setProcessPhoto(null);
+    setProcessPhoto([]);
+    setFileError("");
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -135,18 +138,30 @@ function RentalDetailModal({
 
   const handleFileSelect = (event) => {
     if (isPending) return;
-    const [selectedFile] = Array.from(event.target.files ?? []);
+    const selectedFiles = Array.from(event.target.files ?? []);
+    event.target.value = "";
 
-    setProcessPhoto(selectedFile ?? null);
+    if (selectedFiles.length === 0) return;
+
+    if (processPhoto.length + selectedFiles.length > 2) {
+      setFileError("사진은 최대 2장까지 첨부할 수 있습니다.");
+      return;
+    }
+
+    setFileError("");
+    setProcessPhoto((current) => [...current, ...selectedFiles]);
   };
 
-  const handleRemoveFile = () => {
+  const handleRemoveFile = (indexToRemove) => {
     if (isPending) return;
-    resetProcessPhoto();
+    setProcessPhoto((current) =>
+      current.filter((_, index) => index !== indexToRemove),
+    );
+    setFileError("");
   };
 
   const handleComplete = (event) => {
-    if ((isProcessPhotoRequired && !processPhoto) || isPending) {
+    if ((isProcessPhotoRequired && processPhoto.length === 0) || isPending) {
       return;
     }
 
@@ -280,28 +295,35 @@ function RentalDetailModal({
                   required={isProcessPhotoRequired}
                   onChange={handleFileSelect}
                   disabled={isPending}
+                  multiple
                 />
 
-                {processPhoto ? (
-                  <div className={styles.fileItem}>
-                    <span className={styles.fileName} title={processPhoto.name}>
-                      {processPhoto.name}
-                    </span>
+                {processPhoto.length > 0 ? (
+                  <div className={styles.fileList}>
+                    {
+                      processPhoto.map((file, index) => (
+                        <div className={styles.fileItem} key={index}>
+                          <span className={styles.fileName} title={file.name}>
+                            {file.name}
+                          </span>
 
-                    <span className={styles.fileSize}>
-                      {formatFileSize(processPhoto.size)}
-                    </span>
+                          <span className={styles.fileSize}>
+                            {formatFileSize(file.size)}
+                          </span>
 
-                    <IconButton
-                      icon="trash"
-                      size={24}
-                      type="button"
-                      ariaLabel={`${processPhoto.name} 파일 제거`}
-                      onClick={handleRemoveFile}
-                      disabled={isPending}
-                    />
+                          <IconButton
+                            icon="trash"
+                            size={24}
+                            type="button"
+                            ariaLabel={`${file.name} 파일 제거`}
+                            onClick={() => handleRemoveFile(index)}
+                            disabled={isPending}
+                          />
+                        </div>))
+                    }
                   </div>
-                ) : (
+                ) : ""}
+                {processPhoto.length < 2 ? (
                   <IconTextButton
                     className={styles.fileSelectButton}
                     icon="paperclip"
@@ -312,11 +334,12 @@ function RentalDetailModal({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isPending}
                   />
-                )}
+                ) : ""}
               </div>
             </section>
           ) : null}
-          {error ? <p role="alert">{error.message || `${processTitle} 처리에 실패했습니다.`}</p> : null}
+          {error ? <p className={styles.errorMessage} role="alert">⚠ {error.message || `${processTitle} 처리에 실패했습니다.`}</p> : null}
+          {fileError ? <p className={styles.errorMessage} role="alert">⚠ {fileError}</p> : null}
         </div>
 
         {isProcessing ? (
@@ -341,7 +364,7 @@ function RentalDetailModal({
               status="Default"
               text={isPending ? "처리 중" : completeButtonText}
               type="button"
-              disabled={(isProcessPhotoRequired && !processPhoto) || isPending}
+              disabled={(isProcessPhotoRequired && processPhoto.length === 0) || isPending}
               onClick={handleComplete}
             />
           </footer>

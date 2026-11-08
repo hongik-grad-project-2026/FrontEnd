@@ -182,8 +182,21 @@
   white-space: nowrap;
 }
 
-.fileSelectButton {
+.processField>.fileSelectButton {
   min-height: 36px;
+  padding: 0 16px;
+  border-color: var(--color-neutral-50);
+}
+
+.fileSelectButton img {
+  opacity: calc(5/9);
+}
+
+.fileList {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
 }
 
 .fileItem {
@@ -244,6 +257,14 @@
 .threeActions .actionButton[data-size="Default"] {
   min-width: 0;
   flex: 1;
+}
+
+.errorMessage {
+  padding: 2px var(--spacing-20) 0 var(--spacing-20);
+  color: var(--color-status-danger);
+  font-size: var(--text-head-5-size);
+  font-weight: var(--text-head-5-weight);
+  line-height: var(--text-head-5-line-height);
 }
 
 @media (max-width: 720px) {

@@ -11,7 +11,9 @@ import Button from "../../components/common/Button";
 import InputBar from "../../components/common/Input";
 import PageHeader from "../../components/layout/PageHeader";
 import ConfirmModal from "../../components/modal/ConfirmModal";
+import UsageGuideModal from "../../components/modal/UsageGuideModal";
 import { useUser } from "../../context/UserContext";
+import { GUIDE_CONTENT } from "../../data/usageGuideContent";
 import styles from "./StudentMyPage.module.css";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,6 +56,7 @@ function StudentMyPage() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [imageSelectionError, setImageSelectionError] = useState("");
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [isUsageGuideModalOpen, setIsUsageGuideModalOpen] = useState(false);
   const imageInputRef = useRef(null);
   const previewUrlRef = useRef("");
   const infoSubmitGuardRef = useRef(false);
@@ -293,131 +296,131 @@ function StudentMyPage() {
             />
           </div>
         ) : (
-        <div className={styles.profileCard}>
-          <div className={styles.profileArea}>
-            <img
-              className={styles.profileImage}
-              src={profileImageSrc}
-              alt={`${availableUser?.name ?? "사용자"} 프로필`}
-            />
-
-            <input
-              ref={imageInputRef}
-              className={styles.hiddenFileInput}
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-
-            <Button
-              color="Neutral"
-              kind="border"
-              size="Default"
-              status="Default"
-              text="사진 선택"
-              disabled={imageMutation.isPending}
-              onClick={() => imageInputRef.current?.click()}
-            />
-            <Button
-              color="Primary"
-              kind="fill"
-              size="Default"
-              status="Default"
-              text={imageMutation.isPending ? "저장 중" : "사진 저장"}
-              disabled={!selectedImage || imageMutation.isPending}
-              onClick={handleImageSubmit}
-            />
-
-            {imageSelectionError || imageMutation.error ? (
-              <p className={styles.errorMessage} role="alert">
-                {imageSelectionError ||
-                  imageMutation.error?.message ||
-                  "프로필 사진을 변경하지 못했습니다."}
-              </p>
-            ) : null}
-          </div>
-
-          <div className={styles.profileContent}>
-            <div className={styles.readOnlyGrid}>
-              <ReadOnlyField label="이름" value={availableUser?.name} />
-              <ReadOnlyField
-                label="학번"
-                value={availableUser?.studentId ?? availableUser?.loginId}
+          <div className={styles.profileCard}>
+            <div className={styles.profileArea}>
+              <img
+                className={styles.profileImage}
+                src={profileImageSrc}
+                alt={`${availableUser?.name ?? "사용자"} 프로필`}
               />
-              <ReadOnlyField label="단과대학" value={availableUser?.college} />
-              <ReadOnlyField label="학과" value={availableUser?.department} />
-            </div>
 
-            <form className={styles.editForm} onSubmit={handleInfoSubmit} noValidate>
-              <div className={styles.editField}>
-                <label className={styles.fieldLabel} htmlFor="mypage-email">
-                  이메일
-                </label>
-                <InputBar
-                  id="mypage-email"
-                  name="email"
-                  type="email"
-                  width="100%"
-                  value={displayedEmail}
-                  helperText={
-                    email !== "" && !isEmailValid
-                      ? "이메일 형식을 확인해 주세요."
-                      : undefined
-                  }
-                  disabled={infoMutation.isPending}
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    infoDirtyRef.current = true;
-                    infoMutation.reset();
-                  }}
-                />
-              </div>
+              <input
+                ref={imageInputRef}
+                className={styles.hiddenFileInput}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
 
-              <div className={styles.editField}>
-                <label className={styles.fieldLabel} htmlFor="mypage-phone-number">
-                  연락처
-                </label>
-                <InputBar
-                  id="mypage-phone-number"
-                  name="phoneNumber"
-                  type="tel"
-                  width="100%"
-                  value={displayedPhoneNumber}
-                  helperText={
-                    phoneNumber !== "" && !isPhoneNumberValid
-                      ? "전화번호는 '-' 없이 입력해 주세요."
-                      : undefined
-                  }
-                  disabled={infoMutation.isPending}
-                  onChange={(event) => {
-                    setPhoneNumber(event.target.value);
-                    infoDirtyRef.current = true;
-                    infoMutation.reset();
-                  }}
-                />
-              </div>
+              <Button
+                color="Neutral"
+                kind="border"
+                size="Default"
+                status="Default"
+                text="사진 선택"
+                disabled={imageMutation.isPending}
+                onClick={() => imageInputRef.current?.click()}
+              />
+              <Button
+                color="Primary"
+                kind="fill"
+                size="Default"
+                status="Default"
+                text={imageMutation.isPending ? "저장 중" : "사진 저장"}
+                disabled={!selectedImage || imageMutation.isPending}
+                onClick={handleImageSubmit}
+              />
 
-              <div className={styles.editActions}>
-                <Button
-                  color="Primary"
-                  kind="fill"
-                  size="Default"
-                  status="Default"
-                  type="submit"
-                  text={infoMutation.isPending ? "저장 중" : "연락처 정보 저장"}
-                  disabled={!canSubmitInfo}
-                />
-              </div>
-
-              {infoMutation.error ? (
+              {imageSelectionError || imageMutation.error ? (
                 <p className={styles.errorMessage} role="alert">
-                  {infoMutation.error.message || "내 정보를 수정하지 못했습니다."}
+                  {imageSelectionError ||
+                    imageMutation.error?.message ||
+                    "프로필 사진을 변경하지 못했습니다."}
                 </p>
               ) : null}
+            </div>
 
-            </form>
+            <div className={styles.profileContent}>
+              <div className={styles.readOnlyGrid}>
+                <ReadOnlyField label="이름" value={availableUser?.name} />
+                <ReadOnlyField
+                  label="학번"
+                  value={availableUser?.studentId ?? availableUser?.loginId}
+                />
+                <ReadOnlyField label="단과대학" value={availableUser?.college} />
+                <ReadOnlyField label="학과" value={availableUser?.department} />
+              </div>
+
+              <form className={styles.editForm} onSubmit={handleInfoSubmit} noValidate>
+                <div className={styles.editField}>
+                  <label className={styles.fieldLabel} htmlFor="mypage-email">
+                    이메일
+                  </label>
+                  <InputBar
+                    id="mypage-email"
+                    name="email"
+                    type="email"
+                    width="100%"
+                    value={displayedEmail}
+                    helperText={
+                      email !== "" && !isEmailValid
+                        ? "이메일 형식을 확인해 주세요."
+                        : undefined
+                    }
+                    disabled={infoMutation.isPending}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      infoDirtyRef.current = true;
+                      infoMutation.reset();
+                    }}
+                  />
+                </div>
+
+                <div className={styles.editField}>
+                  <label className={styles.fieldLabel} htmlFor="mypage-phone-number">
+                    연락처
+                  </label>
+                  <InputBar
+                    id="mypage-phone-number"
+                    name="phoneNumber"
+                    type="tel"
+                    width="100%"
+                    value={displayedPhoneNumber}
+                    helperText={
+                      phoneNumber !== "" && !isPhoneNumberValid
+                        ? "전화번호는 '-' 없이 입력해 주세요."
+                        : undefined
+                    }
+                    disabled={infoMutation.isPending}
+                    onChange={(event) => {
+                      setPhoneNumber(event.target.value);
+                      infoDirtyRef.current = true;
+                      infoMutation.reset();
+                    }}
+                  />
+                </div>
+
+                <div className={styles.editActions}>
+                  <Button
+                    color="Primary"
+                    kind="fill"
+                    size="Default"
+                    status="Default"
+                    type="submit"
+                    text={infoMutation.isPending ? "저장 중" : "연락처 정보 저장"}
+                    disabled={!canSubmitInfo}
+                  />
+                </div>
+
+                {infoMutation.error ? (
+                  <p className={styles.errorMessage} role="alert">
+                    {infoMutation.error.message || "내 정보를 수정하지 못했습니다."}
+                  </p>
+                ) : null}
+
+              </form>
+            </div>
           </div>
-        </div>
         )}
       </div>
 
@@ -455,25 +458,11 @@ function StudentMyPage() {
       <div className={styles.contentSection}>
         <h3>이용 안내 및 기타</h3>
         <div className={styles.contentContainer}>
-          <Button color="Primary" kind="border" size="Default" status="Default"
-            text="MULMI 이용방법" className={styles.infoButton}
-          />
-          <Button color="Primary" kind="border" size="Default" status="Default"
-            text="MULMI 이용규칙" className={styles.infoButton}
-          />
-          <Button color="Primary" kind="border" size="Default" status="Default"
-            text="서비스 이용 약관" className={styles.infoButton}
-          />
-          <Button color="Primary" kind="border" size="Default" status="Default"
-            text="개인정보 처리방침" className={styles.infoButton}
-          />
-          <Button color="Primary" kind="border" size="Default" status="Default"
-            text="서약서 내용 확인" className={styles.infoButton}
-          />
-          <Button color="Primary" kind="border" size="Default" status="Default"
-            text="회원 탈퇴" className={styles.infoButton}
-            onClick={() => setIsWithdrawModalOpen(true)}
-          />
+          {Object.entries(GUIDE_CONTENT).map(([id, guide]) => (
+            <Button key={id} color="Primary" kind="border" size="Default" status="Default"
+              text={guide.label} className={styles.infoButton} onClick={() => setIsUsageGuideModalOpen(id)}
+            />
+          ))}
         </div>
       </div>
 
@@ -507,6 +496,15 @@ function StudentMyPage() {
         closeOnOverlay={!withdrawMutation.isPending}
         onClose={handleCloseWithdrawModal}
         onConfirm={handleWithdraw}
+      />
+
+      <UsageGuideModal
+        isOpen={!!isUsageGuideModalOpen}
+        id={isUsageGuideModalOpen}
+        title={GUIDE_CONTENT[isUsageGuideModalOpen]?.label}
+        content={GUIDE_CONTENT[isUsageGuideModalOpen]?.content}
+        onClose={() => setIsUsageGuideModalOpen(false)}
+        onClick={() => setIsWithdrawModalOpen(true)}
       />
     </div>
   );

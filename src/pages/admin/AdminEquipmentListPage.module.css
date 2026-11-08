@@ -196,10 +196,12 @@
   justify-self: center;
 }
 
-.registerButton {
+.btnsWrapper {
   grid-column: 3;
   grid-row: 1;
   justify-self: end;
+  display: flex;
+  gap: var(--spacing-12);
 }
 
 .visuallyHidden {

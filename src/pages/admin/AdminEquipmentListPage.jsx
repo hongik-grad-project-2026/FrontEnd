@@ -16,6 +16,7 @@ import {
   uploadAdminEquipmentModelImage,
   updateAdminEquipmentModel,
 } from "../../api/equipmentApi";
+import { saveSemester } from "../../api/semesterApi";
 import Button from "../../components/common/Button";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
@@ -25,6 +26,7 @@ import Tabs from "../../components/common/Tabs";
 import PageHeader from "../../components/layout/PageHeader";
 import ConfirmModal from "../../components/modal/ConfirmModal";
 import EquipmentCreateModal from "../../components/modal/EquipmentCreateModal";
+import EquipmentSettingModal from "../../components/modal/EquipmentSettingModal";
 import EquipmentDisposeModal from "../../components/modal/EquipmentDisposeModal";
 import EquipmentItemEditModal from "../../components/modal/EquipmentItemEditModal";
 import DataTable from "../../components/table/DataTable";
@@ -91,8 +93,8 @@ function EquipmentImageCell({ equipment }) {
 
 function EquipmentNameCell({ equipment }) {
   const rentalPolicyText = equipment.rentalPolicies
-    ?.map((policy) => RENTAL_POLICY_LABELS[policy] ?? policy)
-    .join(", ");
+    ? RENTAL_POLICY_LABELS[equipment.rentalPolicies] ?? equipment.rentalPolicies
+    : "";
 
   return (
     <span className={styles.cellStack}>
@@ -204,6 +206,7 @@ function AdminEquipmentListPage() {
   const queryClient = useQueryClient();
   const panelId = useId();
   const registerButtonRef = useRef(null);
+  const settingButtonRef = useRef(null);
   const createSubmissionGuardRef = useRef(false);
   const pendingImageUploadModelIdRef = useRef(null);
   const editButtonRef = useRef(null);
@@ -215,6 +218,7 @@ function AdminEquipmentListPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
   const [pendingImageUploadModelId, setPendingImageUploadModelId] =
     useState(null);
   const [editTargetEquipment, setEditTargetEquipment] = useState(null);
@@ -267,6 +271,16 @@ function AdminEquipmentListPage() {
 
     await Promise.allSettled(invalidations);
   };
+
+  const settingMutation = useMutation({
+    mutationFn: saveSemester,
+    onSuccess: (_result, values) => {
+      queryClient.setQueryData(["semester", "current"], {
+        ...values,
+      });
+      setIsSettingModalOpen(false);
+    },
+  });
 
   const createMutation = useMutation({
     mutationFn: createAdminEquipmentModel,
@@ -374,6 +388,12 @@ function AdminEquipmentListPage() {
     navigate(
       `/admin/equipment/${encodeURIComponent(equipment.modelId)}/assets`,
     );
+  };
+
+  const handleCloseSettingModal = () => {
+    if (!settingMutation.isPending) {
+      setIsSettingModalOpen(false);
+    }
   };
 
   const handleCloseCreateModal = () => {
@@ -497,6 +517,10 @@ function AdminEquipmentListPage() {
     } finally {
       createSubmissionGuardRef.current = false;
     }
+  };
+
+  const handleEquipmentSettings = (values) => {
+    settingMutation.mutate(values);
   };
 
   const handleOpenEditModal = (equipment, event) => {
@@ -724,23 +748,44 @@ function AdminEquipmentListPage() {
                   onChange={setCurrentPage}
                   ariaLabel="기자재 목록 페이지 이동"
                 />
-                <Button
-                  ref={registerButtonRef}
-                  className={styles.registerButton}
-                  kind="border"
-                  size="Default"
-                  color="Primary"
-                  status="Default"
-                  type="button"
-                  text="기자재 등록"
-                  disabled={isMutationPending}
-                  onClick={handleOpenCreateModal}
-                />
+                <div className={styles.btnsWrapper}>
+                  <Button
+                    ref={settingButtonRef}
+                    kind="border"
+                    size="Default"
+                    color="Primary"
+                    status="Default"
+                    type="button"
+                    text="기자재 통합 관리"
+                    onClick={() => setIsSettingModalOpen(true)}
+                  />
+                  <Button
+                    ref={registerButtonRef}
+                    kind="border"
+                    size="Default"
+                    color="Primary"
+                    status="Default"
+                    type="button"
+                    text="기자재 등록"
+                    disabled={isMutationPending}
+                    onClick={handleOpenCreateModal}
+                  />
+                </div>
               </div>
             </>
           ) : null}
         </div>
       </div>
+
+      {isSettingModalOpen ? (
+        <EquipmentSettingModal
+          isOpen
+          isPending={settingMutation.isPending}
+          onClose={handleCloseSettingModal}
+          onConfirm={handleEquipmentSettings}
+          returnFocusRef={settingButtonRef}
+        />
+      ) : null}
 
       <EquipmentCreateModal
         isOpen={isCreateModalOpen}
