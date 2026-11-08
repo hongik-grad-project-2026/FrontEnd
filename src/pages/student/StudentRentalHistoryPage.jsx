@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import { RENTAL_STATUS } from "../../constants/status";
+
 import {
   cancelStudentRental,
   getStudentRentalCounts,
@@ -22,23 +24,6 @@ import styles from "./StudentRentalHistoryPage.module.css";
 
 const LIST_PAGE = 0;
 const LIST_SIZE = 50;
-const RENTAL_TAB_VALUES = new Set([
-  "all",
-  "approvalPending",
-  "pickupPending",
-  "renting",
-  "canceled",
-  "returned",
-]);
-
-const BADGE_STATUS = {
-  approvalPending: "대여-승인대기",
-  pickupPending: "대여-수령대기",
-  renting: "대여-대여중",
-  overdue: "대여-연체",
-  canceled: "대여-신청취소",
-  returned: "대여-반납완료",
-};
 
 function shouldRetry(failureCount, error) {
   return error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" && failureCount < 1;
@@ -152,7 +137,6 @@ function StudentRentalHistoryPage() {
   const modalTriggerRef = useRef(null);
   const cancelGuardRef = useRef(false);
   const requestedTab = searchParams.get("status") ?? "all";
-  const activeTab = RENTAL_TAB_VALUES.has(requestedTab) ? requestedTab : "all";
   const [searchTerm, setSearchTerm] = useState("");
   const [modalState, setModalState] = useState(null);
 
@@ -167,6 +151,48 @@ function StudentRentalHistoryPage() {
 
     setSearchParams(nextSearchParams);
   };
+
+  const countsQuery = useQuery({
+    queryKey: studentRentalKeys.counts(),
+    queryFn: ({ signal }) => getStudentRentalCounts({ signal }),
+    retry: shouldRetry,
+  });
+
+  const cancelMutation = useMutation({ mutationFn: cancelStudentRental });
+  const counts = countsQuery.data;
+  const countValue = (key) => counts?.[key] ?? "-";
+  const rentalTabs = [
+    { value: "all", label: "전체", count: countValue("all") },
+    {
+      value: "pendingApproval",
+      label: RENTAL_STATUS.pendingApproval.label,
+      count: countValue("pendingApproval"),
+    },
+    {
+      value: "readyForPickup",
+      label: RENTAL_STATUS.readyForPickup.label,
+      count: countValue("readyForPickup"),
+    },
+    {
+      value: "renting",
+      label: RENTAL_STATUS.renting.label,
+      count: countValue("renting"),
+      badge: counts?.overdue > 0 ? "⚠ 연체" : null,
+    },
+    {
+      value: "canceled",
+      label: RENTAL_STATUS.canceled.label,
+      count: countValue("canceled"),
+    },
+    {
+      value: "returned",
+      label: RENTAL_STATUS.returned.label,
+      count: countValue("returned"),
+    },
+  ];
+  const activeTab = rentalTabs.some((tab) => tab.value === requestedTab)
+    ? requestedTab
+    : "all";
 
   const listParams = useMemo(
     () => ({
@@ -183,45 +209,6 @@ function StudentRentalHistoryPage() {
     queryFn: ({ signal }) => getStudentRentals({ ...listParams, signal }),
     retry: shouldRetry,
   });
-
-  const countsQuery = useQuery({
-    queryKey: studentRentalKeys.counts(),
-    queryFn: ({ signal }) => getStudentRentalCounts({ signal }),
-    retry: shouldRetry,
-  });
-
-  const cancelMutation = useMutation({ mutationFn: cancelStudentRental });
-  const counts = countsQuery.data;
-  const countValue = (key) => counts?.[key] ?? "-";
-  const rentalTabs = [
-    { value: "all", label: "전체", count: countValue("all") },
-    {
-      value: "approvalPending",
-      label: "승인대기",
-      count: countValue("approvalPending"),
-    },
-    {
-      value: "pickupPending",
-      label: "수령대기",
-      count: countValue("pickupPending"),
-    },
-    {
-      value: "renting",
-      label: "대여중",
-      count: countValue("renting"),
-      badge: counts?.overdue > 0 ? "⚠ 연체" : null,
-    },
-    {
-      value: "canceled",
-      label: "신청취소",
-      count: countValue("canceled"),
-    },
-    {
-      value: "returned",
-      label: "반납완료",
-      count: countValue("returned"),
-    },
-  ];
 
   const rentals = listQuery.data?.content ?? [];
   const isUnsupported =
@@ -414,56 +401,59 @@ function StudentRentalHistoryPage() {
                 <div className={styles.statePanel}>{emptyMessage}</div>
               ) : null}
 
-              {rentals.map((rental) => (
-                <RentalCard
-                  key={rental.rentalId}
-                  imageSrc={rental.imageUrl}
-                  imageAlt={rental.imageUrl ? rental.equipmentName : ""}
-                  ariaLabel={`${rental.equipmentName} 대여내역 카드`}
-                  badge={<StatusBadge status={BADGE_STATUS[rental.status]} />}
-                  actions={
-                    <>
-                      {rental.status === "approvalPending" ? (
+              {rentals.map((rental) => {
+                const status = RENTAL_STATUS[rental.status];
+                return (
+                  <RentalCard
+                    key={rental.rentalId}
+                    imageSrc={rental.imageUrl}
+                    imageAlt={rental.imageUrl ? rental.equipmentName : ""}
+                    ariaLabel={`${rental.equipmentName} 대여내역 카드`}
+                    badge={<StatusBadge text={status.label} color={status.color} />}
+                    actions={
+                      <>
+                        {rental.status === "pendingApproval" ? (
+                          <Button
+                            kind="border"
+                            status="Default"
+                            size="Default"
+                            color="Danger"
+                            text="신청 취소하기"
+                            type="button"
+                            onClick={(event) =>
+                              openCancelModalFromCard(rental.rentalId, event)
+                            }
+                          />
+                        ) : null}
+
                         <Button
                           kind="border"
                           status="Default"
                           size="Default"
-                          color="Danger"
-                          text="신청 취소하기"
+                          color="Primary"
+                          text="상세 보기"
                           type="button"
                           onClick={(event) =>
-                            openCancelModalFromCard(rental.rentalId, event)
+                            openDetailModal(rental.rentalId, event)
                           }
                         />
-                      ) : null}
-
-                      <Button
-                        kind="border"
-                        status="Default"
-                        size="Default"
-                        color="Primary"
-                        text="상세 보기"
-                        type="button"
-                        onClick={(event) =>
-                          openDetailModal(rental.rentalId, event)
-                        }
-                      />
-                    </>
-                  }
-                >
-                  <RentalCardInfo
-                    category={rental.category}
-                    equipmentName={
-                      <HighlightedEquipmentName
-                        name={rental.equipmentName}
-                        searchTerm={searchTerm}
-                      />
+                      </>
                     }
-                    rentalId={rental.rentalId}
-                    fields={getCardFields(rental)}
-                  />
-                </RentalCard>
-              ))}
+                  >
+                    <RentalCardInfo
+                      category={rental.category}
+                      equipmentName={
+                        <HighlightedEquipmentName
+                          name={rental.equipmentName}
+                          searchTerm={searchTerm}
+                        />
+                      }
+                      rentalId={rental.rentalId}
+                      fields={getCardFields(rental)}
+                    />
+                  </RentalCard>
+                )
+              })}
             </section>
           </div>
         ) : null}

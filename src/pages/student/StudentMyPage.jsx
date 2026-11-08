@@ -13,7 +13,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import ConfirmModal from "../../components/modal/ConfirmModal";
 import UsageGuideModal from "../../components/modal/UsageGuideModal";
 import { useUser } from "../../context/UserContext";
-import { GUIDE_CONTENT } from "../../data/usageGuideContent";
+import { GUIDE_CONTENT } from "../../constants/usageGuideContent";
 import styles from "./StudentMyPage.module.css";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -83,9 +83,9 @@ function StudentMyPage() {
       error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" && failureCount < 1,
   });
   const rentalCounts = rentalCountsQuery.data;
-  const rentalApplicationCount = rentalCounts?.approvalPending ?? "-";
+  const rentalApplicationCount = rentalCounts?.pendingApproval ?? "-";
   const activeRentalCount = rentalCounts
-    ? rentalCounts.pickupPending + rentalCounts.renting
+    ? rentalCounts.readyForPickup + rentalCounts.renting
     : "-";
   const returnedRentalCount = rentalCounts?.returned ?? "-";
 

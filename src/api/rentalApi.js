@@ -142,8 +142,8 @@ export async function getStudentRentalDashboard(options = {}) {
   });
 
   return {
-    approvalPending: content.filter((rental) => rental.status === "approvalPending"),
-    pickupPending: content.filter((rental) => rental.status === "pickupPending"),
+    pendingApproval: content.filter((rental) => rental.status === "pendingApproval"),
+    readyForPickup: content.filter((rental) => rental.status === "readyForPickup"),
     renting: content.filter(
       (rental) => rental.status === "renting" || rental.status === "overdue",
     ),

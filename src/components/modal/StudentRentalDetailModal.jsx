@@ -10,15 +10,7 @@ import StatusBadge from "../common/StatusBadge";
 import BaseModal from "./BaseModal";
 import detailStyles from "./RentalDetailModal.module.css";
 import styles from "./StudentRentalModal.module.css";
-
-const BADGE_STATUS = {
-  approvalPending: "대여-승인대기",
-  pickupPending: "대여-수령대기",
-  renting: "대여-대여중",
-  overdue: "대여-연체",
-  canceled: "대여-신청취소",
-  returned: "대여-반납완료",
-};
+import { getRentalStatus } from "../../constants/status.js";
 
 function joinClassNames(...classNames) {
   return classNames.filter(Boolean).join(" ");
@@ -93,8 +85,8 @@ function StudentRentalDetailModal({
   });
 
   const rental = detailQuery.data;
-  const isApprovalPending = rental?.status === "approvalPending";
-  const isPickupPending = rental?.status === "pickupPending";
+  const isApprovalPending = rental?.status === "pendingApproval";
+  const isPickupPending = rental?.status === "readyForPickup";
   const isRenting = rental?.status === "renting";
   const isOverdue = rental?.status === "overdue";
   const isCanceled = rental?.status === "canceled";
@@ -106,6 +98,7 @@ function StudentRentalDetailModal({
   const hasCheckoutPhoto = hasResourceUrl(rental?.checkoutPhotoUrl);
   const hasReturnPhoto = hasResourceUrl(rental?.returnPhotoUrl);
   const hasPledge = hasResourceUrl(rental?.pledgeUrl);
+  const statusData = getRentalStatus(rental?.status);
 
   return (
     <BaseModal
@@ -166,7 +159,7 @@ function StudentRentalDetailModal({
                 <strong className={detailStyles.rentalId}>
                   대여내역 ID : {rental.rentalId}
                 </strong>
-                <StatusBadge status={BADGE_STATUS[rental.status]} size="lg" />
+                <StatusBadge text={statusData.label} color={statusData.color} size="lg" />
               </section>
 
               <InfoSection title="기자재 정보">

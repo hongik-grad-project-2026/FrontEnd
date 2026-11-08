@@ -22,25 +22,20 @@ import AssetDisposeModal from "../../components/modal/AssetDisposeModal";
 import AssetFormModal from "../../components/modal/AssetFormModal";
 import AssetResultModal from "../../components/modal/AssetResultModal";
 import DataTable from "../../components/table/DataTable";
-
+import { ITEM_STATUS, getItemStatus } from "../../constants/status";
 import styles from "./AdminAssetListPage.module.css";
 
 const PAGE_SIZE = 10;
 
 const ASSET_TABS = [
   { value: "all", label: "전체" },
-  { value: "available", label: "대여 가능" },
-  { value: "rented", label: "대여 중" },
-  { value: "broken", label: "고장" },
-  { value: "disposalScheduled", label: "폐기 예정" },
+  ...Object.values(ITEM_STATUS).map((status) => ({
+    value: status.id,
+    label: status.label,
+  })),
 ];
 
-const ASSET_BADGE_STATUS = {
-  available: "기기-대여가능",
-  rented: "기기-대여중",
-  broken: "기기-대여중지",
-  disposalScheduled: "기기-폐기예정",
-};
+
 
 function getErrorMessage(error, fallbackMessage) {
   if (error instanceof Error && error.message) {
@@ -311,12 +306,6 @@ function AdminAssetListPage() {
   };
 
   const columns = [
-    // {
-    //   key: "assetNumber",
-    //   header: "비품 번호",
-    //   width: 120,
-    //   render: (item) => <SingleLineCell text={item.assetNumber} />,
-    // },
     {
       key: "labelNumber",
       header: "라벨 번호",
@@ -327,9 +316,18 @@ function AdminAssetListPage() {
       key: "status",
       header: "상태",
       width: 120,
-      render: (item) => (
-        <StatusBadge status={ASSET_BADGE_STATUS[item.status]} size="lg" />
-      ),
+      render: (item) => {
+        const status = getItemStatus(item.status);
+
+        return (
+          <StatusBadge
+            text={status.label}
+            color={status.color}
+            size="lg"
+            border
+          />
+        );
+      },
     },
     {
       key: "notes",

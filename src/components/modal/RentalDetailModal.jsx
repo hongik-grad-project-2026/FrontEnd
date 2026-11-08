@@ -10,12 +10,7 @@ import StatusBadge from "../common/StatusBadge";
 import BaseModal from "./BaseModal";
 import styles from "./RentalDetailModal.module.css";
 import { isPickupPhotoRequired } from "../../utils/rentalRules";
-
-const BADGE_STATUS = {
-  waiting: "대여-수령대기",
-  renting: "대여-대여중",
-  overdue: "대여-연체",
-};
+import { getRentalStatus } from "../../constants/status";
 
 function joinClassNames(...classNames) {
   return classNames.filter(Boolean).join(" ");
@@ -100,9 +95,10 @@ function RentalDetailModal({
   const titleId = `${generatedId}-title`;
   const processPhotoId = `${generatedId}-process-photo`;
 
-  const isWaiting = rental.status === "waiting";
+  const isWaiting = rental.status === "readyForPickup";
   const isOverdue = rental.status === "overdue";
   const isProcessing = mode === "process";
+  const status = getRentalStatus(rental.status);
 
   const processType = isWaiting ? "pickup" : "return";
   const processTitle = isWaiting ? "수령" : "반납";
@@ -210,7 +206,7 @@ function RentalDetailModal({
               대여내역 ID : {rental.rentalId}
             </strong>
 
-            <StatusBadge status={BADGE_STATUS[rental.status]} size="lg" />
+            <StatusBadge text={status.label} color={status.color} size="lg" />
           </section>
 
           <InfoSection title="학생 정보">

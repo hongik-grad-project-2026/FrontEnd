@@ -567,6 +567,8 @@ export async function getAdminMembers({
   size = 10,
   signal,
 } = {}) {
+  const resolvedStatus = status.trim().toUpperCase();
+
   if (affiliation === "other") {
     if (!isMockMode) {
       throw createUnsupportedError(
@@ -576,7 +578,7 @@ export async function getAdminMembers({
 
     return getMockMembersByOtherDepartment({
       keyword,
-      status,
+      status: resolvedStatus,
       currentDepartment,
       page,
       size,
@@ -598,7 +600,7 @@ export async function getAdminMembers({
 
   const optionalParams = {
     keyword,
-    status,
+    status: resolvedStatus,
     college: resolvedCollege,
     department: resolvedDepartment,
   };

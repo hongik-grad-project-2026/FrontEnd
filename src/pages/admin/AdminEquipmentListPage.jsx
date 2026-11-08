@@ -16,6 +16,8 @@ import {
   updateAdminEquipmentModel,
 } from "../../api/equipmentApi";
 import { saveSemester } from "../../api/semesterApi";
+import { MODEL_STATUS, getModelStatus } from "../../constants/status";
+
 import Button from "../../components/common/Button";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
@@ -32,12 +34,6 @@ import DataTable from "../../components/table/DataTable";
 import styles from "./AdminEquipmentListPage.module.css";
 
 const ROWS_PER_PAGE = 10;
-
-// 상태값은 실제 서버 계약이 아닌 화면 확인용 mock 계약임.
-const STATUS_BADGES = {
-  active: "기자재-대여진행",
-  paused: "기자재-대여중지",
-};
 
 const RENTAL_POLICY_LABELS = {
   regular: "사전",
@@ -484,9 +480,12 @@ function AdminEquipmentListPage() {
       key: "status",
       header: "상태",
       width: 92,
-      render: (equipment) => (
-        <StatusBadge status={STATUS_BADGES[equipment.status]} size="lg" />
-      ),
+      render: (equipment) => {
+        const status = getModelStatus(equipment.status);
+        return (
+          <StatusBadge text={status.label} color={status.color} size="lg" border />
+        );
+      },
     },
     {
       key: "dates",
