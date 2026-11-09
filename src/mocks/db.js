@@ -28,8 +28,8 @@ export const users = [
         department: "컴퓨터공학과",
         role: "student",
         status: "ACTIVE",
-        profile_image_url: 'https://media.licdn.com/dms/image/v2/C4D1BAQGT7ihga9VFvw/company-background_10000/company-background_10000/0/1618498738825/_cover?e=2147483647&v=beta&t=VAMjKXM8VeaRsYbJlMeoO09R0RN8FIOAKDjvjwff7QY'
-        ,
+        profile_image_url: null,
+        // profile_image_url: "/images/hongikLogo-circle.png",
     },
 ];
 

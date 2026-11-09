@@ -23,7 +23,7 @@ import AssetDisposeModal from "../../components/modal/AssetDisposeModal";
 import AssetFormModal from "../../components/modal/AssetFormModal";
 import AssetResultModal from "../../components/modal/AssetResultModal";
 import DataTable from "../../components/table/DataTable";
-
+import { ITEM_STATUS, getItemStatus } from "../../constants/status";
 import styles from "./AdminAssetListPage.module.css";
 
 const PAGE_SIZE = 10;
@@ -39,20 +39,13 @@ const ACTUAL_ASSET_TABS = [
 // 폐기 예정은 실제 서버 enum이 아닌 기존 mock 화면 전용 상태임.
 const MOCK_ASSET_TABS = [
   { value: "all", label: "전체" },
-  { value: "available", label: "대여 가능" },
-  { value: "rented", label: "대여 중" },
-  { value: "broken", label: "고장" },
-  { value: "disposalScheduled", label: "폐기 예정" },
+  ...Object.values(ITEM_STATUS).map((status) => ({
+    value: status.id,
+    label: status.label,
+  })),
 ];
 
-const ASSET_BADGE_STATUS = {
-  available: "기기-대여가능",
-  reserved: "기기-신청됨",
-  rented: "기기-대여중",
-  broken: "기기-고장",
-  disposalScheduled: "기기-폐기예정",
-  unknown: "기기-상태미확인",
-};
+
 
 function getErrorMessage(error, fallbackMessage) {
   if (error instanceof Error && error.message) {
@@ -358,10 +351,16 @@ function AdminAssetListPage() {
       header: "상태",
       width: 120,
       render: (item) => {
-        const badgeStatus =
-          ASSET_BADGE_STATUS[item.status] ?? "기기-상태미확인";
+        const status = getItemStatus(item.status);
 
-        return <StatusBadge status={badgeStatus} size="lg" />;
+        return (
+          <StatusBadge
+            text={status.label}
+            color={status.color}
+            size="lg"
+            border
+          />
+        );
       },
     },
     {

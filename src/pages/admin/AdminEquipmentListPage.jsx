@@ -17,6 +17,8 @@ import {
   updateAdminEquipmentModel,
 } from "../../api/equipmentApi";
 import { saveSemester } from "../../api/semesterApi";
+import { MODEL_STATUS, getModelStatus } from "../../constants/status";
+
 import Button from "../../components/common/Button";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
@@ -34,14 +36,8 @@ import styles from "./AdminEquipmentListPage.module.css";
 
 const ROWS_PER_PAGE = 10;
 
-// 서버와 mock 상태값을 기존 화면 배지용 상태로 분리함.
-const STATUS_BADGES = {
-  active: "기자재-대여진행",
-  paused: "기자재-대여중지",
-};
-
 const RENTAL_POLICY_LABELS = {
-  regular: "정기",
+  regular: "사전",
   always: "상시",
 };
 
@@ -573,7 +569,7 @@ function AdminEquipmentListPage() {
     },
     {
       key: "name",
-      header: "기자재 모델명 / 대여정책",
+      header: "모델명 / 대여정책",
       width: 222,
       render: (equipment) => <EquipmentNameCell equipment={equipment} />,
     },
@@ -623,12 +619,9 @@ function AdminEquipmentListPage() {
       header: "상태",
       width: 92,
       render: (equipment) => {
-        const badgeStatus = STATUS_BADGES[equipment.status];
-
-        return badgeStatus ? (
-          <StatusBadge status={badgeStatus} size="lg" />
-        ) : (
-          <span className={styles.unknownStatus}>상태 미확인</span>
+        const status = getModelStatus(equipment.status);
+        return (
+          <StatusBadge text={status.label} color={status.color} size="lg" border />
         );
       },
     },
@@ -656,7 +649,7 @@ function AdminEquipmentListPage() {
   return (
     <section className={styles.page}>
       <PageHeader />
-      <div className={styles.contentViewport} role="region" aria-label="기자재 목록 영역">
+      <div className={styles.contentViewport} role="region" aria-label="모델 목록 영역">
         <div className={styles.content}>
           <div className={styles.toolbar}>
             <Tabs
@@ -664,7 +657,7 @@ function AdminEquipmentListPage() {
               items={tabItems}
               value={selectedCategory}
               onChange={handleCategoryChange}
-              ariaLabel="기자재 카테고리"
+              ariaLabel="모델 카테고리"
             />
             <SearchBar
               className={styles.search}
@@ -673,9 +666,9 @@ function AdminEquipmentListPage() {
               value={searchTerm}
               onChange={handleSearchChange}
               onSubmit={handleSearchSubmit}
-              ariaLabel="기자재명 또는 모델명 검색"
-              placeholder="기자재명 또는 모델명으로 검색..."
-              disabled={!hasCategories}
+              ariaLabel="모델명 검색"
+              placeholder="모델명으로 검색..."
+              disabled={!isMockMode || !hasCategories}
             />
           </div>
 
@@ -727,7 +720,7 @@ function AdminEquipmentListPage() {
                 id={panelId}
                 className={styles.tablePanel}
                 role="tabpanel"
-                aria-label={`${selectedCategoryLabel} 기자재 목록`}
+                aria-label={`${selectedCategoryLabel} 모델 목록`}
                 aria-busy={equipmentQuery.isFetching}
               >
                 <DataTable
@@ -757,7 +750,8 @@ function AdminEquipmentListPage() {
                     color="Primary"
                     status="Default"
                     type="button"
-                    text="기자재 통합 관리"
+                    text="학기 통합 관리"
+                    // disabled={!isMockMode || isMutationPending}
                     onClick={() => setIsSettingModalOpen(true)}
                   />
                   <Button
@@ -767,9 +761,9 @@ function AdminEquipmentListPage() {
                     color="Primary"
                     status="Default"
                     type="button"
-                    text="기자재 등록"
-                    disabled={isMutationPending}
-                    onClick={handleOpenCreateModal}
+                    text="모델 등록"
+                    disabled={!isMockMode || isMutationPending}
+                    onClick={() => setIsCreateModalOpen(true)}
                   />
                 </div>
               </div>

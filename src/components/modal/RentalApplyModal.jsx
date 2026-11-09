@@ -1,11 +1,11 @@
-import { useContext, useId, useRef, useState } from "react";
+import { useId, useRef, useState, useContext } from "react";
 import BaseModal from "./BaseModal";
 import Button from "../common/Button";
 import Select from "../common/Select";
 import Input from "../common/Input";
 import styles from "./RentalApplyModal.module.css";
+// import { SEMESTER_END_DATE } from "../../utils/rentalRules";
 import { SemesterContext } from "../../context/SemesterContext";
-import { isMockMode } from "../../api/client";
 
 function getNextDayDate(dateValue) {
   if (!(dateValue instanceof Date) || Number.isNaN(dateValue.getTime())) {
@@ -43,7 +43,9 @@ function RentalApplyModalContent({
   onSubmit,
   returnFocusRef,
 }) {
-  const { semester } = useContext(SemesterContext);
+  const { currentSemester } = useContext(SemesterContext);
+  const semesterEndDate = currentSemester?.endDate ?? "";
+
 
   const [form, setForm] = useState(() => ({
     rentalType: equipment?.rentalPolicies ?? "",
@@ -65,7 +67,7 @@ function RentalApplyModalContent({
   )?.slice(0, 10) ?? "";
 
   const resolvedReturnDate = isRegularRental
-    ? regularReturnDate
+    ? semesterEndDate
     : isAlwaysRental
       ? getNextDayDate(form.pickupDate)
       : form.returnDate;
@@ -115,7 +117,7 @@ function RentalApplyModalContent({
             <label className={styles.wideLabel}>기자재 정보</label>
             <div className={styles.infoGrid}>
               <div><span>카테고리</span>{equipment.category || "-"}</div>
-              <div><span>기자재명</span>{equipment.modelName || "-"}</div>
+              <div><span>모델명</span>{equipment.modelName || "-"}</div>
               <div><span>설명</span>{equipment.description || "-"}</div>
               <div><span>구성</span>{equipment.components || "-"}</div>
             </div>

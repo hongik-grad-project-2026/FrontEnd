@@ -59,7 +59,7 @@ function EquipmentDisposeModal({
       <section className={styles.layout}>
         <header className={styles.header}>
           <h2 id={titleId} className={styles.title}>
-            기자재 폐기
+            모델 폐기
           </h2>
         </header>
 
@@ -68,7 +68,7 @@ function EquipmentDisposeModal({
             <strong className={styles.equipmentName}>{equipment.name}</strong>
 
             <div className={styles.information}>
-              <h3 className={styles.sectionTitle}>기자재 정보</h3>
+              <h3 className={styles.sectionTitle}>모델 정보</h3>
 
               <dl className={styles.informationGrid}>
                 <div className={styles.informationItem}>
@@ -127,7 +127,7 @@ function EquipmentDisposeModal({
             size="Default"
             color="Danger"
             status="Default"
-            text={isPending ? "처리 중" : "기자재 폐기"}
+            text={isPending ? "처리 중" : "모델 폐기"}
             type="button"
             disabled={isPending}
             onClick={handleConfirm}

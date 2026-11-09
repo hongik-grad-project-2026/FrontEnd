@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isMockMode } from "../../api/client";
+import { RENTAL_STATUS, getRentalStatus } from "../../constants/status";
 import {
   getAdminRentalStatusCounts,
   getAdminRentalStatuses,
@@ -23,15 +24,11 @@ import RentalDetailModal from "../../components/modal/RentalDetailModal";
 import styles from "./AdminRentalStatusPage.module.css";
 
 const primaryButtonByStatus = {
-  waiting: { text: "수령 처리하기", kind: "fill", color: "Primary" },
+  readyForPickup: { text: "수령 처리하기", kind: "fill", color: "Primary" },
   renting: { text: "반납 처리하기", kind: "fill", color: "Primary" },
   overdue: { text: "반납 처리하기", kind: "border", color: "Danger" },
 };
-const badgeStatusByRentalStatus = {
-  waiting: "대여-수령대기",
-  renting: "대여-대여중",
-  overdue: "대여-연체",
-};
+
 
 function AdminRentalStatusPage() {
   const queryClient = useQueryClient();
@@ -73,11 +70,24 @@ function AdminRentalStatusPage() {
     onSettled: () => { mutationGuardRef.current = false; },
   });
 
-  const counts = countQuery.data ?? { all: null, waiting: null, renting: null, overdue: 0 };
+  const counts = countQuery.data ?? { all: null, readyForPickup: null, renting: null, overdue: 0 };
   const tabs = [
-    { value: "all", label: "전체", count: counts.all ?? "-" },
-    { value: "waiting", label: "수령대기", count: counts.waiting ?? "-" },
-    { value: "renting", label: "대여중", count: counts.renting ?? "-", badge: counts.overdue > 0 ? "⚠ 연체" : null },
+    {
+      value: "all",
+      label: "전체",
+      count: counts.all ?? "-",
+    },
+    {
+      value: "readyForPickup",
+      label: RENTAL_STATUS.readyForPickup.label,
+      count: counts.readyForPickup ?? "-",
+    },
+    {
+      value: "renting",
+      label: RENTAL_STATUS.renting.label,
+      count: counts.renting ?? "-",
+      badge: counts.overdue > 0 ? "⚠ 연체" : null,
+    },
   ];
 
   const handleComplete = (values) => {
@@ -107,8 +117,12 @@ function AdminRentalStatusPage() {
             {isMockMode && !statusQuery.isLoading && !statusQuery.isError && statusQuery.items.length === 0 ? <p>검색 조건에 해당하는 대여 현황이 없습니다.</p> : null}
             {isMockMode ? statusQuery.items.map((rental) => {
               const primary = primaryButtonByStatus[rental.status];
+              const status = getRentalStatus(rental.status);
               return (
-                <RentalCard key={rental.rentalId} ariaLabel={rental.ariaLabel} badge={<StatusBadge status={badgeStatusByRentalStatus[rental.status]} />} actions={<><Button kind={primary.kind} status="Default" size="Default" color={primary.color} text={primary.text} disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "process", rental }); }} /><Button kind="border" status="Default" size="Default" color="Primary" text="상세 보기" disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "detail", rental }); }} /></>}>
+                <RentalCard
+                  key={rental.rentalId} ariaLabel={rental.ariaLabel}
+                  badge={<StatusBadge text={status.label} color={status.color} size="lg" />}
+                  actions={<><Button kind={primary.kind} status="Default" size="Default" color={primary.color} text={primary.text} disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "process", rental }); }} /><Button kind="border" status="Default" size="Default" color="Primary" text="상세 보기" disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "detail", rental }); }} /></>}>
                   <RentalCardInfo category={rental.category} equipmentName={rental.equipmentName} rentalId={rental.rentalId} fields={rental.infoFields} />
                 </RentalCard>
               );

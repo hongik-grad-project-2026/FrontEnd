@@ -2,19 +2,10 @@ import BaseModal from "./BaseModal";
 import styles from "./EquipmentSettingModal.module.css";
 import Select from "../common/Select";
 import Button from "../common/Button";
-import { useContext, useState, useId } from "react";
-import { SemesterContext } from "../../context/SemesterContext";
-import { isMockMode } from "../../api/client";
+import { useState, useId } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchSemester } from "../../api/semesterApi";
 
-function addDays(date, days) {
-    if (!date) {
-        return null;
-    }
-
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-}
 
 function toDateOnly(date) {
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
@@ -28,44 +19,80 @@ function toDateOnly(date) {
     return `${year}-${month}-${day}`;
 }
 
-function toCalendarDate(value) {
+function parseSemesterDate(value) {
+    if (!value) {
+        return null;
+    }
+
     if (value instanceof Date) {
         return Number.isNaN(value.getTime()) ? null : value;
     }
-    if (typeof value !== "string") {
-        return null;
+
+    const dateOnlyMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (dateOnlyMatch) {
+        const [, year, month, day] = dateOnlyMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day));
     }
 
-    const datePart = value.slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
-        return null;
-    }
-
-    const date = new Date(`${datePart}T00:00:00`);
-    return Number.isNaN(date.getTime()) ? null : date;
+    const parsedDate = new Date(value);
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
 }
 
+function addDays(date, days) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
 
 function formatDate(date) {
-    const parsedDate = toCalendarDate(date);
-    if (!parsedDate) {
-        return null;
-    }
-
-    return parsedDate.toLocaleDateString();
+    const parsedDate = parseSemesterDate(date);
+    return parsedDate?.toLocaleDateString() ?? null;
 }
 
-function formatPeriod(period) {
-    const start = formatDate(period?.start);
-    const end = formatDate(period?.end);
+function formatPeriod(startDate, endDate) {
+    const start = formatDate(startDate);
+    const end = formatDate(endDate);
 
     return start && end ? `${start} ~ ${end}` : "미정";
 }
 
+function getSemesterFormValues(semester) {
+    return {
+        startDate: parseSemesterDate(semester?.startDate),
+        endDate: parseSemesterDate(semester?.endDate),
+        preApplyStartDate: parseSemesterDate(semester?.preApplyStartDate),
+        preApplyEndDate: parseSemesterDate(semester?.preApplyEndDate),
+        pickupStartDate: parseSemesterDate(semester?.pickupStartDate),
+        pickupDeadline: parseSemesterDate(semester?.pickupDeadline),
+        onDemandStartDate: parseSemesterDate(semester?.onDemandStartDate),
+        returnDeadline: parseSemesterDate(semester?.returnDeadline),
+    };
+}
+
+function calculateRentalScheduleDates(startDate, endDate) {
+    const preApplyStartDate = startDate;
+    const preApplyEndDate = addDays(preApplyStartDate, 7);
+    const pickupStartDate = addDays(preApplyEndDate, 1);
+    const pickupDeadline = addDays(pickupStartDate, 7);
+
+    return {
+        preApplyStartDate,
+        preApplyEndDate,
+        pickupStartDate,
+        pickupDeadline,
+        onDemandStartDate: addDays(pickupDeadline, 1),
+        returnDeadline: endDate,
+    };
+}
 
 function EuipmentSettingModal({
     isOpen = true,
-    isPending = false,
+    isPending: isSaving = false,
     onClose,
     onConfirm,
     returnFocusRef,
@@ -93,25 +120,28 @@ function EuipmentSettingModal({
         end: semester.preApplyEndDate,
     };
 
-    const regularApplyPeriod = formValues.endDate && formValues.startDate ? {
-        start: addDays(formValues.startDate, 14),
-        end: formValues.endDate,
-    } : null;
 
     const isRequiredFormComplete = Boolean(formValues.startDate && formValues.endDate);
 
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!isMockMode || !isRequiredFormComplete || isPending) {
+        if (!semester || !isRequiredFormComplete || isSaving) {
             return;
         }
 
-        onConfirm?.({
+        onConfirm({
+            semesterId: semester.semesterId,
             year: semester.year,
             term: semester.term,
             startDate: toDateOnly(formValues.startDate),
             endDate: toDateOnly(formValues.endDate),
+            preApplyStartDate: toDateOnly(formValues.preApplyStartDate),
+            preApplyEndDate: toDateOnly(formValues.preApplyEndDate),
+            pickupStartDate: toDateOnly(formValues.pickupStartDate),
+            pickupDeadline: toDateOnly(formValues.pickupDeadline),
+            onDemandStartDate: toDateOnly(formValues.onDemandStartDate),
+            returnDeadline: toDateOnly(formValues.returnDeadline),
         });
         // updateSemester // 부모의 mutation 성공 처리에서 갱신
     };
@@ -122,22 +152,46 @@ function EuipmentSettingModal({
             isOpen={isOpen}
             onClose={onClose}
             // ariaLabelledBy={titleId}
-            closeOnEscape={!isPending}
-            closeOnOverlay={!isPending}
+            closeOnEscape={!isSaving}
+            closeOnOverlay={!isSaving}
             returnFocusRef={returnFocusRef}
         >
             <form className={styles.form}
                 onSubmit={handleSubmit}
             >
                 <header className={styles.header}>
-                    <h2>기자재 통합 설정</h2>
+                    <h2>대여 일정 통합 관리</h2>
                 </header>
 
                 <div className={styles.content}>
                     <div className={styles.contentTitle}>
-                        {semester.year && semester.term
-                            ? `${semester.year}학년도 ${semester.term}학기 일정`
-                            : "학기 일정"}
+                        <Button
+                            color="Neutral"
+                            kind="border"
+                            size="Xsmall"
+                            status="Default"
+                            text="이전"
+                            type="button"
+                            disabled={!canGoPrevious || isSemesterLoading}
+                            onClick={() => setSelectedKey(SEMESTER_KEYS[selectedIndex - 1])}
+                        />
+                        <p>
+                            {semester
+                                ? `${semester.year}학년도 ${semester.term}학기 일정`
+                                : isSemesterLoading
+                                    ? "학기 일정 불러오는 중"
+                                    : "학기 일정을 불러오지 못했습니다."}
+                        </p>
+                        <Button
+                            color="Neutral"
+                            kind="border"
+                            size="Xsmall"
+                            status="Default"
+                            text="다음"
+                            type="button"
+                            disabled={!canGoNext || isSemesterLoading}
+                            onClick={() => setSelectedKey(SEMESTER_KEYS[selectedIndex + 1])}
+                        />
                     </div>
                     <div className={styles.field}>
                         <label className={styles.label}
@@ -153,10 +207,12 @@ function EuipmentSettingModal({
                             value={formValues.startDate}
                             placeholder="날짜를 선택하세요."
                             ariaLabel="시작일"
+                            disabled={selectedKey === 'previous'}
                             onChange={(nextDate) =>
-                                setDraftValues({ ...formValues, startDate: nextDate })
+                                updateFormDates({ startDate: nextDate })
                             }
-                            disabled={!isMockMode || isPending || isLoading}
+                            maxDate={formValues.endDate ? addDays(formValues.endDate, -14) : undefined}
+
                         />
                     </div>
                     <div className={styles.field}>
@@ -172,43 +228,43 @@ function EuipmentSettingModal({
                             width="100%"
                             value={formValues.endDate}
                             placeholder="날짜를 선택하세요."
-                            ariaLabel={isMockMode ? "종료일" : "반납 마감일"}
+                            ariaLabel="종료일"
+                            disabled={selectedKey === 'previous'}
                             onChange={(nextDate) =>
-                                setDraftValues({ ...formValues, endDate: nextDate })
+                                updateFormDates({ endDate: nextDate })
                             }
-                            disabled={!isMockMode || isPending || isLoading}
+                            minDate={formValues.startDate ? addDays(formValues.pickupDeadline, 1) : undefined}
                         />
                     </div>
-                    {isLoading ? <p className={styles.alertText}>학기 일정을 불러오는 중입니다.</p> : null}
-                    {error ? <p className={styles.alertText} role="alert">학기 일정을 불러오지 못했습니다.</p> : null}
-                    {!isLoading && !error && !isCustomSemester ? <p className={styles.alertText}>
-                        학기 일정이 아직 설정되지 않았습니다.
-                    </p> : null}
-                    {!isMockMode ? <p className={styles.alertText}>
-                        현재 서버는 학기 일정 조회만 지원하여 이 화면에서 저장할 수 없습니다.
-                    </p> : null}
+                    {semesterError ? (
+                        <p className={styles.alertText} role="alert">
+                            {semesterError.message || "학기 일정을 불러오지 못했습니다."}
+                        </p>
+                    ) : null}
+                    {semester && !isCustomSemester ? <p className={styles.alertText}>
+                        ⚠ 학기 일정이 아직 설정되지 않았습니다. 실제 일정에 맞게 설정을 완료해주세요.
+                    </p> : ""}
                 </div>
                 <div className={styles.content}>
                     <div className={styles.contentTitle}>
                         대여 신청 일정
-                        <span> (학기 일정 기준 자동 설정)</span>
+                        <span>(학기 일정 기준 자동 설정)</span>
                     </div>
                     <ol>
                         <li>
-                            <span> • 사전 신청 기간</span>
-                            <span className={styles.periodBox}>{formatPeriod(preApplyPeriod)}</span>
-                            <span className={styles.noticeText}>{isMockMode ? "학기 시작일부터 2주간 진행됩니다." : "서버에 설정된 기간입니다."}</span>
+                            <span> • 사전신청</span>
+                            <span className={styles.periodBox}>{formatPeriod(formValues.preApplyStartDate, formValues.preApplyEndDate)}</span>
+                            <span className={styles.noticeText}>학기 시작일부터 1주</span>
                         </li>
                         <li>
-                            <span> • 상시 신청 기간</span>
-                            <span className={styles.periodBox}>
-                                {isMockMode
-                                    ? formatPeriod(regularApplyPeriod)
-                                    : semester.onDemandStartDate
-                                        ? `${formatDate(semester.onDemandStartDate)}부터`
-                                        : "미정"}
-                            </span>
-                            <span className={styles.noticeText}>{isMockMode ? "사전 신청 종료 후 학기 종료일까지 진행됩니다." : "신청 종료일은 서버 응답에 없습니다."}</span>
+                            <span> • 사전신청 수령</span>
+                            <span className={styles.periodBox}>{formatPeriod(formValues.pickupStartDate, formValues.pickupDeadline)}</span>
+                            <span className={styles.noticeText}>사전신청 종료 후 1주</span>
+                        </li>
+                        <li>
+                            <span> • 상시신청 및 수령</span>
+                            <span className={styles.periodBox}>{formatPeriod(formValues.onDemandStartDate, formValues.returnDeadline)}</span>
+                            <span className={styles.noticeText}>사전신청 수령 후 학기 종료일까지.</span>
                         </li>
                     </ol>
                 </div>
@@ -222,7 +278,7 @@ function EuipmentSettingModal({
                         text="취소"
                         type="button"
                         onClick={onClose}
-                        disabled={isPending}
+                        disabled={isSaving}
                     />
 
                     <Button

@@ -88,7 +88,7 @@
     text-decoration: underline;
 }
 
-.withdrawalButtonContainer {
+.additionalContainer {
     display: flex;
     justify-content: center;
     background-color: var(--color-white);

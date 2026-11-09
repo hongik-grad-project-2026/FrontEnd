@@ -200,7 +200,7 @@ const BLACKLIST_COLUMNS = [
 const RENTAL_COLUMNS = [
   {
     key: "equipment",
-    header: "기자재 정보",
+    header: "기자재 모델 정보",
     width: 300,
     render: (rental) => <EquipmentCell rental={rental} />,
   },
@@ -509,8 +509,8 @@ function AdminMemberDetailPage() {
                 value={rentalKeyword}
                 onChange={handleRentalSearchChange}
                 onSubmit={handleRentalSearchSubmit}
-                ariaLabel="회원 대여 기자재 검색"
-                placeholder="기자재명·모델명·비품번호 검색"
+                ariaLabel="회원 대여 기기 검색"
+                placeholder="모델명·비품번호 검색"
               />
             ) : null}
           </div>

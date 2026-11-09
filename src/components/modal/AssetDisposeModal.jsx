@@ -1,4 +1,4 @@
-// 개별 기자재 폐기 모달임.
+// 기기 폐기 모달임.
 import { useId } from "react";
 
 import Button from "../common/Button";
@@ -77,10 +77,10 @@ function AssetDisposeModal({
 
         <div className={styles.content}>
           <section className={styles.assetSection}>
-            <h3 className={styles.sectionTitle}>기자재</h3>
+            <h3 className={styles.sectionTitle}>모델</h3>
 
             <strong className={styles.modelName}>
-              {modelName || "개별 기자재"}
+              {modelName || "기기"}
             </strong>
 
             <div className={styles.assetInformation}>
@@ -95,11 +95,6 @@ function AssetDisposeModal({
                 <div className={styles.informationItem}>
                   <dt>상태</dt>
                   <dd>{STATUS_LABELS[asset.status] ?? "-"}</dd>
-                </div>
-
-                <div className={styles.informationItem}>
-                  <dt>비품 번호</dt>
-                  <dd>{asset.assetNumber || "-"}</dd>
                 </div>
 
                 <div className={styles.informationItem}>

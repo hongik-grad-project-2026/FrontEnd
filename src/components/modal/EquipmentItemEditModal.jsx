@@ -327,7 +327,7 @@ function EquipmentItemEditModal({
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <header className={styles.header}>
             <h2 id={titleId} className={styles.title}>
-              기자재 수정
+              모델 수정
             </h2>
           </header>
 
@@ -465,7 +465,7 @@ function EquipmentItemEditModal({
                   height="md"
                   name="equipmentName"
                   value={formValues.name}
-                  placeholder="기자재명을 입력하세요"
+                  placeholder="모델명을 입력하세요"
                   onChange={handleTextChange("name")}
                 />
               </div>
@@ -529,7 +529,7 @@ function EquipmentItemEditModal({
 
 
             <div className={styles.field}>
-              <span className={styles.label}>기자재 모델 사진*</span>
+              <span className={styles.label}>모델 사진*</span>
 
               <input
                 ref={fileInputRef}

@@ -1,4 +1,5 @@
 import { equipmentModels as studentEquipmentModels } from "./db";
+import { ITEM_STATUS } from "../constants/status";
 
 // 학생 목록·찜과 관리자 모델·개별 기자재는 현재 서로 다른 mock 저장소를 사용함.
 // 실제 서버 계약이 아니며 API 제공 시 equipmentApi 함수에서 함께 교체함.
@@ -9,19 +10,12 @@ export const MOCK_EQUIPMENT_MODEL_STATUSES = Object.freeze([
   "paused",
 ]);
 
-export const MOCK_EQUIPMENT_ITEM_STATUSES = Object.freeze([
-  "available",
-  "rented",
-  "broken",
-  "disposalScheduled",
-]);
 
-const MOCK_STATUS_NOTES = {
-  available: "비밀번호:1234\n디스플레이 깨짐.",
-  rented: "현재 대여 중인 기기",
-  broken: "디스플레이 점검 필요",
-  disposalScheduled: "폐기 예정 기기",
-};
+export const MOCK_EQUIPMENT_ITEM_STATUSES = Object.freeze(
+  Object.keys(ITEM_STATUS)
+);
+
+const MOCK_STATUS_NOTES = ["비밀번호:1234", "디스플레이 점검 필요", "폐기 예정 기기", "-"];
 
 // categoryId와 categoryKey는 src/api/categories.js의 mock 카테고리 정의와 일치시킴.
 const MOCK_MODEL_DEFINITIONS = [
@@ -36,7 +30,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "본체, 파우치, 충전 케이블",
     specification: "화면 확인용 성능 정보",
     description: "일반적인 두 줄 설명의 배치를 확인합니다.",
-    status: "active",
+    status: "available",
     receivedDate: "2026.08.01",
     disposalDate: "2028.08.01",
     labelPrefix: "TA",
@@ -55,7 +49,7 @@ const MOCK_MODEL_DEFINITIONS = [
     specification: "긴 성능 정보가 두 줄을 초과할 때 표시를 확인합니다.",
     description:
       "긴 설명이 셀 너비와 행 높이를 넘지 않도록 두 줄 말줄임을 확인하는 임시 내용입니다.",
-    status: "paused",
+    status: "unavailable",
     receivedDate: "2026.08.02",
     disposalDate: "2028.08.02",
     labelPrefix: "TB",
@@ -73,7 +67,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "본체, 케이스, 충전 케이블",
     specification: "화면 확인용 성능 정보",
     description: "카테고리와 OS의 두 줄 표시를 확인합니다.",
-    status: "active",
+    status: "available",
     receivedDate: "2026.08.03",
     disposalDate: "2028.08.03",
     labelPrefix: "TC",
@@ -91,7 +85,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "본체, 케이스",
     specification: "",
     description: "성능 정보가 없는 셀의 배치를 확인합니다.",
-    status: "paused",
+    status: "unavailable",
     receivedDate: "2026.08.04",
     disposalDate: "2028.08.04",
     labelPrefix: "TD",
@@ -109,7 +103,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "키보드, 마우스",
     specification: "",
     description: "모델명과 OS가 없는 한 줄 표시를 확인합니다.",
-    status: "active",
+    status: "available",
     receivedDate: "2026.08.05",
     disposalDate: "2028.08.05",
     labelPrefix: "TE",
@@ -127,7 +121,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "키보드, 마우스, 수신기",
     specification: "화면 확인용 연결 정보",
     description: "대여중지 배지의 표시를 확인합니다.",
-    status: "paused",
+    status: "unavailable",
     receivedDate: "2026.08.06",
     disposalDate: "2028.08.06",
     labelPrefix: "TF",
@@ -145,7 +139,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "본체, 충전 케이블",
     specification: "화면 확인용 용량 정보",
     description: "OS 없이 카테고리만 표시합니다.",
-    status: "active",
+    status: "available",
     receivedDate: "2026.08.07",
     disposalDate: "2028.08.07",
     labelPrefix: "TG",
@@ -163,7 +157,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "본체, 파우치, 충전 케이블",
     specification: "화면 확인용 용량 정보",
     description: "",
-    status: "paused",
+    status: "unavailable",
     receivedDate: "2026.08.08",
     disposalDate: "2028.08.08",
     labelPrefix: "TH",
@@ -181,7 +175,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "거치대, 보관 파우치",
     specification: "",
     description: "거치대 카테고리의 목록을 확인합니다.",
-    status: "active",
+    status: "available",
     receivedDate: "2026.08.09",
     disposalDate: "2028.08.09",
     labelPrefix: "TI",
@@ -199,7 +193,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "거치대",
     specification: "",
     description: "첫 페이지의 마지막 행을 확인합니다.",
-    status: "paused",
+    status: "unavailable",
     receivedDate: "2026.08.10",
     disposalDate: "2028.08.10",
     labelPrefix: "TJ",
@@ -217,7 +211,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "독서대",
     specification: "",
     description: "두 번째 페이지의 목록을 확인합니다.",
-    status: "active",
+    status: "available",
     receivedDate: "2026.08.11",
     disposalDate: "2028.08.11",
     labelPrefix: "TK",
@@ -235,7 +229,7 @@ const MOCK_MODEL_DEFINITIONS = [
     accessories: "독서대, 보관 가방",
     specification: "",
     description: "마지막 페이지와 대여중지 상태를 확인합니다.",
-    status: "paused",
+    status: "unavailable",
     receivedDate: "2026.08.12",
     disposalDate: "2028.08.12",
     labelPrefix: "TL",
@@ -269,7 +263,7 @@ const mockEquipmentItems = new Map(
         assetNumber: String(index + 1).padStart(7, "0"),
         labelNumber: `${definition.labelPrefix}-${displayNumber}`,
         status,
-        notes: MOCK_STATUS_NOTES[status],
+        notes: MOCK_STATUS_NOTES[Math.floor(Math.random() * MOCK_STATUS_NOTES.length)],
       };
     }),
   ]),

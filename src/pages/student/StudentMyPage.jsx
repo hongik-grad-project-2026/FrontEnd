@@ -13,12 +13,11 @@ import PageHeader from "../../components/layout/PageHeader";
 import ConfirmModal from "../../components/modal/ConfirmModal";
 import UsageGuideModal from "../../components/modal/UsageGuideModal";
 import { useUser } from "../../context/UserContext";
-import { GUIDE_CONTENT } from "../../data/usageGuideContent";
+import { GUIDE_CONTENT } from "../../constants/usageGuideContent";
 import styles from "./StudentMyPage.module.css";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^01[016789][0-9]{7,8}$/;
-const DEFAULT_PROFILE_IMAGE = "/images/hongikLogo-circle.png";
 const MY_INFO_FIELDS = [
   "email",
   "phoneNumber",
@@ -83,9 +82,9 @@ function StudentMyPage() {
       error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" && failureCount < 1,
   });
   const rentalCounts = rentalCountsQuery.data;
-  const rentalApplicationCount = rentalCounts?.approvalPending ?? "-";
+  const rentalApplicationCount = rentalCounts?.pendingApproval ?? "-";
   const activeRentalCount = rentalCounts
-    ? rentalCounts.pickupPending + rentalCounts.renting
+    ? rentalCounts.readyForPickup + rentalCounts.renting
     : "-";
   const returnedRentalCount = rentalCounts?.returned ?? "-";
 
@@ -140,7 +139,7 @@ function StudentMyPage() {
     isPhoneNumberValid &&
     !infoMutation.isPending;
   const profileImageSrc =
-    previewUrl || availableUser?.profileImageUrl || DEFAULT_PROFILE_IMAGE;
+    previewUrl || availableUser?.profileImageUrl || null;
 
   const shouldBlockNavigation = useCallback(
     ({ currentLocation, nextLocation }) =>
@@ -298,12 +297,15 @@ function StudentMyPage() {
         ) : (
           <div className={styles.profileCard}>
             <div className={styles.profileArea}>
-              <img
-                className={styles.profileImage}
-                src={profileImageSrc}
-                alt={`${availableUser?.name ?? "사용자"} 프로필`}
-              />
-
+              <div className={styles.profileImgArea}>
+                {profileImageSrc &&
+                  <img
+                    className={styles.profileImage}
+                    src={profileImageSrc}
+                    alt={`${availableUser?.name ?? "사용자"} 프로필`}
+                  />
+                }
+              </div>
               <input
                 ref={imageInputRef}
                 className={styles.hiddenFileInput}

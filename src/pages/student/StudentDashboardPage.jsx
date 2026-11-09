@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isMockMode } from "../../api/client";
 import { fetchNotices, noticeKeys } from '../../api/noticeApi';
+import { RENTAL_STATUS } from "../../constants/status";
 import {
   createStudentRental,
   getStudentRentalDashboard,
@@ -172,8 +173,8 @@ function NoticeArea() {
 
 function RentalsLi({ rental }) {
   const statusLabel = {
-    approvalPending: "승인대기",
-    pickupPending: "수령대기",
+    pendingApproval: "승인대기",
+    readyForPickup: "수령대기",
     renting: "대여중",
     overdue: "연체",
   }[rental.status];
@@ -183,7 +184,7 @@ function RentalsLi({ rental }) {
       <div >
         <span className={styles.liModelName}>{rental.equipmentName}</span>
       </div>
-      {rental.status === "pickupPending" && (
+      {rental.status === "readyForPickup" && (
         <span className={styles.liDateInfo}>{formatPickupDateTime(rental.expectedPickupAt)}</span>
       )}
       {(rental.status === "renting" || rental.status === "overdue") && (
@@ -212,8 +213,8 @@ function StudentDashboardPage() {
     enabled: isMockMode,
   });
   const rentalGroups = rentalQuery.data ?? {
-    approvalPending: [],
-    pickupPending: [],
+    pendingApproval: [],
+    readyForPickup: [],
     renting: [],
   };
   const categoryQuery = useQuery({
@@ -313,8 +314,8 @@ function StudentDashboardPage() {
     items.length === 0;
   const isEmptyRentalDashboard =
     rentalQuery.isSuccess &&
-    rentalGroups.approvalPending.length === 0 &&
-    rentalGroups.pickupPending.length === 0 &&
+    rentalGroups.pendingApproval.length === 0 &&
+    rentalGroups.readyForPickup.length === 0 &&
     rentalGroups.renting.length === 0;
 
   return (
@@ -357,58 +358,59 @@ function StudentDashboardPage() {
         {isMockMode && isEmptyRentalDashboard ? (
           <p className={styles.noticeState}>대여 내역이 없습니다.</p>
         ) : null}
-        {isMockMode && rentalQuery.isSuccess && !isEmptyRentalDashboard ? <div className={styles.rentalsGrid}>
-          <div
-            className={`${styles.contentArea} ${styles.rentalStatusBox}`}
-            role="link"
-            tabIndex={0}
-            aria-label="승인대기 대여내역 보기"
-            onClick={() => navigateToRentalHistory("approvalPending")}
-            onKeyDown={(event) => handleRentalStatusKeyDown(event, "approvalPending")}
-          >
-            <StatusBadge status='대여-승인대기' size='md' />
-            <ul>
-              {rentalGroups.approvalPending.slice(0, 2).map((rental) => (
-                <RentalsLi key={rental.rentalId} rental={rental} />
-              ))}
-              {rentalGroups.approvalPending.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.approvalPending.length - 2}건</span></li> : ''}
-            </ul>
-          </div>
-          <div
-            className={`${styles.contentArea} ${styles.rentalStatusBox}`}
-            role="link"
-            tabIndex={0}
-            aria-label="수령대기 대여내역 보기"
-            onClick={() => navigateToRentalHistory("pickupPending")}
-            onKeyDown={(event) => handleRentalStatusKeyDown(event, "pickupPending")}
-          >
-            <StatusBadge status='대여-수령대기' size='md' />
-            <ul>
-              {rentalGroups.pickupPending.slice(0, 2).map((rental) => (
-                <RentalsLi key={rental.rentalId} rental={rental} />
-              ))}
-              {rentalGroups.pickupPending.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.pickupPending.length - 2}건</span></li> : ''}
-            </ul>
+        {isMockMode && rentalQuery.isSuccess && !isEmptyRentalDashboard ?
+          <div className={styles.rentalsGrid}>
+            <div
+              className={`${styles.contentArea} ${styles.rentalStatusBox}`}
+              role="link"
+              tabIndex={0}
+              aria-label="승인대기 대여내역 보기"
+              onClick={() => navigateToRentalHistory("pendingApproval")}
+              onKeyDown={(event) => handleRentalStatusKeyDown(event, "pendingApproval")}
+            >
+              <StatusBadge text={RENTAL_STATUS["pendingApproval"].label} color={RENTAL_STATUS["pendingApproval"].color} />
+              <ul>
+                {rentalGroups.pendingApproval.slice(0, 2).map((rental) => (
+                  <RentalsLi key={rental.rentalId} rental={rental} />
+                ))}
+                {rentalGroups.pendingApproval.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.pendingApproval.length - 2}건</span></li> : ''}
+              </ul>
+            </div>
+            <div
+              className={`${styles.contentArea} ${styles.rentalStatusBox}`}
+              role="link"
+              tabIndex={0}
+              aria-label="수령대기 대여내역 보기"
+              onClick={() => navigateToRentalHistory("readyForPickup")}
+              onKeyDown={(event) => handleRentalStatusKeyDown(event, "readyForPickup")}
+            >
+              <StatusBadge text={RENTAL_STATUS["readyForPickup"].label} color={RENTAL_STATUS["readyForPickup"].color} />
+              <ul>
+                {rentalGroups.readyForPickup.slice(0, 2).map((rental) => (
+                  <RentalsLi key={rental.rentalId} rental={rental} />
+                ))}
+                {rentalGroups.readyForPickup.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.readyForPickup.length - 2}건</span></li> : ''}
+              </ul>
 
-          </div>
-          <div
-            className={`${styles.contentArea} ${styles.rentalStatusBox}`}
-            role="link"
-            tabIndex={0}
-            aria-label="대여중 대여내역 보기"
-            onClick={() => navigateToRentalHistory("renting")}
-            onKeyDown={(event) => handleRentalStatusKeyDown(event, "renting")}
-          >
-            <StatusBadge status='대여-대여중' size='md' />
-            <ul>
-              {rentalGroups.renting.slice(0, 2).map((rental) => (
-                <RentalsLi key={rental.rentalId} rental={rental} />
-              ))}
-              {rentalGroups.renting.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.renting.length - 2}건</span></li> : ''}
-            </ul>
+            </div>
+            <div
+              className={`${styles.contentArea} ${styles.rentalStatusBox}`}
+              role="link"
+              tabIndex={0}
+              aria-label="대여중 대여내역 보기"
+              onClick={() => navigateToRentalHistory("renting")}
+              onKeyDown={(event) => handleRentalStatusKeyDown(event, "renting")}
+            >
+              <StatusBadge text={RENTAL_STATUS["renting"].label} color={RENTAL_STATUS["renting"].color} />
+              <ul>
+                {rentalGroups.renting.slice(0, 2).map((rental) => (
+                  <RentalsLi key={rental.rentalId} rental={rental} />
+                ))}
+                {rentalGroups.renting.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.renting.length - 2}건</span></li> : ''}
+              </ul>
 
-          </div>
-        </div> : null}
+            </div>
+          </div> : null}
 
       </section>
 

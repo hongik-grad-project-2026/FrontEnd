@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-
+import { MEMBER_STATUS } from "../../constants/status";
 import {
   getAdminMemberCapabilities,
   getAdminMembers,
@@ -23,8 +23,8 @@ const COUNT_STALE_TIME = 30 * 1000;
 
 const MEMBER_TABS = [
   { value: "all", label: "전체" },
-  { value: "ACTIVE", label: "일반회원" },
-  { value: "SUSPENDED", label: "블랙리스트" },
+  { value: "active", label: "일반회원" },
+  { value: "suspended", label: "블랙리스트" },
 ];
 
 const AFFILIATION_OPTIONS = [
@@ -32,16 +32,6 @@ const AFFILIATION_OPTIONS = [
   { value: "own", label: "소속 학과" },
   { value: "other", label: "타과생" },
 ];
-
-const MEMBER_BADGE_STATUS = {
-  active: "회원-일반",
-  suspended: "회원-블랙",
-};
-
-const MEMBER_STATUS_LABEL = {
-  withdrawn: "탈퇴회원",
-  unknown: "상태 미확인",
-};
 
 function MemberNameCell({ member }) {
   return (
@@ -192,13 +182,13 @@ const MEMBER_COLUMNS = [
     header: "분류",
     width: 116,
     render: (member) => {
-      const badgeStatus = MEMBER_BADGE_STATUS[member.membershipStatus];
+      const badgeStatus = MEMBER_STATUS[member.membershipStatus];
 
       return badgeStatus ? (
-        <StatusBadge status={badgeStatus} size="md" />
+        <StatusBadge text={badgeStatus.label} color={badgeStatus.color} />
       ) : (
         <TextCell
-          text={MEMBER_STATUS_LABEL[member.membershipStatus] ?? "상태 미확인"}
+          text={MEMBER_STATUS[member.membershipStatus] ?? "상태 미확인"}
         />
       );
     },
@@ -384,15 +374,15 @@ function AdminMemberListPage() {
   const memberColumns = MEMBER_COLUMNS.map((column) =>
     column.key === "department"
       ? {
-          ...column,
-          header: (
-            <DepartmentFilterHeader
-              value={selectedAffiliation}
-              canFilterOtherDepartment={canFilterOtherDepartment}
-              onChange={handleAffiliationChange}
-            />
-          ),
-        }
+        ...column,
+        header: (
+          <DepartmentFilterHeader
+            value={selectedAffiliation}
+            canFilterOtherDepartment={canFilterOtherDepartment}
+            onChange={handleAffiliationChange}
+          />
+        ),
+      }
       : column,
   );
 

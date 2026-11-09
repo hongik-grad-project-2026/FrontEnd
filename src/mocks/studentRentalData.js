@@ -1,15 +1,10 @@
 import { isPickupPhotoRequired } from "../utils/rentalRules";
-
+import { RENTAL_STATUS } from "../constants/status";
 // 상태값은 학생 대여 화면 확인을 위한 mock 전용 계약임.
 // 실제 서버 상태값은 대여 API가 Swagger에 추가된 뒤 별도로 변환함.
-export const MOCK_STUDENT_RENTAL_STATUSES = Object.freeze([
-  "approvalPending",
-  "pickupPending",
-  "renting",
-  "overdue",
-  "canceled",
-  "returned",
-]);
+export const MOCK_STUDENT_RENTAL_STATUSES = Object.freeze(
+  Object.keys(RENTAL_STATUS),
+);
 
 // 관리자 반려는 학생 신청 취소와 다른 mock 결과로 관리함.
 // 실제 서버 상태값은 대여 API 계약이 나온 뒤 별도로 변환함.
@@ -28,14 +23,14 @@ const INITIAL_STUDENT_RENTALS = [
     itemId: null,
     assetNumber: null,
     labelNumber: null,
-    status: "approvalPending",
+    status: "pendingApproval",
     categoryId: 1,
     category: "노트북",
     equipmentName: "MacBook Pro 14",
     imageUrl: null,
     description: "고성능 프로세서를 탑재한 노트북입니다.",
     components: "본체, 전원 어댑터, 충전 케이블",
-    rentalType: "정기",
+    rentalType: "사전",
     requestedAt: "2026.10.08. 09:30:00",
     expectedPickupAt: "2026.10.13. 14:00",
     expectedReturnAt: "2026.11.10. 17:00",
@@ -55,7 +50,7 @@ const INITIAL_STUDENT_RENTALS = [
     itemId: null,
     assetNumber: null,
     labelNumber: null,
-    status: "approvalPending",
+    status: "pendingApproval",
     categoryId: 2,
     category: "태블릿",
     equipmentName: "iPad Pro 12.9",
@@ -82,7 +77,7 @@ const INITIAL_STUDENT_RENTALS = [
     itemId: "mock-item-0301",
     assetNumber: "0000301",
     labelNumber: "CAM-301",
-    status: "pickupPending",
+    status: "readyForPickup",
     categoryId: 4,
     category: "기타",
     equipmentName: "Logitech MX Keys",
@@ -230,7 +225,7 @@ const APPROVAL_TEMPLATES = [
     description: "화면 확인용 노트북입니다.",
     components: "본체, 파우치, 충전선",
     reason: "캡스톤 디자인 프로젝트 발표 준비",
-    rentalType: "정기",
+    rentalType: "사전",
     department: "컴퓨터공학과",
   },
   {
@@ -273,7 +268,7 @@ const INITIAL_ADMIN_APPROVAL_RENTALS = Array.from(
       itemId: null,
       assetNumber: null,
       labelNumber: null,
-      status: "approvalPending",
+      status: "pendingApproval",
       category: template.category,
       equipmentName: template.equipmentName,
       modelName: template.equipmentName,
@@ -302,7 +297,7 @@ const INITIAL_ADMIN_APPROVAL_RENTALS = Array.from(
 const ADMIN_STATUS_MOCK_DEFINITIONS = [
   {
     rentalId: "SR2026101201",
-    status: "pickupPending",
+    status: "readyForPickup",
     studentName: "김민지",
     studentId: "C200001",
     department: "컴퓨터공학과",
@@ -316,7 +311,7 @@ const ADMIN_STATUS_MOCK_DEFINITIONS = [
   },
   {
     rentalId: "SR2026101202",
-    status: "pickupPending",
+    status: "readyForPickup",
     studentName: "이서준",
     studentId: "C200002",
     department: "시각디자인과",
@@ -330,7 +325,7 @@ const ADMIN_STATUS_MOCK_DEFINITIONS = [
   },
   {
     rentalId: "SR2026101203",
-    status: "pickupPending",
+    status: "readyForPickup",
     studentName: "박하은",
     studentId: "C200003",
     department: "산업디자인과",
@@ -344,7 +339,7 @@ const ADMIN_STATUS_MOCK_DEFINITIONS = [
   },
   {
     rentalId: "SR2026101204",
-    status: "pickupPending",
+    status: "readyForPickup",
     studentName: "최도윤",
     studentId: "C200004",
     department: "전자전기공학부",
@@ -460,7 +455,7 @@ const INITIAL_ADMIN_STATUS_RENTALS = ADMIN_STATUS_MOCK_DEFINITIONS.map(
     imageUrl: null,
     description: "관리자 대여 현황과 무한 스크롤 확인용 기자재입니다.",
     components: "본체, 전원 어댑터, 보관 케이스",
-    rentalType: "정기",
+    rentalType: "사전",
     reason: "수업 및 프로젝트 진행을 위한 기자재 대여",
     approvedAt: "2026.10.01. 09:00:00",
     actualPickupAt: null,
@@ -498,7 +493,7 @@ const INITIAL_MEMBER_RENTALS = [
     imageUrl: null,
     description: "회원 상세 화면 확인용 기자재입니다.",
     components: "본체, 파우치, 충전기",
-    rentalType: "정기",
+    rentalType: "사전",
     requestedAt: "2026.09.18. 09:00:00",
     expectedPickupAt: "2026.09.19. 10:00",
     expectedReturnAt: "2026.09.26. 17:00",
@@ -704,8 +699,8 @@ function toAdminApprovalRecord(rental) {
 }
 
 function toAdminStatusRecord(rental) {
-  const status = rental.status === "pickupPending" ? "waiting" : rental.status;
-  const isWaiting = status === "waiting";
+  const status = rental.status;
+  const isWaiting = status === "readyForPickup";
 
   return {
     ...clone(rental),
@@ -859,11 +854,11 @@ export async function getMockStudentRentalCounts({ signal } = {}) {
 
   return {
     all: studentRentals.length,
-    approvalPending: studentRentals.filter(
-      (rental) => rental.status === "approvalPending",
+    pendingApproval: studentRentals.filter(
+      (rental) => rental.status === "pendingApproval",
     ).length,
-    pickupPending: studentRentals.filter(
-      (rental) => rental.status === "pickupPending",
+    readyForPickup: studentRentals.filter(
+      (rental) => rental.status === "readyForPickup",
     ).length,
     renting: studentRentals.filter(
       (rental) => rental.status === "renting" || rental.status === "overdue",
@@ -920,7 +915,7 @@ export async function cancelMockStudentRental({ rentalId, reason }) {
     );
   }
 
-  if (rental.status !== "approvalPending") {
+  if (rental.status !== "pendingApproval") {
     throw createMockError(
       "승인대기 상태의 신청만 취소할 수 있습니다.",
       "STUDENT_RENTAL_NOT_CANCELABLE",
@@ -992,7 +987,7 @@ export async function createMockStudentRental({
     itemId: null,
     assetNumber: null,
     labelNumber: null,
-    status: "approvalPending",
+    status: "pendingApproval",
     category: model.category,
     equipmentName: model.modelName,
     modelName: model.modelName,
@@ -1031,7 +1026,7 @@ export async function queryMockAdminRentalApprovals({
   await waitForMock(signal);
   const normalizedKeyword = normalizeSearch(keyword);
   const records = mockRentals
-    .filter((rental) => rental.status === "approvalPending")
+    .filter((rental) => rental.status === "pendingApproval")
     .filter(
       (rental) =>
         !normalizedKeyword ||
@@ -1051,7 +1046,7 @@ export async function approveMockRental({ rentalId }) {
   await waitForMock();
   const rental = requireRental(rentalId);
 
-  if (rental.status !== "approvalPending") {
+  if (rental.status !== "pendingApproval") {
     throw createMockError(
       "승인대기 상태의 신청만 승인할 수 있습니다.",
       "RENTAL_NOT_APPROVABLE",
@@ -1060,7 +1055,7 @@ export async function approveMockRental({ rentalId }) {
 
   return replaceRental({
     ...rental,
-    status: "pickupPending",
+    status: "readyForPickup",
     approvedAt: formatMockDateTime(),
     itemId: rental.itemId ?? `mock-item-${rental.rentalId}`,
     assetNumber: rental.assetNumber ?? `MOCK-${rental.rentalId.slice(-6)}`,
@@ -1071,7 +1066,7 @@ export async function rejectMockRental({ rentalId, reason }) {
   await waitForMock();
   const rental = requireRental(rentalId);
 
-  if (rental.status !== "approvalPending") {
+  if (rental.status !== "pendingApproval") {
     throw createMockError(
       "승인대기 상태의 신청만 반려할 수 있습니다.",
       "RENTAL_NOT_REJECTABLE",
@@ -1101,15 +1096,15 @@ export async function queryMockAdminRentalStatuses({
   const normalizedKeyword = normalizeSearch(keyword);
   const records = mockRentals
     .filter((rental) => {
-      if (status === "waiting") {
-        return rental.status === "pickupPending";
+      if (status === "readyForPickup") {
+        return rental.status === "readyForPickup";
       }
 
       if (status === "renting") {
         return rental.status === "renting" || rental.status === "overdue";
       }
 
-      return ["pickupPending", "renting", "overdue"].includes(rental.status);
+      return ["readyForPickup", "renting", "overdue"].includes(rental.status);
     })
     .filter(
       (rental) =>
@@ -1135,8 +1130,8 @@ export async function queryMockAdminRentalStatuses({
 
 export async function getMockAdminRentalStatusCounts({ signal } = {}) {
   await waitForMock(signal);
-  const waiting = mockRentals.filter(
-    (rental) => rental.status === "pickupPending",
+  const readyForPickup = mockRentals.filter(
+    (rental) => rental.status === "readyForPickup",
   ).length;
   const renting = mockRentals.filter(
     (rental) => rental.status === "renting" || rental.status === "overdue",
@@ -1145,14 +1140,14 @@ export async function getMockAdminRentalStatusCounts({ signal } = {}) {
     (rental) => rental.status === "overdue",
   ).length;
 
-  return { all: waiting + renting, waiting, renting, overdue };
+  return { all: readyForPickup + renting, readyForPickup, renting, overdue };
 }
 
 export async function pickupMockRental({ rentalId, processPhoto, workerName }) {
   await waitForMock();
   const rental = requireRental(rentalId);
 
-  if (rental.status !== "pickupPending") {
+  if (rental.status !== "readyForPickup") {
     throw createMockError(
       "수령대기 상태의 대여만 수령 처리할 수 있습니다.",
       "RENTAL_NOT_PICKUP_PENDING",
@@ -1250,11 +1245,11 @@ export async function getMockAdminRentalDashboard({ signal } = {}) {
 
   return {
     waitingApproval: mockRentals.filter(
-      (rental) => rental.status === "approvalPending",
+      (rental) => rental.status === "pendingApproval",
     ).length,
     todayPickup: mockRentals.filter(
       (rental) =>
-        rental.status === "pickupPending" &&
+        rental.status === "readyForPickup" &&
         getDatePart(rental.expectedPickupAt) === today,
     ).length,
     todayReturn: mockRentals.filter(

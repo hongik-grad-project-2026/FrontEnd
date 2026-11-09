@@ -1,4 +1,4 @@
-// 개별 기자재 등록·수정 모달임.
+// 기기 등록·수정 모달임.
 import { useId, useState } from "react";
 
 import Button from "../common/Button";
@@ -219,10 +219,10 @@ function AssetFormModalContent({
 
         <div className={styles.content}>
           <section className={styles.modelInformation}>
-            <h3 className={styles.modelLabel}>기자재</h3>
+            <h3 className={styles.modelLabel}>모델</h3>
 
             <strong className={styles.modelName}>
-              {modelName || "개별 기자재"}
+              {modelName || "기기"}
             </strong>
           </section>
 
@@ -262,7 +262,7 @@ function AssetFormModalContent({
                     options={STATUS_OPTIONS}
                     value={formValues.status}
                     placeholder="상태 선택"
-                    ariaLabel="개별 기자재 상태"
+                    ariaLabel="기기 상태"
                     disabled={isPending}
                     onChange={(nextValue) =>
                       updateFormValue("status", nextValue)
@@ -284,7 +284,7 @@ function AssetFormModalContent({
                     options={STATUS_OPTIONS}
                     value={formValues.status}
                     placeholder="상태 선택"
-                    ariaLabel="개별 기자재 상태"
+                    ariaLabel="기기 상태"
                     disabled={isPending}
                     onChange={(nextValue) =>
                       updateFormValue("status", nextValue)

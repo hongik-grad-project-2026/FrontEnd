@@ -63,7 +63,7 @@ function UsageGuideModal({ isOpen, title, content = [], onClose, id, onClick }) 
                     ))}
 
                     {(id === 'withdrawal') && (
-                        <div className={styles.withdrawalButtonContainer}>
+                        <div className={styles.additionalContainer}>
                             <Button
                                 color="Danger"
                                 kind="border"
@@ -75,7 +75,13 @@ function UsageGuideModal({ isOpen, title, content = [], onClose, id, onClick }) 
                             />
                         </div>
                     )}
-
+                    {id === 'pledge' ?
+                        <div className={styles.additionalContainer}>
+                            <img
+                                src="/images/rentalAgreement2026.png" alt="Pledge"
+                            />
+                        </div>
+                        : ''}
                 </div>
             </section>
 

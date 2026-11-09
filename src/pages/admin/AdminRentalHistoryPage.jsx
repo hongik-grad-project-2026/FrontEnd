@@ -12,15 +12,16 @@ import StatusBadge from "../../components/common/StatusBadge";
 import Tabs from "../../components/common/Tabs";
 import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
+import { RENTAL_STATUS } from "../../constants/status";
 import styles from "./AdminRentalHistoryPage.module.css";
 
 const ROWS_PER_PAGE = 10;
-const STATUS_BADGES = { canceled: "대여-신청취소", returned: "대여-반납완료" };
+// const STATUS_BADGES = { canceled: "대여-신청취소", returned: "대여-반납완료" };
 
 function EquipmentCell({ record }) {
   return (
     <div className={styles.equipmentCell}>
-      {/* 기자재명과 중복되는 이미지 영역은 장식 요소임. */}
+      {/* 모델명과 중복되는 이미지 영역은 장식 요소임. */}
       <span className={styles.equipmentImage} aria-hidden="true">
         {record.imageSrc ? (
           <img
@@ -122,7 +123,7 @@ function RequestDatesCell({ record }) {
 }
 
 function HistoryStatusCell({ record }) {
-  const badgeStatus = STATUS_BADGES[record.status];
+  const badgeStatus = RENTAL_STATUS[record.status];
 
   if (!badgeStatus) {
     return <span className={styles.primaryText}>-</span>;
@@ -130,7 +131,7 @@ function HistoryStatusCell({ record }) {
 
   return (
     <div className={styles.statusCell}>
-      <StatusBadge status={badgeStatus} size="md" />
+      <StatusBadge text={badgeStatus.label} color={badgeStatus.color} />
     </div>
   );
 }
@@ -138,7 +139,7 @@ function HistoryStatusCell({ record }) {
 const HISTORY_COLUMNS = [
   {
     key: "equipment",
-    header: <span className={styles.firstColumnHeader}>기자재 정보</span>,
+    header: <span className={styles.firstColumnHeader}>모델 정보</span>,
     width: 272,
     render: (record) => <EquipmentCell record={record} />,
   },
@@ -150,7 +151,7 @@ const HISTORY_COLUMNS = [
   },
   {
     key: "assetNumber",
-    header: "비품번호",
+    header: "라벨번호",
     width: 148,
     render: (record) => (
       <span
@@ -218,8 +219,8 @@ function AdminRentalHistoryPage() {
   const counts = countQuery.data ?? {};
   const tabs = [
     { value: "all", label: "전체", count: counts.all ?? "-", controlsId: panelId },
-    { value: "canceled", label: "신청 취소", count: counts.canceled ?? "-", controlsId: panelId },
-    { value: "returned", label: "반납 완료", count: counts.returned ?? "-", controlsId: panelId },
+    { value: "canceled", label: RENTAL_STATUS.canceled.label, count: counts.canceled ?? "-", controlsId: panelId },
+    { value: "returned", label: RENTAL_STATUS.returned.label, count: counts.returned ?? "-", controlsId: panelId },
   ];
   const data = historyQuery.data;
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
@@ -232,7 +233,7 @@ function AdminRentalHistoryPage() {
         <div className={styles.content}>
           <div className={styles.toolbar}>
             <Tabs className={styles.statusTabs} items={tabs} value={selectedStatus} onChange={(status) => { setSelectedStatus(status); setCurrentPage(1); }} ariaLabel="대여 기록 상태" />
-            <SearchBar className={styles.search} name="rentalHistorySearch" width={360} value={searchTerm} onChange={(event) => { setSearchTerm(event.target.value); setCurrentPage(1); }} onSubmit={(value) => { setSearchTerm(value); setCurrentPage(1); }} ariaLabel="대여 기록 검색" placeholder="기자재명·모델명·비품번호·이름·학번 검색" />
+            <SearchBar className={styles.search} name="rentalHistorySearch" width={360} value={searchTerm} onChange={(event) => { setSearchTerm(event.target.value); setCurrentPage(1); }} onSubmit={(value) => { setSearchTerm(value); setCurrentPage(1); }} ariaLabel="대여 기록 검색" placeholder="모델명·라벨번호·이름·학번 검색" />
           </div>
           <div id={panelId} className={styles.tablePanel} role="tabpanel" tabIndex={0}>
             {!isMockMode ? <p>대여 API가 아직 제공되지 않았습니다.</p> : null}
