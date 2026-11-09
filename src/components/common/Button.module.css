@@ -228,6 +228,12 @@
   border-color: var(--color-neutral-30);
 }
 
+.button[data-kind="border"][data-size="Xsmall"][data-color="Neutral"][data-status="Disabled"] {
+  color: var(--color-neutral-30);
+  background-color: var(--color-neutral-10);
+  border-color: var(--color-neutral-30);
+}
+
 .button[data-kind="border"][data-size="Xsmall"][data-color="Neutral"][data-status="Active"] {
   color: var(--color-brand-primary);
   background-color: var(--color-white);

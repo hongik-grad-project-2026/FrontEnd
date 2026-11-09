@@ -1,12 +1,11 @@
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, useContext } from "react";
 import BaseModal from "./BaseModal";
 import Button from "../common/Button";
 import Select from "../common/Select";
 import Input from "../common/Input";
 import styles from "./RentalApplyModal.module.css";
-import { SEMESTER_END_DATE } from "../../utils/rentalRules";
-
-const SEMESTER_END_DATE_VALUE = SEMESTER_END_DATE.toISOString().slice(0, 10);
+// import { SEMESTER_END_DATE } from "../../utils/rentalRules";
+import { SemesterContext } from "../../context/SemesterContext";
 
 function getNextDayDate(dateValue) {
   if (!(dateValue instanceof Date) || Number.isNaN(dateValue.getTime())) {
@@ -44,6 +43,9 @@ function RentalApplyModalContent({
   onSubmit,
   returnFocusRef,
 }) {
+  const { currentSemester } = useContext(SemesterContext);
+  const semesterEndDate = currentSemester?.endDate ?? "";
+
 
   const [form, setForm] = useState(() => ({
     rentalType: equipment?.rentalPolicies ?? "",
@@ -62,7 +64,7 @@ function RentalApplyModalContent({
   const firstInputRef = useRef(null);
 
   const resolvedReturnDate = isRegularRental
-    ? SEMESTER_END_DATE_VALUE
+    ? semesterEndDate
     : isAlwaysRental
       ? getNextDayDate(form.pickupDate)
       : form.returnDate;
