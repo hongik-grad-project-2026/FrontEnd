@@ -1,28 +1,37 @@
-// import { isMockMode } from "./client";
+import { api, isMockMode } from "./client";
 
-//조회
-export async function getCurrentSemester() {
-    // 임시값
-    const tempResult = {
-        year: 2024,
-        term: 1,
-        startDate: "2024-03-03",
-        endDate: "2024-06-06"
-    };
-    console.log("getCurrentSemester API 미연결, tempResult:", tempResult);
+const MOCK_CURRENT_SEMESTER = {
+  year: 2026,
+  term: 2,
+  startDate: "2026-09-01",
+  endDate: "2026-12-31",
+};
 
-    return tempResult;
+export async function getCurrentSemester({ signal } = {}) {
+  if (isMockMode) {
+    return { ...MOCK_CURRENT_SEMESTER };
+  }
+
+  const schedule = await api.get("/semesters", { signal });
+  if (!schedule || typeof schedule !== "object" || Array.isArray(schedule)) {
+    throw new Error("학기 일정 응답 형식을 확인할 수 없습니다.");
+  }
+
+  const { current } = schedule;
+  if (current == null) {
+    return null;
+  }
+  if (typeof current !== "object" || Array.isArray(current)) {
+    throw new Error("현재 학기 정보의 형식을 확인할 수 없습니다.");
+  }
+
+  return current;
 }
 
-//저장
-export async function saveSemester({ year, term, startDate, endDate }) {
-    const data = {
-        year,
-        term,
-        startDate,
-        endDate
-    };
+export async function saveSemester(values) {
+  if (!isMockMode) {
+    throw new Error("현재 서버는 학기 일정 저장을 지원하지 않습니다.");
+  }
 
-    console.log("saveSemester API 미연결:", data);
-    return;
+  return { ...values };
 }

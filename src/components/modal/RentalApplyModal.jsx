@@ -1,12 +1,11 @@
-import { useId, useRef, useState } from "react";
+import { useContext, useId, useRef, useState } from "react";
 import BaseModal from "./BaseModal";
 import Button from "../common/Button";
 import Select from "../common/Select";
 import Input from "../common/Input";
 import styles from "./RentalApplyModal.module.css";
-import { SEMESTER_END_DATE } from "../../utils/rentalRules";
-
-const SEMESTER_END_DATE_VALUE = SEMESTER_END_DATE.toISOString().slice(0, 10);
+import { SemesterContext } from "../../context/SemesterContext";
+import { isMockMode } from "../../api/client";
 
 function getNextDayDate(dateValue) {
   if (!(dateValue instanceof Date) || Number.isNaN(dateValue.getTime())) {
@@ -44,6 +43,7 @@ function RentalApplyModalContent({
   onSubmit,
   returnFocusRef,
 }) {
+  const { semester } = useContext(SemesterContext);
 
   const [form, setForm] = useState(() => ({
     rentalType: equipment?.rentalPolicies ?? "",
@@ -60,9 +60,12 @@ function RentalApplyModalContent({
   const pickupDateId = `${useId()}-pickup-date`;
   const reasonTextId = `${useId()}-reason-text`;
   const firstInputRef = useRef(null);
+  const regularReturnDate = (
+    isMockMode ? semester.endDate : semester.returnDeadline
+  )?.slice(0, 10) ?? "";
 
   const resolvedReturnDate = isRegularRental
-    ? SEMESTER_END_DATE_VALUE
+    ? regularReturnDate
     : isAlwaysRental
       ? getNextDayDate(form.pickupDate)
       : form.returnDate;
@@ -141,7 +144,7 @@ function RentalApplyModalContent({
               <label >
                 반납 예정일
                 {isRegularRental
-                  ? " (학기말)"
+                  ? " (학기 반납 마감일)"
                   : isAlwaysRental
                     ? " (수령일 다음 날)"
                     : ""}
@@ -164,7 +167,11 @@ function RentalApplyModalContent({
                 width="100%"
                 value={resolvedReturnDate}
                 ariaLabel="반납 예정일"
-                placeholder="수령 희망일을 선택하세요."
+                placeholder={
+                  isRegularRental && !regularReturnDate
+                    ? "학기 반납 마감일 미설정"
+                    : "수령 희망일을 선택하세요."
+                }
                 disabled={true}
               />
             </div>

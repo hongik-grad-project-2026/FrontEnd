@@ -520,6 +520,7 @@ function AdminEquipmentListPage() {
   };
 
   const handleEquipmentSettings = (values) => {
+    if (!isMockMode || settingMutation.isPending) return;
     settingMutation.mutate(values);
   };
 

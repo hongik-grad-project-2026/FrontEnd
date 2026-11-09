@@ -4,6 +4,7 @@ import Select from "../common/Select";
 import Button from "../common/Button";
 import { useContext, useState, useId } from "react";
 import { SemesterContext } from "../../context/SemesterContext";
+import { isMockMode } from "../../api/client";
 
 function addDays(date, days) {
     if (!date) {
@@ -27,17 +28,31 @@ function toDateOnly(date) {
     return `${year}-${month}-${day}`;
 }
 
-
-function formatDate(date) {
-    if (!date) {
+function toCalendarDate(value) {
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+    if (typeof value !== "string") {
         return null;
     }
 
-    const parsedDate = date instanceof Date ? date : new Date(`${date}T00:00:00`);
+    const datePart = value.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        return null;
+    }
 
-    return Number.isNaN(parsedDate.getTime())
-        ? null
-        : parsedDate.toLocaleDateString();
+    const date = new Date(`${datePart}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+
+function formatDate(date) {
+    const parsedDate = toCalendarDate(date);
+    if (!parsedDate) {
+        return null;
+    }
+
+    return parsedDate.toLocaleDateString();
 }
 
 function formatPeriod(period) {
@@ -57,33 +72,42 @@ function EuipmentSettingModal({
 }) {
     const startDateId = useId();
     const endDateId = useId();
-    const { semester, isCustomSemester } = useContext(SemesterContext);
+    const { semester, isCustomSemester, isLoading, error } = useContext(SemesterContext);
 
-    const [formValues, setFormValues] = useState(() => ({
-        startDate: semester.startDate ? (semester.startDate instanceof Date ? semester.startDate : new Date(`${semester.startDate}T00:00:00`)) : null,
-        endDate: semester.endDate ? (semester.endDate instanceof Date ? semester.endDate : new Date(`${semester.endDate}T00:00:00`)) : null,
-    }));
+    const [draftValues, setDraftValues] = useState(null);
+    const formValues = isMockMode
+        ? draftValues ?? {
+            startDate: toCalendarDate(semester.startDate),
+            endDate: toCalendarDate(semester.endDate),
+        }
+        : {
+            startDate: toCalendarDate(semester.startDate),
+            endDate: toCalendarDate(semester.returnDeadline),
+        };
 
-    const preApplyPeriod = formValues.startDate ? {
+    const preApplyPeriod = isMockMode && formValues.startDate ? {
         start: formValues.startDate,
         end: addDays(formValues.startDate, 13),
-    } : null;
+    } : {
+        start: semester.preApplyStartDate,
+        end: semester.preApplyEndDate,
+    };
 
     const regularApplyPeriod = formValues.endDate && formValues.startDate ? {
         start: addDays(formValues.startDate, 14),
         end: formValues.endDate,
     } : null;
 
-    const isRequiredFormComplete = formValues.startDate && formValues.endDate;
+    const isRequiredFormComplete = Boolean(formValues.startDate && formValues.endDate);
 
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!isRequiredFormComplete || isPending) {
+        if (!isMockMode || !isRequiredFormComplete || isPending) {
             return;
         }
 
-        onConfirm({
+        onConfirm?.({
             year: semester.year,
             term: semester.term,
             startDate: toDateOnly(formValues.startDate),
@@ -111,7 +135,9 @@ function EuipmentSettingModal({
 
                 <div className={styles.content}>
                     <div className={styles.contentTitle}>
-                        {semester.year}학년도 {semester.term}학기 일정
+                        {semester.year && semester.term
+                            ? `${semester.year}학년도 ${semester.term}학기 일정`
+                            : "학기 일정"}
                     </div>
                     <div className={styles.field}>
                         <label className={styles.label}
@@ -128,15 +154,16 @@ function EuipmentSettingModal({
                             placeholder="날짜를 선택하세요."
                             ariaLabel="시작일"
                             onChange={(nextDate) =>
-                                setFormValues(prev => ({ ...prev, startDate: nextDate }))
+                                setDraftValues({ ...formValues, startDate: nextDate })
                             }
+                            disabled={!isMockMode || isPending || isLoading}
                         />
                     </div>
                     <div className={styles.field}>
                         <label className={styles.label}
                             htmlFor={endDateId}
                         >
-                            종료일
+                            {isMockMode ? "종료일" : "반납 마감일"}
                         </label>
                         <Select
                             id={endDateId}
@@ -145,15 +172,21 @@ function EuipmentSettingModal({
                             width="100%"
                             value={formValues.endDate}
                             placeholder="날짜를 선택하세요."
-                            ariaLabel="종료일"
+                            ariaLabel={isMockMode ? "종료일" : "반납 마감일"}
                             onChange={(nextDate) =>
-                                setFormValues(prev => ({ ...prev, endDate: nextDate }))
+                                setDraftValues({ ...formValues, endDate: nextDate })
                             }
+                            disabled={!isMockMode || isPending || isLoading}
                         />
                     </div>
-                    {!isCustomSemester ? <p className={styles.alertText}>
-                        ⚠ 학기 일정이 아직 설정되지 않았습니다. 실제 일정에 맞게 설정을 완료해주세요.
-                    </p> : ""}
+                    {isLoading ? <p className={styles.alertText}>학기 일정을 불러오는 중입니다.</p> : null}
+                    {error ? <p className={styles.alertText} role="alert">학기 일정을 불러오지 못했습니다.</p> : null}
+                    {!isLoading && !error && !isCustomSemester ? <p className={styles.alertText}>
+                        학기 일정이 아직 설정되지 않았습니다.
+                    </p> : null}
+                    {!isMockMode ? <p className={styles.alertText}>
+                        현재 서버는 학기 일정 조회만 지원하여 이 화면에서 저장할 수 없습니다.
+                    </p> : null}
                 </div>
                 <div className={styles.content}>
                     <div className={styles.contentTitle}>
@@ -164,12 +197,18 @@ function EuipmentSettingModal({
                         <li>
                             <span> • 사전 신청 기간</span>
                             <span className={styles.periodBox}>{formatPeriod(preApplyPeriod)}</span>
-                            <span className={styles.noticeText}>학기 시작일부터 2주간 진행됩니다.</span>
+                            <span className={styles.noticeText}>{isMockMode ? "학기 시작일부터 2주간 진행됩니다." : "서버에 설정된 기간입니다."}</span>
                         </li>
                         <li>
                             <span> • 상시 신청 기간</span>
-                            <span className={styles.periodBox}>{formatPeriod(regularApplyPeriod)}</span>
-                            <span className={styles.noticeText}>사전 신청 종료 후 학기 종료일까지 진행됩니다.</span>
+                            <span className={styles.periodBox}>
+                                {isMockMode
+                                    ? formatPeriod(regularApplyPeriod)
+                                    : semester.onDemandStartDate
+                                        ? `${formatDate(semester.onDemandStartDate)}부터`
+                                        : "미정"}
+                            </span>
+                            <span className={styles.noticeText}>{isMockMode ? "사전 신청 종료 후 학기 종료일까지 진행됩니다." : "신청 종료일은 서버 응답에 없습니다."}</span>
                         </li>
                     </ol>
                 </div>
@@ -192,9 +231,9 @@ function EuipmentSettingModal({
                         kind="fill"
                         size="Default"
                         status="Default"
-                        text={isPending ? "처리 중" : "설정 완료"}
+                        text={isPending ? "처리 중" : isMockMode ? "설정 완료" : "저장 미지원"}
                         type="submit"
-                        disabled={isPending || !isRequiredFormComplete}
+                        disabled={!isMockMode || isPending || isLoading || !isRequiredFormComplete}
                     />
                 </div>
             </form>
