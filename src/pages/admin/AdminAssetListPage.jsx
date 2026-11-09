@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLoaderData, useParams } from "react-router-dom";
+import { useLoaderData } from "react-router-dom";
 
 import { isMockMode } from "../../api/client";
 import {
@@ -9,6 +9,7 @@ import {
   equipmentKeys,
   getAdminEquipmentItemCounts,
   getAdminEquipmentItems,
+  ITEM_STATUS_LABEL,
   updateAdminEquipmentItem,
 } from "../../api/equipmentApi";
 
@@ -27,7 +28,16 @@ import styles from "./AdminAssetListPage.module.css";
 
 const PAGE_SIZE = 10;
 
-const ASSET_TABS = [
+const ACTUAL_ASSET_TABS = [
+  { value: "all", label: "전체" },
+  ...Object.entries(ITEM_STATUS_LABEL).map(([value, label]) => ({
+    value,
+    label,
+  })),
+];
+
+// 폐기 예정은 실제 서버 enum이 아닌 기존 mock 화면 전용 상태임.
+const MOCK_ASSET_TABS = [
   { value: "all", label: "전체" },
   ...Object.values(ITEM_STATUS).map((status) => ({
     value: status.id,
@@ -62,8 +72,9 @@ function NotesCell({ notes }) {
 }
 
 function AdminAssetListPage() {
-  const { modelId } = useParams();
   const modelSummary = useLoaderData();
+  const resolvedModelId = modelSummary?.modelId ?? null;
+  const modelLoadError = modelSummary?.loadError ?? "";
   const queryClient = useQueryClient();
 
   const panelId = useId();
@@ -81,9 +92,11 @@ function AdminAssetListPage() {
     isPending: isItemsPending,
     isFetching: isItemsFetching,
     isError: isItemsError,
+    error: itemsError,
+    refetch: refetchItems,
   } = useQuery({
     queryKey: equipmentKeys.adminItems({
-      modelId,
+      modelId: resolvedModelId,
       status: selectedStatus,
       keyword,
       page: currentPage - 1,
@@ -91,23 +104,23 @@ function AdminAssetListPage() {
     }),
     queryFn: ({ signal }) =>
       getAdminEquipmentItems({
-        modelId,
+        modelId: resolvedModelId,
         status: selectedStatus,
         keyword,
         page: currentPage - 1,
         size: PAGE_SIZE,
         signal,
       }),
-    enabled: isMockMode && Boolean(modelId),
+    enabled: Boolean(resolvedModelId),
     retry: false,
     refetchOnWindowFocus: false,
   });
 
   const { data: itemCounts, isError: isCountsError } = useQuery({
-    queryKey: equipmentKeys.adminItemCounts(modelId),
+    queryKey: equipmentKeys.adminItemCounts(resolvedModelId),
     queryFn: ({ signal }) =>
-      getAdminEquipmentItemCounts(modelId, { signal }),
-    enabled: isMockMode && Boolean(modelId),
+      getAdminEquipmentItemCounts(resolvedModelId, { signal }),
+    enabled: isMockMode && Boolean(resolvedModelId),
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -115,10 +128,10 @@ function AdminAssetListPage() {
   const invalidateEquipmentQueries = async () => {
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: equipmentKeys.adminItemLists(modelId),
+        queryKey: equipmentKeys.adminItemLists(resolvedModelId),
       }),
       queryClient.invalidateQueries({
-        queryKey: equipmentKeys.adminItemCounts(modelId),
+        queryKey: equipmentKeys.adminItemCounts(resolvedModelId),
       }),
       queryClient.invalidateQueries({
         queryKey: equipmentKeys.adminModelLists(),
@@ -207,9 +220,12 @@ function AdminAssetListPage() {
     },
   });
 
-  const tabItems = ASSET_TABS.map((tab) => ({
+  const assetTabs = isMockMode ? MOCK_ASSET_TABS : ACTUAL_ASSET_TABS;
+  const tabItems = assetTabs.map((tab) => ({
     ...tab,
-    count: itemCounts?.[tab.value],
+    count: isMockMode
+      ? itemCounts?.[tab.value]
+      : itemPage?.statusCounts?.[tab.value],
     controlsId: panelId,
   }));
 
@@ -229,14 +245,32 @@ function AdminAssetListPage() {
       ? "표시할 개별 기자재가 없습니다."
       : "선택한 상태에 해당하는 개별 기자재가 없습니다.";
 
-  if (!isMockMode) {
-    emptyMessage = "개별 기자재 API가 아직 제공되지 않았습니다.";
-  } else if (!modelId) {
+  if (modelLoadError) {
+    emptyMessage = modelLoadError;
+  } else if (!resolvedModelId) {
     emptyMessage = "조회할 기자재 모델 정보가 없습니다.";
   } else if (isItemsPending) {
     emptyMessage = "개별 기자재 목록을 불러오는 중입니다.";
-  } else if (isItemsError) {
-    emptyMessage = "개별 기자재 목록을 불러오지 못했습니다.";
+  } else if (isItemsError && !itemPage) {
+    emptyMessage = (
+      <div className={styles.retryState} role="alert">
+        <span>
+          {getErrorMessage(
+            itemsError,
+            "개별 기자재 목록을 불러오지 못했습니다.",
+          )}
+        </span>
+        <Button
+          kind="border"
+          size="Default"
+          color="Primary"
+          status="Default"
+          text="다시 시도"
+          type="button"
+          onClick={() => refetchItems()}
+        />
+      </div>
+    );
   }
 
   const handleStatusChange = (nextStatus) => {
@@ -343,7 +377,8 @@ function AdminAssetListPage() {
         <IconButton
           icon="edit"
           size={24}
-          ariaLabel={`${item.assetNumber} 기기 수정`}
+          ariaLabel={`${item.labelNumber} 기기 수정`}
+          disabled={!isMockMode || updateMutation.isPending}
           onClick={(event) => handleOpenEdit(item, event)}
         />
       ),
@@ -357,7 +392,8 @@ function AdminAssetListPage() {
         <IconButton
           icon="trash"
           size={24}
-          ariaLabel={`${item.assetNumber} 기기 폐기`}
+          ariaLabel={`${item.labelNumber} 기기 폐기`}
+          disabled={!isMockMode || disposeMutation.isPending}
           onClick={(event) => handleOpenDispose(item, event)}
         />
       ),
@@ -393,7 +429,7 @@ function AdminAssetListPage() {
                 onSubmit={handleSearchSubmit}
                 ariaLabel="라벨 번호 검색"
                 placeholder="검색어를 입력하세요."
-                disabled={!isMockMode}
+                disabled={!resolvedModelId}
               />
             </div>
 
@@ -404,7 +440,7 @@ function AdminAssetListPage() {
               aria-label={`${selectedTab?.label ?? "전체"} 개별 기자재 목록`}
               aria-busy={isItemsFetching}
             >
-              {!modelId ? (
+              {!resolvedModelId && !modelLoadError ? (
                 <p className={styles.errorMessage} role="alert">
                   URL에서 기자재 모델 ID를 확인할 수 없습니다.
                 </p>
@@ -449,7 +485,7 @@ function AdminAssetListPage() {
                 status="Default"
                 text="기기 등록"
                 type="button"
-                disabled={!isMockMode || !modelId}
+                disabled={!isMockMode || !resolvedModelId}
                 onClick={handleOpenCreate}
               />
             </div>
@@ -459,7 +495,7 @@ function AdminAssetListPage() {
 
       <AssetFormModal
         mode="create"
-        modelId={modelId}
+        modelId={resolvedModelId}
         modelName={modelName}
         labelPrefix={modelSummary?.labelPrefix}
         isOpen={activeModal === "create"}
@@ -472,7 +508,7 @@ function AdminAssetListPage() {
       <AssetFormModal
         mode="edit"
         asset={selectedAsset}
-        modelId={modelId}
+        modelId={resolvedModelId}
         modelName={modelName}
         labelPrefix={modelSummary?.labelPrefix}
         isOpen={activeModal === "edit" && selectedAsset !== null}

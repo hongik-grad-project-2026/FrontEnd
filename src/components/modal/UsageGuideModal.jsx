@@ -3,7 +3,7 @@ import { InputIconButton } from "../common/IconButton";
 import styles from "./UsageGuideModal.module.css";
 import Button from "../common/Button";
 
-function ContentSection({ title = "", text = "", link, footer, ...props }) {
+function ContentSection({ title = "", text = "", link, footer }) {
     return (
         <section className={styles.contentSection}>
             {title === "" ? null : (

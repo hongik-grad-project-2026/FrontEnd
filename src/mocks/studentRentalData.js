@@ -633,8 +633,19 @@ function formatMockDateTime(date = new Date()) {
   return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}. ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-function formatInputDateTime(date, time) {
-  return `${String(date).replaceAll("-", ".")}. ${time}`;
+function formatApplicationDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}.${month}.${day}`;
+  }
+
+  if (typeof value === "string" && /^\d{4}[-.]\d{2}[-.]\d{2}$/.test(value)) {
+    return value.replaceAll("-", ".");
+  }
+
+  return null;
 }
 
 function getDatePart(value) {
@@ -940,21 +951,20 @@ export async function createMockStudentRental({
   user,
   rentalType,
   pickupDate,
-  // pickupTime,
   returnDate,
-  // returnTime,
   reason,
 }) {
   await waitForMock();
+
+  const expectedPickupAt = formatApplicationDate(pickupDate);
+  const expectedReturnAt = formatApplicationDate(returnDate);
 
   if (
     !model?.modelId ||
     !user?.id ||
     !rentalType ||
-    !pickupDate ||
-    // !pickupTime ||
-    !returnDate ||
-    // !returnTime ||
+    !expectedPickupAt ||
+    !expectedReturnAt ||
     !String(reason ?? "").trim()
   ) {
     throw createMockError(
@@ -985,10 +995,10 @@ export async function createMockStudentRental({
     imageUrl: model.modelImageUrl ?? null,
     description: model.description ?? "",
     components: model.components ?? "",
-    rentalType: rentalType,
+    rentalType: rentalType === "regular" ? "정기" : "상시",
     requestedAt: formatMockDateTime(now),
-    // expectedPickupAt: formatInputDateTime(pickupDate, pickupTime),
-    // expectedReturnAt: formatInputDateTime(returnDate, returnTime),
+    expectedPickupAt,
+    expectedReturnAt,
     reason: String(reason).trim(),
     approvedAt: null,
     actualPickupAt: null,

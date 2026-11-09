@@ -6,7 +6,7 @@ import AuthLayout from "../components/layout/AuthLayout";
 import NotFoundPage from "../pages/error/NotFoundPage";
 import ProtectedRoute from "./ProtectedRoute";
 
-import { getAdminEquipmentModelSummary } from "../api/equipmentApi";
+import { getAdminEquipmentModelByID } from "../api/equipmentApi";
 
 // 관리자 모드 모듈을 가져온다.
 // 관리자 1차 페이지를 구성함.
@@ -42,14 +42,20 @@ import SignUpPage from "../pages/auth/SignUpPage";
 import SignUpCompletePage from "../pages/auth/SignUpCompletePage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 
-async function loadAdminEquipmentModel({ params }) {
+async function loadAdminEquipmentModel({ params, request }) {
   try {
-    return await getAdminEquipmentModelSummary(params.modelId);
-  } catch {
+    return await getAdminEquipmentModelByID(params.modelId, {
+      signal: request.signal,
+    });
+  } catch (error) {
     return {
-      modelId: params.modelId,
+      modelId: null,
       name: "개별 기자재",
       labelPrefix: "",
+      loadError:
+        error instanceof Error && error.message
+          ? error.message
+          : "기자재 모델 정보를 불러오지 못했습니다.",
     };
   }
 }

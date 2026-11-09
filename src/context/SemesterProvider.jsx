@@ -19,6 +19,7 @@ const EMPTY_SEMESTER = {
 };
 
 export function SemesterProvider({ children }) {
+    const { isAuthenticated } = useUser();
 
     const {
         data: semesters,
@@ -28,6 +29,7 @@ export function SemesterProvider({ children }) {
         queryKey: ["semester", "current"],
         queryFn: fetchSemester,
     });
+    const semester = currentSemester ?? EMPTY_SEMESTER;
 
 
     const value = useMemo(() => ({

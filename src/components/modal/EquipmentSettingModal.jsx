@@ -99,46 +99,29 @@ function EuipmentSettingModal({
 }) {
     const startDateId = useId();
     const endDateId = useId();
+    const { semester, isCustomSemester, isLoading, error } = useContext(SemesterContext);
 
-    const SEMESTER_KEYS = ["previous", "current", "next"];
-    const [selectedKey, setSelectedKey] = useState("current");
+    const [draftValues, setDraftValues] = useState(null);
+    const formValues = isMockMode
+        ? draftValues ?? {
+            startDate: toCalendarDate(semester.startDate),
+            endDate: toCalendarDate(semester.endDate),
+        }
+        : {
+            startDate: toCalendarDate(semester.startDate),
+            endDate: toCalendarDate(semester.returnDeadline),
+        };
 
-    const selectedIndex = SEMESTER_KEYS.indexOf(selectedKey);
-
-    const canGoPrevious = selectedIndex > 0;
-    const canGoNext = selectedIndex < SEMESTER_KEYS.length - 1;
-
-    const {
-        data: semesters,
-        isPending: isSemesterLoading,
-        error: semesterError,
-    } = useQuery({
-        queryKey: ["semesters"],
-        queryFn: fetchSemester,
-    });
-
-    const semester = semesters?.[selectedKey];
-    const isCustomSemester = Boolean(semester?.startDate && semester?.endDate);
-
-    const [editedForm, setEditedForm] = useState(null);
-    const formValues = editedForm && editedForm.semesterId === semester?.semesterId
-        ? editedForm.values
-        : getSemesterFormValues(semester);
-
-    const updateFormDates = (updates) => {
-        const nextValues = { ...formValues, ...updates };
-
-        setEditedForm({
-            semesterId: semester.semesterId,
-            values: {
-                ...nextValues,
-                ...calculateRentalScheduleDates(nextValues.startDate, nextValues.endDate),
-            },
-        });
+    const preApplyPeriod = isMockMode && formValues.startDate ? {
+        start: formValues.startDate,
+        end: addDays(formValues.startDate, 13),
+    } : {
+        start: semester.preApplyStartDate,
+        end: semester.preApplyEndDate,
     };
 
 
-    const isRequiredFormComplete = formValues.startDate && formValues.endDate;
+    const isRequiredFormComplete = Boolean(formValues.startDate && formValues.endDate);
 
 
     const handleSubmit = (e) => {
@@ -236,7 +219,7 @@ function EuipmentSettingModal({
                         <label className={styles.label}
                             htmlFor={endDateId}
                         >
-                            종료일
+                            {isMockMode ? "종료일" : "반납 마감일"}
                         </label>
                         <Select
                             id={endDateId}
@@ -304,9 +287,9 @@ function EuipmentSettingModal({
                         kind="fill"
                         size="Default"
                         status="Default"
-                        text={isSaving ? "처리 중" : "설정 완료"}
+                        text={isPending ? "처리 중" : isMockMode ? "설정 완료" : "저장 미지원"}
                         type="submit"
-                        disabled={isSaving || isSemesterLoading || !semester || !isRequiredFormComplete}
+                        disabled={!isMockMode || isPending || isLoading || !isRequiredFormComplete}
                     />
                 </div>
             </form>

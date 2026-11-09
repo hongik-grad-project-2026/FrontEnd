@@ -107,3 +107,9 @@
   margin-top: 4px;
   background-color: var(--color-white);
 }
+
+.errorMessage {
+  margin: 0;
+  padding: 0 20px;
+  color: var(--color-danger-text);
+}

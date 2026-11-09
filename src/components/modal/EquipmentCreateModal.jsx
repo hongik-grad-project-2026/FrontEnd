@@ -30,6 +30,13 @@ function allowsFlexibleRentalPolicies(categoryOption) {
   return FLEXIBLE_POLICY_CATEGORY_LABELS.has(categoryOption?.label);
 }
 
+function isOtherCategory(categoryOption) {
+  return (
+    typeof categoryOption?.label === "string" &&
+    categoryOption.label.trim() === "기타"
+  );
+}
+
 function createEmptyForm() {
   return {
     category: "",
@@ -71,6 +78,7 @@ function formatFileSize(size) {
 function EquipmentCreateModal({
   categoryOptions = [],
   isOpen = false,
+  isMetadataLocked = false,
   isPending = false,
   onClose,
   onConfirm,
@@ -79,6 +87,7 @@ function EquipmentCreateModal({
   const generatedId = useId();
   const fileInputRef = useRef(null);
   const cancelButtonRef = useRef(null);
+  const submitGuardRef = useRef(false);
 
   const [formValues, setFormValues] = useState(createEmptyForm);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
@@ -102,6 +111,8 @@ function EquipmentCreateModal({
   const allowsFlexiblePolicies = allowsFlexibleRentalPolicies(
     selectedCategoryOption,
   );
+  const isOtherCategorySelected = isOtherCategory(selectedCategoryOption);
+  const metadataInputsDisabled = isPending || isMetadataLocked;
 
   const isRequiredFormComplete =
     Boolean(formValues.category) &&
@@ -111,10 +122,14 @@ function EquipmentCreateModal({
     isValidDate(formValues.disposalDate) &&
     Boolean(formValues.name.trim()) &&
     Boolean(formValues.accessories.trim()) &&
-    Boolean(formValues.labelPrefix.trim()) &&
+    (isOtherCategorySelected || Boolean(formValues.labelPrefix.trim())) &&
     formValues.imageFile !== null;
 
   const updateFormValue = (field, value) => {
+    if (isPending || (isMetadataLocked && field !== "imageFile")) {
+      return;
+    }
+
     setFormValues((previousValues) => ({
       ...previousValues,
       [field]: value,
@@ -126,12 +141,17 @@ function EquipmentCreateModal({
   };
 
   const handleCategoryChange = (nextCategory) => {
+    if (metadataInputsDisabled) {
+      return;
+    }
+
     const nextCategoryOption = categoryOptions.find(
       (option) => option.value === nextCategory,
     );
     const nextAllowsFlexiblePolicies = allowsFlexibleRentalPolicies(
       nextCategoryOption,
     );
+    const nextIsOtherCategory = isOtherCategory(nextCategoryOption);
 
     setFormValues((previousValues) => {
       const previousCategoryOption = categoryOptions.find(
@@ -144,6 +164,7 @@ function EquipmentCreateModal({
       return {
         ...previousValues,
         category: nextCategory,
+        labelPrefix: nextIsOtherCategory ? "" : previousValues.labelPrefix,
         rentalPolicies: nextAllowsFlexiblePolicies
           ? previousAllowsFlexiblePolicies
             ? previousValues.rentalPolicies
@@ -156,6 +177,10 @@ function EquipmentCreateModal({
   };
 
   const handleRentalPolicyChange = (nextPolicy) => {
+    if (metadataInputsDisabled) {
+      return;
+    }
+
     updateFormValue("rentalPolicies", nextPolicy);
   };
 
@@ -168,7 +193,7 @@ function EquipmentCreateModal({
   };
 
   const handleRequestClose = () => {
-    if (isPending) {
+    if (isPending || submitGuardRef.current) {
       return;
     }
 
@@ -176,7 +201,7 @@ function EquipmentCreateModal({
   };
 
   const handleCancel = () => {
-    if (isPending) {
+    if (isPending || submitGuardRef.current) {
       return;
     }
 
@@ -184,11 +209,15 @@ function EquipmentCreateModal({
   };
 
   const handleCloseCancelConfirm = () => {
+    if (isPending || submitGuardRef.current) {
+      return;
+    }
+
     setIsCancelConfirmOpen(false);
   };
 
   const handleConfirmCancel = (event) => {
-    if (isPending) {
+    if (isPending || submitGuardRef.current) {
       return;
     }
 
@@ -198,12 +227,20 @@ function EquipmentCreateModal({
   };
 
   const handleFileSelect = (event) => {
+    if (isPending) {
+      return;
+    }
+
     const [selectedFile] = Array.from(event.target.files ?? []);
 
     updateFormValue("imageFile", selectedFile ?? null);
   };
 
   const handleRemoveFile = () => {
+    if (isPending) {
+      return;
+    }
+
     updateFormValue("imageFile", null);
 
     if (fileInputRef.current) {
@@ -214,9 +251,11 @@ function EquipmentCreateModal({
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!isRequiredFormComplete || isPending) {
+    if (!isRequiredFormComplete || isPending || submitGuardRef.current) {
       return;
     }
+
+    submitGuardRef.current = true;
 
     const { category, ...otherFormValues } = formValues;
     const submittedValues = {
@@ -226,7 +265,9 @@ function EquipmentCreateModal({
       accessories: formValues.accessories.trim(),
       specification: formValues.specification.trim(),
       description: formValues.description.trim(),
-      labelPrefix: formValues.labelPrefix.trim(),
+      labelPrefix: isOtherCategorySelected
+        ? ""
+        : formValues.labelPrefix.trim(),
     };
 
     try {
@@ -234,6 +275,8 @@ function EquipmentCreateModal({
       resetForm();
     } catch {
       // 실패 시 사용자가 입력한 값을 그대로 유지함.
+    } finally {
+      submitGuardRef.current = false;
     }
   };
 
@@ -256,7 +299,11 @@ function EquipmentCreateModal({
           </header>
 
           <div className={styles.content}>
-            <div className={styles.pairRow}>
+            <div
+              className={`${styles.pairRow} ${
+                isOtherCategorySelected ? styles.singleFieldRow : ""
+              }`}
+            >
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={categoryId}>
@@ -270,27 +317,32 @@ function EquipmentCreateModal({
                   value={formValues.category}
                   placeholder="카테고리를 선택하세요."
                   ariaLabel="모델 카테고리"
+                  disabled={metadataInputsDisabled}
                   onChange={handleCategoryChange}
                 />
               </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={labelPrefixId}>
-                  라벨 번호 접두사*
-                </label>
+              {!isOtherCategorySelected ? (
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor={labelPrefixId}>
+                    라벨 번호 접두사*
+                  </label>
 
-                <div className={styles.inputWrap}>
-                  <InputBar
-                    id={labelPrefixId}
-                    width="100%"
-                    height="md"
-                    name="labelPrefix"
-                    value={formValues.labelPrefix}
-                    placeholder="예) ABC"
-                    required
-                    onChange={handleTextChange("labelPrefix")}
-                  />
+                  <div className={styles.inputWrap}>
+                    <InputBar
+                      id={labelPrefixId}
+                      width="100%"
+                      height="md"
+                      name="labelPrefix"
+                      value={formValues.labelPrefix}
+                      placeholder="예) ABC"
+                      required
+                      maxLength={10}
+                      status={metadataInputsDisabled ? "disabled" : "default"}
+                      onChange={handleTextChange("labelPrefix")}
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
 
 
@@ -307,7 +359,7 @@ function EquipmentCreateModal({
                   width="100%"
                   options={RENTAL_POLICY_OPTIONS}
                   value={formValues.rentalPolicies}
-                  disabled={!allowsFlexiblePolicies}
+                  disabled={metadataInputsDisabled || !allowsFlexiblePolicies}
                   placeholder="대여정책을 선택하세요"
                   ariaLabel="대여정책"
                   onChange={handleRentalPolicyChange}
@@ -325,6 +377,7 @@ function EquipmentCreateModal({
                   value={formValues.status}
                   placeholder="대여 상태를 선택하세요."
                   ariaLabel="모델 대여 상태"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextValue) => updateFormValue("status", nextValue)}
                 />
               </div>
@@ -344,6 +397,7 @@ function EquipmentCreateModal({
                   value={formValues.receivedDate}
                   placeholder="날짜를 선택하세요."
                   ariaLabel="모델 입고일"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextDate) =>
                     updateFormValue("receivedDate", nextDate)
                   }
@@ -362,6 +416,7 @@ function EquipmentCreateModal({
                   value={formValues.disposalDate}
                   placeholder="날짜를 선택하세요."
                   ariaLabel="모델 폐기일"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextDate) =>
                     updateFormValue("disposalDate", nextDate)
                   }
@@ -383,6 +438,8 @@ function EquipmentCreateModal({
                   value={formValues.name}
                   placeholder="모델명을 입력하세요"
                   required
+                  maxLength={100}
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("name")}
                 />
               </div>
@@ -402,6 +459,7 @@ function EquipmentCreateModal({
                   value={formValues.accessories}
                   placeholder="구성품을 입력하세요"
                   required
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("accessories")}
                 />
               </div>
@@ -420,6 +478,7 @@ function EquipmentCreateModal({
                   name="specification"
                   value={formValues.specification}
                   placeholder="성능을 입력하세요 (선택)"
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("specification")}
                 />
               </div>
@@ -438,6 +497,7 @@ function EquipmentCreateModal({
                   name="description"
                   value={formValues.description}
                   placeholder="설명을 입력하세요 (선택)"
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("description")}
                 />
               </div>
@@ -457,6 +517,7 @@ function EquipmentCreateModal({
                 name="imageFile"
                 accept="image/*"
                 required
+                disabled={isPending}
                 onChange={handleFileSelect}
               />
 
@@ -478,6 +539,7 @@ function EquipmentCreateModal({
                     size={24}
                     type="button"
                     ariaLabel={`${formValues.imageFile.name} 파일 제거`}
+                    disabled={isPending}
                     onClick={handleRemoveFile}
                   />
                 </div>
@@ -489,6 +551,7 @@ function EquipmentCreateModal({
                   type="button"
                   text="파일 선택"
                   ariaLabel="모델 사진 선택"
+                  disabled={isPending}
                   onClick={() => fileInputRef.current?.click()}
                 />
               )}
@@ -516,7 +579,13 @@ function EquipmentCreateModal({
               size="Default"
               color="Primary"
               status="Default"
-              text={isPending ? "처리 중" : "등록"}
+              text={
+                isPending
+                  ? "처리 중"
+                  : isMetadataLocked
+                    ? "이미지 업로드 재시도"
+                    : "등록"
+              }
               type="submit"
               disabled={!isRequiredFormComplete || isPending}
             />
@@ -528,7 +597,11 @@ function EquipmentCreateModal({
         isOpen={isCancelConfirmOpen}
         icon="warning"
         title="취소하고 나가시겠습니까?"
-        description="작성 중이던 내용이 모두 초기화됩니다."
+        description={
+          isMetadataLocked
+            ? "모델 정보는 이미 서버에 등록되었습니다. 닫으면 이미지 없이 등록된 상태가 유지됩니다."
+            : "작성 중이던 내용이 모두 초기화됩니다."
+        }
         cancelText="취소"
         confirmText="확인"
         confirmColor="Danger"

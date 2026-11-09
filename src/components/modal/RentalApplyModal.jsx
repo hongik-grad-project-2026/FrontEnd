@@ -62,12 +62,22 @@ function RentalApplyModalContent({
   const pickupDateId = `${useId()}-pickup-date`;
   const reasonTextId = `${useId()}-reason-text`;
   const firstInputRef = useRef(null);
+  const regularReturnDate = (
+    isMockMode ? semester.endDate : semester.returnDeadline
+  )?.slice(0, 10) ?? "";
 
   const resolvedReturnDate = isRegularRental
     ? semesterEndDate
     : isAlwaysRental
       ? getNextDayDate(form.pickupDate)
       : form.returnDate;
+  const canSubmit =
+    !isPending &&
+    Boolean(form.rentalType) &&
+    form.pickupDate instanceof Date &&
+    !Number.isNaN(form.pickupDate.getTime()) &&
+    Boolean(resolvedReturnDate) &&
+    Boolean(form.reason.trim());
 
   const updateField = (name, value) => {
     setForm((current) => ({ ...current, [name]: value }));
@@ -81,7 +91,7 @@ function RentalApplyModalContent({
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (!isPending) {
+    if (canSubmit) {
       onSubmit?.({ ...form, returnDate: resolvedReturnDate });
     }
   };
@@ -136,7 +146,7 @@ function RentalApplyModalContent({
               <label >
                 반납 예정일
                 {isRegularRental
-                  ? " (학기말)"
+                  ? " (학기 반납 마감일)"
                   : isAlwaysRental
                     ? " (수령일 다음 날)"
                     : ""}
@@ -159,7 +169,11 @@ function RentalApplyModalContent({
                 width="100%"
                 value={resolvedReturnDate}
                 ariaLabel="반납 예정일"
-                placeholder="수령 희망일을 선택하세요."
+                placeholder={
+                  isRegularRental && !regularReturnDate
+                    ? "학기 반납 마감일 미설정"
+                    : "수령 희망일을 선택하세요."
+                }
                 disabled={true}
               />
             </div>
@@ -181,9 +195,14 @@ function RentalApplyModalContent({
 
         </div>
 
+        {error ? (
+          <p className={styles.errorMessage} role="alert">
+            {error.message || "대여 신청에 실패했습니다."}
+          </p>
+        ) : null}
         <footer className={styles.actions}>
           <Button kind="border" size="Default" color="Neutral" status="Default" text="돌아가기" disabled={isPending} onClick={(event) => handleClose("cancel", event)} />
-          <Button kind="fill" size="Default" color="Primary" status="Default" text={isPending ? "신청 중" : "대여 신청"} type="submit" disabled={isPending} />
+          <Button kind="fill" size="Default" color="Primary" status="Default" text={isPending ? "신청 중" : "대여 신청"} type="submit" disabled={!canSubmit} />
         </footer>
       </form>
     </BaseModal>
