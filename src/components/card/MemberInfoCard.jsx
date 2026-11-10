@@ -63,7 +63,7 @@ function MemberInfoCard({
         <div className={styles.headingRow}>
           <h3 className={styles.name}>{member.name}</h3>
 
-          {badgeStatus ? <StatusBadge status={badgeStatus} size="lg" /> : null}
+          {badgeStatus ? <StatusBadge text={badgeStatus.label} color={badgeStatus.color} size="lg" /> : null}
           {statusLabel ? <span className={styles.statusLabel}>{statusLabel}</span> : null}
 
           <EditButton label="회원 기본 정보" onClick={onEditMember} />

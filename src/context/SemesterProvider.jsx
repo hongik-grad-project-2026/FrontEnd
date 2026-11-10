@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { useQuery } from "@tanstack/react-query";
 
 import { SemesterContext } from './SemesterContext';
-import { fetchSemester } from '../api/semesterApi';
+import { getSemesterSchedule } from '../api/semesterApi';
+import { isMockMode } from '../api/client';
+import { useUser } from './UserContext';
 
 
 const EMPTY_SEMESTER = {
@@ -10,33 +12,34 @@ const EMPTY_SEMESTER = {
     term: null,
     startDate: null,
     endDate: null,
-    preApplyStartDate: null,
-    preApplyEndDate: null,
-    pickupStartDate: null,
-    pickupDeadline: null,
-    onDemandStartDate: null,
-    returnDeadline: null,
 };
+const EMPTY_SCHEDULE = { previous: null, current: null, next: null };
 
 export function SemesterProvider({ children }) {
     const { isAuthenticated } = useUser();
 
     const {
-        data: semesters,
+        data: semesterSchedule,
         isLoading,
         error,
     } = useQuery({
-        queryKey: ["semester", "current"],
-        queryFn: fetchSemester,
+        queryKey: ["semester", "schedule"],
+        queryFn: ({ signal }) => getSemesterSchedule({ signal }),
+        enabled: isAuthenticated,
     });
-    const semester = currentSemester ?? EMPTY_SEMESTER;
+    const schedule = semesterSchedule ?? EMPTY_SCHEDULE;
+    const semester = schedule.current ?? EMPTY_SEMESTER;
 
 
     const value = useMemo(() => ({
-        currentSemester: semesters?.current ?? EMPTY_SEMESTER,
+        semester,
+        schedule,
         isLoading,
         error,
-    }), [semesters, isLoading, error]);
+        isCustomSemester: Boolean(
+            semester.startDate && (isMockMode ? semester.endDate : semester.returnDeadline),
+        ),
+    }), [semester, schedule, isLoading, error]);
 
 
     return (

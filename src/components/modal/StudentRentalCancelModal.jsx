@@ -11,6 +11,7 @@ import StatusBadge from "../common/StatusBadge";
 import BaseModal from "./BaseModal";
 import detailStyles from "./RentalDetailModal.module.css";
 import styles from "./StudentRentalModal.module.css";
+import { RENTAL_STATUS } from "../../constants/status";
 
 function resolveValue(value) {
   return value === undefined || value === null || value === "" ? "-" : value;
@@ -160,7 +161,7 @@ function StudentRentalCancelModal({
                 <strong className={detailStyles.rentalId}>
                   대여내역 ID : {rental.rentalId}
                 </strong>
-                <StatusBadge status="대여-승인대기" size="lg" />
+                <StatusBadge text={RENTAL_STATUS.pendingApproval.label} color={RENTAL_STATUS.pendingApproval.color} size="lg" />
               </section>
 
               <InfoSection title="기자재 정보">

@@ -271,9 +271,11 @@ function AdminEquipmentListPage() {
   const settingMutation = useMutation({
     mutationFn: saveSemester,
     onSuccess: (_result, values) => {
-      queryClient.setQueryData(["semester", "current"], {
-        ...values,
-      });
+      queryClient.setQueryData(["semester", "schedule"], (schedule) => ({
+        previous: schedule?.previous ?? null,
+        current: { ...schedule?.current, ...values },
+        next: schedule?.next ?? null,
+      }));
       setIsSettingModalOpen(false);
     },
   });

@@ -22,6 +22,7 @@ import StatusBadge from "../../components/common/StatusBadge";
 import Tabs from "../../components/common/Tabs";
 import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
+import { MEMBER_STATUS, RENTAL_STATUS } from "../../constants/status";
 
 import styles from "./AdminMemberDetailPage.module.css";
 
@@ -29,8 +30,8 @@ const BLACKLIST_PAGE_SIZE = 5;
 const RENTAL_PAGE_SIZE = 10;
 
 const MEMBER_BADGE_STATUS = {
-  active: "회원-일반",
-  suspended: "회원-블랙",
+  active: MEMBER_STATUS.active,
+  suspended: MEMBER_STATUS.suspended,
 };
 
 const MEMBER_STATUS_LABEL = {
@@ -39,12 +40,12 @@ const MEMBER_STATUS_LABEL = {
 };
 
 const RENTAL_BADGE_STATUS = {
-  approvalPending: "대여-승인대기",
-  pickupPending: "대여-수령대기",
-  rented: "대여-대여중",
-  overdue: "대여-연체",
-  returned: "대여-반납완료",
-  canceled: "대여-신청취소",
+  approvalPending: RENTAL_STATUS.pendingApproval,
+  pickupPending: RENTAL_STATUS.readyForPickup,
+  rented: RENTAL_STATUS.renting,
+  overdue: RENTAL_STATUS.overdue,
+  returned: RENTAL_STATUS.returned,
+  canceled: RENTAL_STATUS.canceled,
 };
 
 function TextValue({ value, className = "" }) {
@@ -143,7 +144,7 @@ function RentalStatusCell({ rental }) {
 
   return (
     <div className={styles.statusCell}>
-      <StatusBadge status={badgeStatus} size="md" />
+      <StatusBadge text={badgeStatus.label} color={badgeStatus.color} size="md" />
     </div>
   );
 }
