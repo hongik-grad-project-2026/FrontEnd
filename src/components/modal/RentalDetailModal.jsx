@@ -1,5 +1,8 @@
 // 대여 상세 표시와 일부 업무 처리를 담당하는 모달임.
 import { useId, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { isMockMode } from "../../api/client";
+import { getAdminRentalDetail, rentalKeys } from "../../api/rentalApi";
 import Button from "../common/Button";
 import IconButton, {
   IconTextButton,
@@ -73,7 +76,7 @@ function RentalDetailModal({
   isOpen = false,
   onClose,
   onComplete,
-  rental,
+  rental: rentalSummary,
   returnFocusRef,
   workerName = "",
   isPending = false,
@@ -86,14 +89,41 @@ function RentalDetailModal({
   const [mode, setMode] = useState(initialMode);
   const [processPhoto, setProcessPhoto] = useState([]);
   const [fileError, setFileError] = useState("");
-
-
-  if (!rental) {
-    return null;
-  }
-
   const titleId = `${generatedId}-title`;
   const processPhotoId = `${generatedId}-process-photo`;
+  const detailQuery = useQuery({
+    queryKey: rentalKeys.adminDetail(rentalSummary?.rentalId),
+    queryFn: ({ signal }) => getAdminRentalDetail(rentalSummary.rentalId, { signal }),
+    enabled: !isMockMode && isOpen && Boolean(rentalSummary?.rentalId),
+    retry: (failureCount, queryError) => queryError?.status !== 404 && failureCount < 1,
+  });
+  const rental = isMockMode ? rentalSummary : detailQuery.data;
+
+  if (!rental) {
+    return (
+      <BaseModal
+        isOpen={isOpen}
+        onClose={onClose}
+        className={styles.modal}
+        ariaLabelledBy={titleId}
+        returnFocusRef={returnFocusRef}
+      >
+        <div className={styles.layout}>
+          <header className={styles.header}>
+            <h2 id={titleId} className={styles.title}>대여내역 상세</h2>
+            <InputIconButton icon="close" type="button" ariaLabel="대여내역 상세 닫기" onClick={onClose} />
+          </header>
+          <div className={styles.content} role={detailQuery.isError ? "alert" : undefined}>
+            <p>{detailQuery.isError ? detailQuery.error?.message || "대여내역을 불러오지 못했습니다." : "대여내역을 불러오는 중입니다."}</p>
+            {detailQuery.isError && detailQuery.error?.status !== 404 ? (
+              <Button kind="border" size="Default" color="Primary" status="Default" text={detailQuery.isFetching ? "다시 시도 중" : "다시 시도"} disabled={detailQuery.isFetching} onClick={() => detailQuery.refetch()} />
+            ) : null}
+          </div>
+        </div>
+      </BaseModal>
+    );
+  }
+
 
   const isWaiting = rental.status === "readyForPickup";
   const isOverdue = rental.status === "overdue";
@@ -123,6 +153,7 @@ function RentalDetailModal({
   };
 
   const handleStartProcess = () => {
+    if (!isMockMode) return;
     setMode("process");
   };
 
@@ -157,7 +188,7 @@ function RentalDetailModal({
   };
 
   const handleComplete = (event) => {
-    if ((isProcessPhotoRequired && processPhoto.length === 0) || isPending) {
+    if (!isMockMode || (isProcessPhotoRequired && processPhoto.length === 0) || isPending) {
       return;
     }
 
@@ -381,6 +412,8 @@ function RentalDetailModal({
                 text="수령 처리"
                 type="button"
                 onClick={handleStartProcess}
+                disabled={!isMockMode}
+                title={!isMockMode ? "수령 처리는 다음 단계에서 연결됩니다." : undefined}
               />
             ) : (
               <>
@@ -419,6 +452,8 @@ function RentalDetailModal({
                   text="반납 처리"
                   type="button"
                   onClick={handleStartProcess}
+                  disabled={!isMockMode}
+                  title={!isMockMode ? "반납 처리는 다음 단계에서 연결됩니다." : undefined}
                 />
               </>
             )}

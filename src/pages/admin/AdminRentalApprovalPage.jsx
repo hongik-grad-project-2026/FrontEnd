@@ -57,7 +57,6 @@ function AdminRentalApprovalPage() {
   const approvalQuery = useQuery({
     queryKey: rentalKeys.adminApprovalList(params),
     queryFn: ({ signal }) => getAdminRentalApprovals({ ...params, signal }),
-    enabled: isMockMode,
   });
 
   const refreshRentals = () =>
@@ -119,9 +118,9 @@ function AdminRentalApprovalPage() {
     { key: "equipment", header: "기자재 정보", width: 176, render: (request) => <CellStack><span className={styles.primaryText} title={request.equipmentName}>{request.equipmentName}</span><span className={styles.secondaryText}>{request.category}</span></CellStack> },
     { key: "reason", header: "대여 사유", width: 280, render: (request) => <span className={styles.singleLineText} title={request.reason}>{request.reason}</span> },
     { key: "rentalType", header: "유형", width: 96, getValue: (request) => request.rentalType },
-    { key: "period", header: "대여 기간", width: 136, render: (request) => <CellStack><span>{request.startDate}</span><span>~{request.endDate}</span></CellStack> },
-    { key: "requestedAt", header: "신청 일시", width: 136, render: (request) => <CellStack><span>{request.requestedDate}</span><span>{request.requestedTime}</span></CellStack> },
-    { key: "reject", header: "반려", width: 64, render: (request) => <Button kind="border" size="small" color="Danger" status="Default" text="반려" disabled={approvalMutation.isPending || rejectMutation.isPending} onClick={(event) => { rejectButtonRef.current = event.currentTarget; setRejectionReason(initializeRejectionReasonFrom()); rejectMutation.reset(); setRejectTargetRequest(request); }} /> },
+    { key: "period", header: "대여 기간", width: 136, render: (request) => <CellStack><span>{request.startDate ?? "-"}</span><span>~{request.endDate ?? "-"}</span></CellStack> },
+    { key: "requestedAt", header: "신청 일시", width: 136, render: (request) => <CellStack><span>{request.requestedDate ?? "-"}</span><span>{request.requestedTime ?? ""}</span></CellStack> },
+    { key: "reject", header: "반려", width: 64, render: (request) => <Button kind="border" size="small" color="Danger" status="Default" text="반려" disabled={!isMockMode || approvalMutation.isPending || rejectMutation.isPending} title={!isMockMode ? "반려 처리는 다음 단계에서 연결됩니다." : undefined} onClick={(event) => { rejectButtonRef.current = event.currentTarget; setRejectionReason(initializeRejectionReasonFrom()); rejectMutation.reset(); setRejectTargetRequest(request); }} /> },
   ];
 
   const pageData = approvalQuery.data;
@@ -132,21 +131,20 @@ function AdminRentalApprovalPage() {
       <h1 className={styles.title}>대여신청 승인</h1>
       <div className={styles.contentViewport} role="region" aria-label="대여 신청 승인 목록 영역">
         <div className={styles.content}>
-          {!isMockMode ? <p>대여 API가 아직 제공되지 않았습니다.</p> : null}
-          {isMockMode && approvalQuery.isPending ? <p>대여 신청을 불러오는 중입니다.</p> : null}
-          {isMockMode && approvalQuery.isError ? <p role="alert">{approvalQuery.error?.message || "대여 신청을 불러오지 못했습니다."}</p> : null}
+          {approvalQuery.isPending ? <p>대여 신청을 불러오는 중입니다.</p> : null}
+          {approvalQuery.isError ? <p role="alert">{approvalQuery.error?.message || "대여 신청을 불러오지 못했습니다."}</p> : null}
           {actionError ? <p role="alert">{actionError}</p> : null}
-          {isMockMode && approvalQuery.isSuccess ? (
+          {approvalQuery.isSuccess ? (
             <DataTable
               ariaLabel="대여 신청 승인 목록"
               columns={columns}
               rows={pageData.content}
               totalCount={pageData.totalElements}
-              selectedRowIds={selectedRequestIds}
-              onSelectedRowIdsChange={setSelectedRequestIds}
+              selectedRowIds={isMockMode ? selectedRequestIds : []}
+              onSelectedRowIdsChange={isMockMode ? setSelectedRequestIds : undefined}
               getRowId={(request) => request.rentalId}
               emptyMessage="검색 조건에 해당하는 대여 신청이 없습니다."
-              bulkAction={<Button ref={approvalButtonRef} kind="fill" size="Default" color="Primary" status="Default" text="신청 승인" disabled={selectedRequestIds.length === 0 || approvalMutation.isPending || rejectMutation.isPending} onClick={() => setApprovalTargetRequestIds([...selectedRequestIds])} />}
+              bulkAction={isMockMode ? <Button ref={approvalButtonRef} kind="fill" size="Default" color="Primary" status="Default" text="신청 승인" disabled={selectedRequestIds.length === 0 || approvalMutation.isPending || rejectMutation.isPending} onClick={() => setApprovalTargetRequestIds([...selectedRequestIds])} /> : null}
               search={<SearchBar width={360} value={searchTerm} ariaLabel="대여 신청 검색어" placeholder="학생명, 학번 또는 기자재명으로 검색..." onChange={(event) => { setSearchTerm(event.target.value); setCurrentPage(1); setSelectedRequestIds([]); }} onSubmit={() => setCurrentPage(1)} />}
               pagination={<Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} ariaLabel="대여 신청 목록 페이지 이동" />}
             />

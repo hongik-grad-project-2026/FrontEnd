@@ -1,6 +1,5 @@
 import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { isMockMode } from "../../api/client";
 import {
   getAdminRentalHistory,
   getAdminRentalHistoryCounts,
@@ -12,7 +11,7 @@ import StatusBadge from "../../components/common/StatusBadge";
 import Tabs from "../../components/common/Tabs";
 import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
-import { RENTAL_STATUS } from "../../constants/status";
+import { RENTAL_STATUS, getRentalStatus } from "../../constants/status";
 import styles from "./AdminRentalHistoryPage.module.css";
 
 const ROWS_PER_PAGE = 10;
@@ -123,11 +122,7 @@ function RequestDatesCell({ record }) {
 }
 
 function HistoryStatusCell({ record }) {
-  const badgeStatus = RENTAL_STATUS[record.status];
-
-  if (!badgeStatus) {
-    return <span className={styles.primaryText}>-</span>;
-  }
+  const badgeStatus = getRentalStatus(record.status);
 
   return (
     <div className={styles.statusCell}>
@@ -209,12 +204,10 @@ function AdminRentalHistoryPage() {
   const historyQuery = useQuery({
     queryKey: rentalKeys.adminHistoryList(params),
     queryFn: ({ signal }) => getAdminRentalHistory({ ...params, signal }),
-    enabled: isMockMode,
   });
   const countQuery = useQuery({
     queryKey: rentalKeys.adminHistoryCounts(),
     queryFn: ({ signal }) => getAdminRentalHistoryCounts({ signal }),
-    enabled: isMockMode,
   });
   const counts = countQuery.data ?? {};
   const tabs = [
@@ -236,12 +229,12 @@ function AdminRentalHistoryPage() {
             <SearchBar className={styles.search} name="rentalHistorySearch" width={360} value={searchTerm} onChange={(event) => { setSearchTerm(event.target.value); setCurrentPage(1); }} onSubmit={(value) => { setSearchTerm(value); setCurrentPage(1); }} ariaLabel="대여 기록 검색" placeholder="모델명·라벨번호·이름·학번 검색" />
           </div>
           <div id={panelId} className={styles.tablePanel} role="tabpanel" tabIndex={0}>
-            {!isMockMode ? <p>대여 API가 아직 제공되지 않았습니다.</p> : null}
-            {isMockMode && historyQuery.isPending ? <p>대여 기록을 불러오는 중입니다.</p> : null}
-            {isMockMode && historyQuery.isError ? <p role="alert">{historyQuery.error?.message || "대여 기록을 불러오지 못했습니다."}</p> : null}
-            {isMockMode && historyQuery.isSuccess ? <DataTable className={styles.dataTable} ariaLabel="관리자 대여 기록 목록" columns={HISTORY_COLUMNS} rows={data.content} getRowId={(record) => record.rentalId} minWidth={1120} emptyMessage={emptyMessage} /> : null}
+            {historyQuery.isPending ? <p>대여 기록을 불러오는 중입니다.</p> : null}
+            {historyQuery.isError ? <p role="alert">{historyQuery.error?.message || "대여 기록을 불러오지 못했습니다."}</p> : null}
+            {countQuery.isError ? <p role="alert">상태별 개수를 불러오지 못했습니다.</p> : null}
+            {historyQuery.isSuccess ? <DataTable className={styles.dataTable} ariaLabel="관리자 대여 기록 목록" columns={HISTORY_COLUMNS} rows={data.content} getRowId={(record) => record.rentalId} minWidth={1120} emptyMessage={emptyMessage} /> : null}
           </div>
-          {isMockMode && historyQuery.isSuccess ? <div className={styles.footer}><Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} ariaLabel="대여 기록 목록 페이지 이동" /></div> : null}
+          {historyQuery.isSuccess ? <div className={styles.footer}><Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} ariaLabel="대여 기록 목록 페이지 이동" /></div> : null}
         </div>
       </div>
     </section>

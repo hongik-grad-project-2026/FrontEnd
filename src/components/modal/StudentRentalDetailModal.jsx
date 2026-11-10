@@ -249,6 +249,8 @@ function StudentRentalDetailModal({
                   status="Default"
                   text="대여 신청 취소하기"
                   type="button"
+                  disabled={!onRequestCancel}
+                  title={!onRequestCancel ? "신청 취소는 다음 단계에서 연결됩니다." : undefined}
                   onClick={() => onRequestCancel?.(rental)}
                 />
               </footer>

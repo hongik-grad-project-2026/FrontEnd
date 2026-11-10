@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { RENTAL_STATUS } from "../../constants/status";
+import { isMockMode } from "../../api/client";
+import { RENTAL_STATUS, getRentalStatus } from "../../constants/status";
 
 import {
   cancelStudentRental,
@@ -13,6 +14,7 @@ import {
 import RentalCard from "../../components/card/RentalCard";
 import RentalCardInfo from "../../components/card/RentalCardInfo";
 import Button from "../../components/common/Button";
+import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/common/SearchBar";
 import StatusBadge from "../../components/common/StatusBadge";
 import Tabs from "../../components/common/Tabs";
@@ -22,7 +24,6 @@ import StudentRentalDetailModal from "../../components/modal/StudentRentalDetail
 import layoutStyles from "../admin/AdminRentalStatusPage.module.css";
 import styles from "./StudentRentalHistoryPage.module.css";
 
-const LIST_PAGE = 0;
 const LIST_SIZE = 50;
 
 function shouldRetry(failureCount, error) {
@@ -138,9 +139,11 @@ function StudentRentalHistoryPage() {
   const cancelGuardRef = useRef(false);
   const requestedTab = searchParams.get("status") ?? "all";
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [modalState, setModalState] = useState(null);
 
   const handleTabChange = (nextTab) => {
+    setCurrentPage(1);
     const nextSearchParams = new URLSearchParams(searchParams);
 
     if (nextTab === "all") {
@@ -198,10 +201,10 @@ function StudentRentalHistoryPage() {
     () => ({
       status: activeTab,
       keyword: searchTerm,
-      page: LIST_PAGE,
+      page: currentPage - 1,
       size: LIST_SIZE,
     }),
-    [activeTab, searchTerm],
+    [activeTab, searchTerm, currentPage],
   );
 
   const listQuery = useQuery({
@@ -300,8 +303,6 @@ function StudentRentalHistoryPage() {
       ]);
 
       setModalState(null);
-    } catch (error) {
-      throw error;
     } finally {
       cancelGuardRef.current = false;
     }
@@ -367,8 +368,8 @@ function StudentRentalHistoryPage() {
                 name="studentRentalSearch"
                 width={360}
                 value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                onSubmit={setSearchTerm}
+                onChange={(event) => { setSearchTerm(event.target.value); setCurrentPage(1); }}
+                onSubmit={(value) => { setSearchTerm(value); setCurrentPage(1); }}
                 ariaLabel="대여내역 검색"
                 placeholder="기자재명, 카테고리, 대여내역 ID 검색..."
               />
@@ -402,7 +403,7 @@ function StudentRentalHistoryPage() {
               ) : null}
 
               {rentals.map((rental) => {
-                const status = RENTAL_STATUS[rental.status];
+                const status = getRentalStatus(rental.status);
                 return (
                   <RentalCard
                     key={rental.rentalId}
@@ -420,6 +421,8 @@ function StudentRentalHistoryPage() {
                             color="Danger"
                             text="신청 취소하기"
                             type="button"
+                            disabled={!isMockMode}
+                            title={!isMockMode ? "신청 취소는 다음 단계에서 연결됩니다." : undefined}
                             onClick={(event) =>
                               openCancelModalFromCard(rental.rentalId, event)
                             }
@@ -455,6 +458,14 @@ function StudentRentalHistoryPage() {
                 )
               })}
             </section>
+            {listQuery.data && listQuery.data.totalPages > 1 ? (
+              <Pagination
+                page={currentPage}
+                totalPages={listQuery.data.totalPages}
+                onChange={setCurrentPage}
+                ariaLabel="학생 대여내역 페이지 이동"
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -464,7 +475,7 @@ function StudentRentalHistoryPage() {
           isOpen
           rentalId={modalState.rentalId}
           onClose={closeModal}
-          onRequestCancel={openCancelModalFromDetail}
+          onRequestCancel={isMockMode ? openCancelModalFromDetail : undefined}
           returnFocusRef={modalTriggerRef}
         />
       ) : null}

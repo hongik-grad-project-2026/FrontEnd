@@ -1,4 +1,14 @@
-import { isMockMode } from "./client";
+import { api, isMockMode } from "./client";
+import {
+  mapAdminApproval,
+  mapAdminDetail,
+  mapAdminHistory,
+  mapAdminStatus,
+  mapRentalPage,
+  mapStudentDetail,
+  mapStudentSummary,
+  serverStatusesFor,
+} from "./rentalAdapter";
 import {
   approveMockRental,
   cancelMockStudentRental,
@@ -32,6 +42,7 @@ function normalizeListParams(params = {}, defaultSize = 10) {
 
 export const rentalKeys = {
   all: ["rentals"],
+  adminDetail: (rentalId) => ["rentals", "admin", "detail", String(rentalId)],
   adminApprovalLists: () => ["rentals", "admin", "approval", "list"],
   adminApprovalList: (params) => [
     "rentals",
@@ -97,29 +108,63 @@ function assertRentalMockMode() {
     return;
   }
 
-  const error = new Error("대여 API가 아직 제공되지 않았습니다.");
+  const error = new Error("이 기능은 실제 API에 아직 연결되지 않았습니다.");
   error.code = "STUDENT_RENTAL_API_UNAVAILABLE";
   throw error;
 }
 
-// Swagger에 대여 API가 추가되면 아래 함수 내부만 실제 요청으로 교체함.
-// 현재 상태값과 입력 구조는 모두 화면 확인용 mock 계약임.
+function rentalListPath(path, { statuses = [], keyword = "", page = 0, size = 10 }) {
+  const query = new URLSearchParams();
+  for (const status of statuses) query.append("status", status);
+  if (keyword.trim()) query.set("keyword", keyword.trim());
+  query.set("page", String(page));
+  query.set("size", String(size));
+  return `${path}?${query.toString()}`;
+}
+
+async function getRentalPage(path, params, mapRecord) {
+  const { signal, page = 0 } = params;
+  const result = await api.get(rentalListPath(path, params), { signal });
+  return mapRentalPage(result, mapRecord, page);
+}
+
 export async function getStudentRentals(params = {}) {
-  assertRentalMockMode();
-  return queryMockStudentRentals({
-    ...normalizeListParams(params, 50),
-    signal: params.signal,
-  });
+  if (isMockMode) {
+    return queryMockStudentRentals({
+      ...normalizeListParams(params, 50),
+      signal: params.signal,
+    });
+  }
+  return getRentalPage("/rentals/me", {
+    ...params,
+    size: params.size ?? 50,
+    statuses: serverStatusesFor(params.status),
+  }, mapStudentSummary);
 }
 
 export async function getStudentRentalCounts(options = {}) {
-  assertRentalMockMode();
-  return getMockStudentRentalCounts(options);
+  if (isMockMode) return getMockStudentRentalCounts(options);
+  const page = await getStudentRentals({ page: 0, size: 1, signal: options.signal });
+  const counts = page.statusCounts;
+  return {
+    all: page.totalElements,
+    pendingApproval: counts?.pendingApproval ?? null,
+    readyForPickup: counts?.readyForPickup ?? null,
+    renting: counts ? counts.renting + counts.overdue : null,
+    overdue: counts?.overdue ?? null,
+    canceled: counts?.canceled ?? null,
+    returned: counts?.returned ?? null,
+  };
 }
 
 export async function getStudentRentalDetail(rentalId, options = {}) {
-  assertRentalMockMode();
-  return getMockStudentRentalDetail(rentalId, options);
+  if (isMockMode) return getMockStudentRentalDetail(rentalId, options);
+  const requestedId = Number(rentalId);
+  if (!Number.isSafeInteger(requestedId) || requestedId < 1) {
+    throw new Error("대여 ID가 올바르지 않습니다.");
+  }
+  const result = await api.get(`/rentals/me/${requestedId}`, { signal: options.signal });
+  return mapStudentDetail(result, requestedId);
 }
 
 export async function createStudentRental(values) {
@@ -151,11 +196,28 @@ export async function getStudentRentalDashboard(options = {}) {
 }
 
 export async function getAdminRentalApprovals(params = {}) {
-  assertRentalMockMode();
-  return queryMockAdminRentalApprovals({
-    ...normalizeListParams(params),
-    signal: params.signal,
-  });
+  if (isMockMode) {
+    return queryMockAdminRentalApprovals({
+      ...normalizeListParams(params),
+      signal: params.signal,
+    });
+  }
+  return getRentalPage("/admin/rentals", {
+    ...params,
+    statuses: ["PENDING_APPROVAL"],
+  }, mapAdminApproval);
+}
+
+export async function getAdminRentalDetail(rentalId, options = {}) {
+  if (isMockMode) {
+    throw new Error("mock 상세 조회는 기존 목록 데이터를 사용합니다.");
+  }
+  const requestedId = Number(rentalId);
+  if (!Number.isSafeInteger(requestedId) || requestedId < 1) {
+    throw new Error("대여 ID가 올바르지 않습니다.");
+  }
+  const result = await api.get(`/admin/rentals/${requestedId}`, { signal: options.signal });
+  return mapAdminDetail(result, requestedId);
 }
 
 export async function approveRental(values) {
@@ -169,16 +231,30 @@ export async function rejectRental(values) {
 }
 
 export async function getAdminRentalStatuses(params = {}) {
-  assertRentalMockMode();
-  return queryMockAdminRentalStatuses({
-    ...normalizeListParams(params),
-    signal: params.signal,
-  });
+  if (isMockMode) {
+    return queryMockAdminRentalStatuses({
+      ...normalizeListParams(params),
+      signal: params.signal,
+    });
+  }
+  const statuses = params.status === "readyForPickup"
+    ? ["READY_FOR_PICKUP"]
+    : params.status === "renting"
+      ? ["RENTING", "OVERDUE"]
+      : ["READY_FOR_PICKUP", "RENTING", "OVERDUE"];
+  return getRentalPage("/admin/rentals", { ...params, statuses }, mapAdminStatus);
 }
 
 export async function getAdminRentalStatusCounts(options = {}) {
-  assertRentalMockMode();
-  return getMockAdminRentalStatusCounts(options);
+  if (isMockMode) return getMockAdminRentalStatusCounts(options);
+  const page = await getRentalPage("/admin/rentals", { page: 0, size: 1, signal: options.signal }, mapAdminStatus);
+  const counts = page.statusCounts;
+  return {
+    all: counts ? counts.readyForPickup + counts.renting + counts.overdue : null,
+    readyForPickup: counts?.readyForPickup ?? null,
+    renting: counts ? counts.renting + counts.overdue : null,
+    overdue: counts?.overdue ?? null,
+  };
 }
 
 export async function pickupRental(values) {
@@ -192,16 +268,29 @@ export async function returnRental(values) {
 }
 
 export async function getAdminRentalHistory(params = {}) {
-  assertRentalMockMode();
-  return queryMockAdminRentalHistory({
-    ...normalizeListParams(params),
-    signal: params.signal,
-  });
+  if (isMockMode) {
+    return queryMockAdminRentalHistory({
+      ...normalizeListParams(params),
+      signal: params.signal,
+    });
+  }
+  const statuses = params.status === "canceled"
+    ? ["CANCELED"]
+    : params.status === "returned"
+      ? ["RETURNED"]
+      : ["CANCELED", "RETURNED"];
+  return getRentalPage("/admin/rentals", { ...params, statuses }, mapAdminHistory);
 }
 
 export async function getAdminRentalHistoryCounts(options = {}) {
-  assertRentalMockMode();
-  return getMockAdminRentalHistoryCounts(options);
+  if (isMockMode) return getMockAdminRentalHistoryCounts(options);
+  const page = await getRentalPage("/admin/rentals", { page: 0, size: 1, signal: options.signal }, mapAdminHistory);
+  const counts = page.statusCounts;
+  return {
+    all: counts ? counts.canceled + counts.returned : null,
+    canceled: counts?.canceled ?? null,
+    returned: counts?.returned ?? null,
+  };
 }
 
 export async function getAdminRentalDashboard(options = {}) {

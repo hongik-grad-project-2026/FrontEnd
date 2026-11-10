@@ -41,8 +41,15 @@ function AdminRentalStatusPage() {
   const [feedbackType, setFeedbackType] = useState(null);
   const params = { status: activeTab, keyword: searchTerm, size: 10 };
 
-  const statusQuery = useInfiniteScroll({
-    enabled: isMockMode,
+  const {
+    items: statusItems,
+    loadMoreRef,
+    isLoading: isStatusLoading,
+    isError: isStatusError,
+    error: statusError,
+    isFetchingNextPage,
+    hasNextPage,
+  } = useInfiniteScroll({
     queryKey: rentalKeys.adminStatusList(params),
     queryFn: ({ pageParam, signal }) => getAdminRentalStatuses({ ...params, page: pageParam, signal }),
     initialPageParam: 0,
@@ -51,7 +58,6 @@ function AdminRentalStatusPage() {
   const countQuery = useQuery({
     queryKey: rentalKeys.adminStatusCounts(),
     queryFn: ({ signal }) => getAdminRentalStatusCounts({ signal }),
-    enabled: isMockMode,
   });
 
   const refreshRentals = () => Promise.all([
@@ -91,7 +97,7 @@ function AdminRentalStatusPage() {
   ];
 
   const handleComplete = (values) => {
-    if (mutationGuardRef.current) return;
+    if (!isMockMode || mutationGuardRef.current) return;
     mutationGuardRef.current = true;
     processMutation.mutate({
       rentalId: values.rental.rentalId,
@@ -111,25 +117,25 @@ function AdminRentalStatusPage() {
             <SearchBar className={styles.search} name="rentalStatusSearch" width={360} value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} onSubmit={setSearchTerm} ariaLabel="대여 현황 검색" placeholder="기자재명·학생명·학번·비품번호 검색..." />
           </div>
           <section className={styles.cardListContainer} aria-label="대여 목록">
-            {!isMockMode ? <p>대여 API가 아직 제공되지 않았습니다.</p> : null}
-            {isMockMode && statusQuery.isLoading ? <p>대여 목록을 불러오는 중입니다.</p> : null}
-            {isMockMode && statusQuery.isError ? <p role="alert">대여 목록을 불러오지 못했습니다.</p> : null}
-            {isMockMode && !statusQuery.isLoading && !statusQuery.isError && statusQuery.items.length === 0 ? <p>검색 조건에 해당하는 대여 현황이 없습니다.</p> : null}
-            {isMockMode ? statusQuery.items.map((rental) => {
+            {isStatusLoading ? <p>대여 목록을 불러오는 중입니다.</p> : null}
+            {isStatusError ? <p role="alert">{statusError?.message || "대여 목록을 불러오지 못했습니다."}</p> : null}
+            {countQuery.isError ? <p role="alert">상태별 개수를 불러오지 못했습니다.</p> : null}
+            {!isStatusLoading && !isStatusError && statusItems.length === 0 ? <p>검색 조건에 해당하는 대여 현황이 없습니다.</p> : null}
+            {statusItems.map((rental) => {
               const primary = primaryButtonByStatus[rental.status];
               const status = getRentalStatus(rental.status);
               return (
                 <RentalCard
                   key={rental.rentalId} ariaLabel={rental.ariaLabel}
                   badge={<StatusBadge text={status.label} color={status.color} size="lg" />}
-                  actions={<><Button kind={primary.kind} status="Default" size="Default" color={primary.color} text={primary.text} disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "process", rental }); }} /><Button kind="border" status="Default" size="Default" color="Primary" text="상세 보기" disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "detail", rental }); }} /></>}>
+                  actions={<>{primary ? <Button kind={primary.kind} status="Default" size="Default" color={primary.color} text={primary.text} disabled={!isMockMode || processMutation.isPending} title={!isMockMode ? "수령·반납 처리는 다음 단계에서 연결됩니다." : undefined} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "process", rental }); }} /> : null}<Button kind="border" status="Default" size="Default" color="Primary" text="상세 보기" disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "detail", rental }); }} /></>}>
                   <RentalCardInfo category={rental.category} equipmentName={rental.equipmentName} rentalId={rental.rentalId} fields={rental.infoFields} />
                 </RentalCard>
               );
-            }) : null}
-            {isMockMode ? <div ref={statusQuery.loadMoreRef} aria-hidden="true" /> : null}
-            {statusQuery.isFetchingNextPage ? <p>더 불러오는 중...</p> : null}
-            {isMockMode && !statusQuery.hasNextPage && statusQuery.items.length > 0 ? <p>마지막 목록입니다.</p> : null}
+            })}
+            <div ref={loadMoreRef} aria-hidden="true" />
+            {isFetchingNextPage ? <p>더 불러오는 중...</p> : null}
+            {!hasNextPage && statusItems.length > 0 ? <p>마지막 목록입니다.</p> : null}
           </section>
         </div>
       </div>
