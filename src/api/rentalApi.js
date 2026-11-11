@@ -272,13 +272,40 @@ export async function getAdminRentalDetail(rentalId, options = {}) {
 }
 
 export async function approveRental(values) {
-  assertRentalMockMode();
-  return approveMockRental(values);
+  if (isMockMode) return approveMockRental(values);
+
+  const rentalId = requireRentalId(values.rentalId);
+  const result = await api.patch(`/admin/rentals/${rentalId}/approve`);
+  if (result?.rentalId !== rentalId || result.status !== "READY_FOR_PICKUP") {
+    throw new Error("대여 승인 결과를 확인할 수 없습니다.");
+  }
+  return result;
 }
 
 export async function rejectRental(values) {
-  assertRentalMockMode();
-  return rejectMockRental(values);
+  if (isMockMode) return rejectMockRental(values);
+
+  const rentalId = requireRentalId(values.rentalId);
+  const rejectReasonType = values.reason?.type;
+  const rejectReasonDetail = values.reason?.detail?.trim();
+  if (!["INSUFFICIENT_STOCK", "RENTAL_SUSPENDED", "OTHER"].includes(rejectReasonType)) {
+    throw new Error("반려 사유를 선택해 주세요.");
+  }
+  if (rejectReasonType === "OTHER" && !rejectReasonDetail) {
+    throw new Error("반려 사유를 입력해 주세요.");
+  }
+  if (rejectReasonDetail?.length > 500) {
+    throw new Error("반려 사유는 500자 이내로 입력해 주세요.");
+  }
+
+  const result = await api.patch(`/admin/rentals/${rentalId}/reject`, {
+    rejectReasonType,
+    ...(rejectReasonDetail && { rejectReasonDetail }),
+  });
+  if (result?.rentalId !== rentalId || result.status !== "REJECTED") {
+    throw new Error("대여 반려 결과를 확인할 수 없습니다.");
+  }
+  return result;
 }
 
 export async function getAdminRentalStatuses(params = {}) {

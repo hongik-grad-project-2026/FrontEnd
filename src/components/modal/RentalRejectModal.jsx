@@ -163,6 +163,7 @@ function RentalRejectModal({
                       width="100%"
                       height="md"
                       placeholder="반려 사유를 입력하세요"
+                      maxLength={500}
                       helperText={
                         rejectionReason?.type === "OTHER" && !isRejectionReasonDetailValid
                           ? "반려 사유를 입력하세요"
