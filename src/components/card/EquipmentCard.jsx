@@ -13,11 +13,13 @@ function EquipmentCard({
     stockRemaining = 0,
     isWish,
     isWishPending = false,
+    isWishDisabled = false,
     isRentPending = false,
+    isRentalAvailable = true,
     onRent,
     onWishChange,
 }) {
-    const isStockOut = stockRemaining === 0 ? true : false;
+    const isStockOut = stockRemaining === 0 || !isRentalAvailable;
 
     return (
         <div
@@ -69,8 +71,9 @@ function EquipmentCard({
                     />
                     <WishIconButton
                         isWish={isWish}
-                        disabled={isWishPending}
-                        onClick={() => onWishChange(!isWish)}
+                        disabled={isWishPending || isWishDisabled}
+                        title={isWishDisabled ? "찜 기능은 아직 연결되지 않았습니다." : undefined}
+                        onClick={() => onWishChange?.(!isWish)}
                     />
                 </div>
             </div>

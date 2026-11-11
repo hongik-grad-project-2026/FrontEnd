@@ -444,6 +444,42 @@ function normalizeAdminEquipmentModelPage(result) {
   };
 }
 
+function normalizeStudentEquipmentModelPage(result) {
+  const page = normalizeAdminEquipmentModelPage(result);
+
+  return {
+    ...page,
+    content: result.models.map((model) => {
+      const modelId = Number(model.modelId);
+      const stockRemaining = normalizeOptionalCount(model.availableCount);
+      const stockTotal = normalizeOptionalCount(model.totalCount);
+
+      if (!Number.isSafeInteger(modelId) || modelId < 1 ||
+          stockRemaining === null || stockTotal === null) {
+        throw createEquipmentListContractError(
+          "학생 기자재 목록의 모델 ID 또는 재고를 확인할 수 없습니다.",
+          model,
+        );
+      }
+
+      return {
+        modelId,
+        modelImageUrl: normalizeOptionalText(model.modelImageUrl),
+        categoryId: model.categoryId ?? null,
+        categoryName: normalizeOptionalText(model.categoryName),
+        modelName: normalizeDisplayText(model.name),
+        specification: normalizeOptionalText(model.specification) ?? "-",
+        components: normalizeOptionalText(model.components) ?? "-",
+        description: normalizeOptionalText(model.description) ?? "-",
+        stockTotal,
+        stockRemaining,
+        isWish: model.favorite === true,
+        isRentalAvailable: model.rentalStatus === "AVAILABLE",
+      };
+    }),
+  };
+}
+
 function createEquipmentModelContractError(message, data) {
   return new ApiError({
     status: null,
@@ -639,10 +675,26 @@ function assertMockMode() {
   throw error;
 }
 
-// 학생 기자재와 찜은 실제 API가 없어 mock 모드에서만 사용함.
 export async function getEquipmentModels(params = {}) {
-  assertMockMode();
-  return queryMockEquipmentModels(params);
+  if (isMockMode) return queryMockEquipmentModels(params);
+
+  const { signal, ...listParams } = params;
+  const { categoryId, keyword, page, size } = normalizeListParams(listParams);
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+  if (keyword) searchParams.set("keyword", keyword);
+  if (categoryId !== null && categoryId !== "") {
+    searchParams.set("categoryId", String(categoryId));
+  }
+
+  // 백엔드가 학생 계정에도 허용한 공용 모델 목록 경로임.
+  const result = await api.get(
+    `/admin/equipment-models?${searchParams.toString()}`,
+    { signal },
+  );
+  return normalizeStudentEquipmentModelPage(result);
 }
 
 export async function getMyWishlistedEquipmentModels(params = {}) {
@@ -700,7 +752,7 @@ export async function getAdminEquipmentItems(params = {}) {
 
 
 
-// 관리자 모델 목록만 현재 확인된 실제 조회 계약을 사용함.
+// 관리자와 학생이 함께 사용하는 모델 목록 응답을 관리자 화면 구조로 변환함.
 export async function getAdminEquipmentModels(params = {}) {
   if (isMockMode) {
     return queryMockAdminEquipmentModels(params);

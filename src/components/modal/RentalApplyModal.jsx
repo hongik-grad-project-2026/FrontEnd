@@ -71,10 +71,9 @@ function RentalApplyModalContent({
       : form.returnDate;
   const canSubmit =
     !isPending &&
-    Boolean(form.rentalType) &&
     form.pickupDate instanceof Date &&
     !Number.isNaN(form.pickupDate.getTime()) &&
-    Boolean(resolvedReturnDate) &&
+    (!isMockMode || (Boolean(form.rentalType) && Boolean(resolvedReturnDate))) &&
     Boolean(form.reason.trim());
 
   const updateField = (name, value) => {
@@ -128,7 +127,9 @@ function RentalApplyModalContent({
               <Input
                 width="100%"
                 value={
-                  equipment.rentalPolicies === "regular"
+                  !isMockMode
+                    ? "신청 시 서버에서 결정"
+                    : equipment.rentalPolicies === "regular"
                     ? "정기"
                     : equipment.rentalPolicies === "always"
                       ? "상시"
@@ -143,7 +144,9 @@ function RentalApplyModalContent({
               <label htmlFor={pickupDateId}>수령 희망일</label>
               <label >
                 반납 예정일
-                {isRegularRental
+                {!isMockMode
+                  ? " (신청 후 확정)"
+                  : isRegularRental
                   ? " (학기 반납 마감일)"
                   : isAlwaysRental
                     ? " (수령일 다음 날)"
@@ -165,10 +168,12 @@ function RentalApplyModalContent({
 
               <Input
                 width="100%"
-                value={resolvedReturnDate}
+                value={isMockMode ? resolvedReturnDate : "신청 후 서버에서 확인"}
                 ariaLabel="반납 예정일"
                 placeholder={
-                  isRegularRental && !regularReturnDate
+                  !isMockMode
+                    ? undefined
+                    : isRegularRental && !regularReturnDate
                     ? "학기 반납 마감일 미설정"
                     : "수령 희망일을 선택하세요."
                 }

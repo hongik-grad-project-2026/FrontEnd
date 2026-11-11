@@ -93,6 +93,8 @@ function StudentEquipmentListPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: rentalKeys.all }),
         queryClient.invalidateQueries({ queryKey: studentRentalKeys.all }),
+        queryClient.invalidateQueries({ queryKey: equipmentKeys.modelLists() }),
+        queryClient.invalidateQueries({ queryKey: equipmentKeys.adminModelLists() }),
         queryClient.invalidateQueries({ queryKey: ["admin", "members"] }),
       ]);
       setRentalTarget(null);
@@ -116,7 +118,8 @@ function StudentEquipmentListPage() {
   };
 
   const handleOpenRental = (equipment, category, event) => {
-    if (!isMockMode || rentalSubmitGuardRef.current) {
+    if (rentalSubmitGuardRef.current || equipment.stockRemaining === 0 ||
+        equipment.isRentalAvailable === false) {
       return;
     }
 
@@ -139,11 +142,14 @@ function StudentEquipmentListPage() {
     loadMoreRef,
     isLoading,
     isError,
+    error,
     isSuccess,
+    isFetching,
+    refetch,
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteScroll({
-    enabled: isMockMode && hasCategories,
+    enabled: hasCategories,
     queryKey: equipmentKeys.modelList(listParams),
     queryFn: ({ pageParam, signal }) =>
       getEquipmentModels({
@@ -159,7 +165,6 @@ function StudentEquipmentListPage() {
   });
 
   const isEmptyEquipmentResult =
-    isMockMode &&
     hasCategories &&
     isSuccess &&
     !isLoading &&
@@ -184,7 +189,7 @@ function StudentEquipmentListPage() {
           />
           <SearchBar
             placeholder="기기명으로 검색..."
-            disabled={!isMockMode || !hasCategories}
+            disabled={!hasCategories}
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onSubmit={setSearchTerm}
@@ -219,20 +224,24 @@ function StudentEquipmentListPage() {
 
         {hasCategories ? (
           <div className={styles.equipmentGrid}>
-            {!isMockMode ? (
-              <p className={styles.equipmentState}>
-                기자재 API가 아직 제공되지 않았습니다.
-              </p>
-            ) : null}
-
-            {isMockMode && isLoading ? (
+            {isLoading ? (
               <p className={styles.equipmentState}>
                 기자재 목록을 불러오는 중입니다.
               </p>
             ) : null}
-            {isMockMode && isError ? (
+            {isError ? (
               <p className={styles.equipmentState} role="alert">
-                기자재 목록을 불러오지 못했습니다.
+                {error?.message || "기자재 목록을 불러오지 못했습니다."}
+                <Button
+                  kind="border"
+                  size="Default"
+                  color="Primary"
+                  status="Default"
+                  text={isFetching ? "다시 시도 중" : "다시 시도"}
+                  type="button"
+                  disabled={isFetching}
+                  onClick={() => refetch()}
+                />
               </p>
             ) : null}
             {isMockMode && wishlistMutation.isError ? (
@@ -244,24 +253,21 @@ function StudentEquipmentListPage() {
               <p className={styles.equipmentState}>{emptyEquipmentMessage}</p>
             ) : null}
 
-            {isMockMode
-              ? items.map((equipment) => {
+            {items.map((equipment) => {
                   const categoryLabel =
                     categoryOptions.find(
                       (category) =>
                         String(category.categoryId) ===
                         String(equipment.categoryId),
-                    )?.label ?? "카테고리";
+                    )?.label ?? equipment.categoryName ?? "카테고리";
 
                   return (
                     <EquipmentCard
                     key={equipment.modelId}
                     category={categoryLabel}
                     {...equipment}
-                    isRentPending={
-                      rentalMutation.isPending &&
-                      rentalTarget?.modelId === equipment.modelId
-                    }
+                    isRentPending={rentalMutation.isPending}
+                    isWishDisabled={!isMockMode}
                     onRent={(event) =>
                       handleOpenRental(equipment, categoryLabel, event)
                     }
@@ -273,16 +279,13 @@ function StudentEquipmentListPage() {
                     }
                     />
                   );
-                })
-              : null}
+                })}
 
-            {isMockMode ? (
-              <div ref={loadMoreRef} aria-hidden="true" />
-            ) : null}
-            {isMockMode && isFetchingNextPage ? (
+            <div ref={loadMoreRef} aria-hidden="true" />
+            {isFetchingNextPage ? (
               <p className={styles.equipmentState}>더 불러오는 중...</p>
             ) : null}
-            {isMockMode && !hasNextPage && items.length > 0 ? (
+            {!hasNextPage && items.length > 0 ? (
               <p className={styles.equipmentState}>마지막 기자재입니다.</p>
             ) : null}
           </div>
@@ -295,7 +298,7 @@ function StudentEquipmentListPage() {
         isPending={rentalMutation.isPending}
         error={rentalMutation.error}
         onClose={() => {
-          if (!rentalMutation.isPending) {
+          if (!rentalMutation.isPending && !rentalSubmitGuardRef.current) {
             setRentalTarget(null);
           }
         }}

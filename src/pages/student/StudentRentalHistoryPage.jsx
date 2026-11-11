@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { isMockMode } from "../../api/client";
+import { equipmentKeys } from "../../api/equipmentApi";
 import { RENTAL_STATUS, getRentalStatus } from "../../constants/status";
 
 import {
@@ -284,13 +285,17 @@ function StudentRentalHistoryPage() {
         reason,
       });
 
-      queryClient.setQueryData(
-        studentRentalKeys.detail(canceledRental.rentalId),
-        canceledRental,
-      );
+      if (isMockMode) {
+        queryClient.setQueryData(
+          studentRentalKeys.detail(canceledRental.rentalId),
+          canceledRental,
+        );
+      }
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: rentalKeys.all }),
+        queryClient.invalidateQueries({ queryKey: equipmentKeys.modelLists() }),
+        queryClient.invalidateQueries({ queryKey: equipmentKeys.adminModelLists() }),
         queryClient.invalidateQueries({ queryKey: ["admin", "members"] }),
         queryClient.invalidateQueries({ queryKey: studentRentalKeys.lists() }),
         queryClient.invalidateQueries({ queryKey: studentRentalKeys.counts() }),
@@ -421,8 +426,6 @@ function StudentRentalHistoryPage() {
                             color="Danger"
                             text="신청 취소하기"
                             type="button"
-                            disabled={!isMockMode}
-                            title={!isMockMode ? "신청 취소는 다음 단계에서 연결됩니다." : undefined}
                             onClick={(event) =>
                               openCancelModalFromCard(rental.rentalId, event)
                             }
@@ -475,7 +478,7 @@ function StudentRentalHistoryPage() {
           isOpen
           rentalId={modalState.rentalId}
           onClose={closeModal}
-          onRequestCancel={isMockMode ? openCancelModalFromDetail : undefined}
+          onRequestCancel={openCancelModalFromDetail}
           returnFocusRef={modalTriggerRef}
         />
       ) : null}

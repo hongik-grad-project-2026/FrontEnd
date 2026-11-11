@@ -103,6 +103,30 @@ export const studentRentalKeys = {
 
 export const studentRentalCancelReasons = MOCK_STUDENT_RENTAL_CANCEL_REASONS;
 
+const CANCEL_REASON_REQUEST = Object.freeze({
+  "필요 없어짐": "NO_LONGER_NEEDED",
+  "신청 정보 잘못 입력함": "WRONG_APPLICATION_INFO",
+  "승인이 늦음": "APPROVAL_DELAYED",
+});
+
+function requireRentalId(value) {
+  const rentalId = Number(value);
+  if (!Number.isSafeInteger(rentalId) || rentalId < 1) {
+    throw new Error("대여 ID가 올바르지 않습니다.");
+  }
+  return rentalId;
+}
+
+function formatPickupDate(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    throw new Error("수령 희망일을 확인해 주세요.");
+  }
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function assertRentalMockMode() {
   if (isMockMode) {
     return;
@@ -168,13 +192,40 @@ export async function getStudentRentalDetail(rentalId, options = {}) {
 }
 
 export async function createStudentRental(values) {
-  assertRentalMockMode();
-  return createMockStudentRental(values);
+  if (isMockMode) return createMockStudentRental(values);
+
+  const modelId = requireRentalId(values.model?.modelId ?? values.modelId);
+  const purpose = values.reason?.trim();
+  if (!purpose) throw new Error("대여 사유를 입력해 주세요.");
+
+  const result = await api.post("/rentals", {
+    modelId,
+    purpose,
+    expectedPickupDate: formatPickupDate(values.pickupDate),
+    ...(values.memo?.trim() && { memo: values.memo.trim() }),
+  });
+
+  if (!result || !Number.isSafeInteger(result.rentalId) || result.rentalId < 1) {
+    throw new Error("대여 신청 결과의 ID를 확인할 수 없습니다.");
+  }
+  return result;
 }
 
 export async function cancelStudentRental(values) {
-  assertRentalMockMode();
-  return cancelMockStudentRental(values);
+  if (isMockMode) return cancelMockStudentRental(values);
+
+  const rentalId = requireRentalId(values.rentalId);
+  const cancelReason = CANCEL_REASON_REQUEST[values.reason];
+  if (!cancelReason) throw new Error("신청 취소 사유를 선택해 주세요.");
+
+  const result = await api.patch(
+    `/rentals/me/${rentalId}/cancel`,
+    { cancelReason },
+  );
+  if (result?.rentalId !== rentalId || result.status !== "CANCELED") {
+    throw new Error("대여 신청 취소 결과를 확인할 수 없습니다.");
+  }
+  return result;
 }
 
 export async function getStudentRentalDashboard(options = {}) {
