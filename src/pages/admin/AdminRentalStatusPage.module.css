@@ -50,3 +50,15 @@
   flex-direction: column;
   gap: var(--spacing-12);
 }
+
+.uploadNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-status-danger);
+  border-radius: var(--radius-8);
+  color: var(--color-status-danger);
+}

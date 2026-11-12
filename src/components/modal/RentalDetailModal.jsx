@@ -2,7 +2,7 @@
 import { useId, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isMockMode } from "../../api/client";
-import { getAdminRentalDetail, rentalKeys } from "../../api/rentalApi";
+import { getAdminRentalDetail, getAdminRentalImages, rentalKeys } from "../../api/rentalApi";
 import Button from "../common/Button";
 import IconButton, {
   IconTextButton,
@@ -81,6 +81,7 @@ function RentalDetailModal({
   workerName = "",
   isPending = false,
   error,
+  uploadRetry,
 }) {
   const generatedId = useId();
   const closeButtonRef = useRef(null);
@@ -89,6 +90,7 @@ function RentalDetailModal({
   const [mode, setMode] = useState(initialMode);
   const [processPhoto, setProcessPhoto] = useState([]);
   const [fileError, setFileError] = useState("");
+  const [showPickupImages, setShowPickupImages] = useState(false);
   const titleId = `${generatedId}-title`;
   const processPhotoId = `${generatedId}-process-photo`;
   const detailQuery = useQuery({
@@ -96,6 +98,11 @@ function RentalDetailModal({
     queryFn: ({ signal }) => getAdminRentalDetail(rentalSummary.rentalId, { signal }),
     enabled: !isMockMode && isOpen && Boolean(rentalSummary?.rentalId),
     retry: (failureCount, queryError) => queryError?.status !== 404 && failureCount < 1,
+  });
+  const pickupImagesQuery = useQuery({
+    queryKey: rentalKeys.adminImages(rentalSummary?.rentalId, "PICKUP"),
+    queryFn: ({ signal }) => getAdminRentalImages(rentalSummary.rentalId, { imageType: "PICKUP", signal }),
+    enabled: !isMockMode && isOpen && showPickupImages && Boolean(rentalSummary?.rentalId),
   });
   const rental = isMockMode ? rentalSummary : detailQuery.data;
 
@@ -127,15 +134,16 @@ function RentalDetailModal({
 
   const isWaiting = rental.status === "readyForPickup";
   const isOverdue = rental.status === "overdue";
-  const isProcessing = mode === "process";
+  const isProcessing = mode === "process" || Boolean(uploadRetry);
   const status = getRentalStatus(rental.status);
 
-  const processType = isWaiting ? "pickup" : "return";
-  const processTitle = isWaiting ? "수령" : "반납";
+  const processType = uploadRetry?.processType ?? (isWaiting ? "pickup" : "return");
+  const processTitle = processType === "pickup" ? "수령" : "반납";
+  const selectedPhotos = uploadRetry?.files ?? processPhoto;
   // 반납 사진은 항상 필수이며, 수령 사진만 기자재 카테고리 규칙을 따름.
   const isProcessPhotoRequired =
-    processType === "return" || isPickupPhotoRequired(rental.category);
-  const completeButtonText = `${processTitle} 처리 완료`;
+    !uploadRetry && (processType === "return" || isPickupPhotoRequired(rental.category));
+  const completeButtonText = uploadRetry ? "사진 업로드 재시도" : `${processTitle} 처리 완료`;
 
   const resetProcessPhoto = () => {
     setProcessPhoto([]);
@@ -153,7 +161,6 @@ function RentalDetailModal({
   };
 
   const handleStartProcess = () => {
-    if (!isMockMode) return;
     setMode("process");
   };
 
@@ -164,7 +171,7 @@ function RentalDetailModal({
   };
 
   const handleFileSelect = (event) => {
-    if (isPending) return;
+    if (isPending || uploadRetry) return;
     const selectedFiles = Array.from(event.target.files ?? []);
     event.target.value = "";
 
@@ -180,7 +187,7 @@ function RentalDetailModal({
   };
 
   const handleRemoveFile = (indexToRemove) => {
-    if (isPending) return;
+    if (isPending || uploadRetry) return;
     setProcessPhoto((current) =>
       current.filter((_, index) => index !== indexToRemove),
     );
@@ -188,13 +195,13 @@ function RentalDetailModal({
   };
 
   const handleComplete = (event) => {
-    if (!isMockMode || (isProcessPhotoRequired && processPhoto.length === 0) || isPending) {
+    if ((isProcessPhotoRequired && selectedPhotos.length === 0) || isPending) {
       return;
     }
 
     onComplete?.(
       {
-        processPhoto,
+        processPhoto: selectedPhotos,
         processType,
         rental,
         workerName,
@@ -291,6 +298,25 @@ function RentalDetailModal({
             </dl>
           </InfoSection>
 
+          {showPickupImages && !isProcessing ? (
+            <InfoSection title="대여 시 사진">
+              {pickupImagesQuery.isPending ? <p>사진을 불러오는 중입니다.</p> : null}
+              {pickupImagesQuery.isError ? (
+                <p role="alert">사진을 불러오지 못했습니다. <button type="button" onClick={() => pickupImagesQuery.refetch()} disabled={pickupImagesQuery.isFetching}>다시 시도</button></p>
+              ) : null}
+              {pickupImagesQuery.isSuccess && pickupImagesQuery.data.length === 0 ? <p>등록된 수령 사진이 없습니다.</p> : null}
+              {pickupImagesQuery.isSuccess && pickupImagesQuery.data.length > 0 ? (
+                <div className={styles.photoGallery}>
+                  {pickupImagesQuery.data.map((image, index) => (
+                    <a key={image.imageId ?? index} href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`수령 사진 ${index + 1} 새 탭에서 보기`}>
+                      <img src={image.imageUrl} alt={`수령 사진 ${index + 1}`} />
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+            </InfoSection>
+          ) : null}
+
           {isProcessing ? (
             <section className={styles.processSection}>
               <div className={styles.processField}>
@@ -321,14 +347,14 @@ function RentalDetailModal({
                   accept="image/*"
                   required={isProcessPhotoRequired}
                   onChange={handleFileSelect}
-                  disabled={isPending}
+                  disabled={isPending || Boolean(uploadRetry)}
                   multiple
                 />
 
-                {processPhoto.length > 0 ? (
+                {selectedPhotos.length > 0 ? (
                   <div className={styles.fileList}>
                     {
-                      processPhoto.map((file, index) => (
+                      selectedPhotos.map((file, index) => (
                         <div className={styles.fileItem} key={index}>
                           <span className={styles.fileName} title={file.name}>
                             {file.name}
@@ -344,13 +370,13 @@ function RentalDetailModal({
                             type="button"
                             ariaLabel={`${file.name} 파일 제거`}
                             onClick={() => handleRemoveFile(index)}
-                            disabled={isPending}
+                            disabled={isPending || Boolean(uploadRetry)}
                           />
                         </div>))
                     }
                   </div>
                 ) : ""}
-                {processPhoto.length < 2 ? (
+                {!uploadRetry && processPhoto.length < 2 ? (
                   <IconTextButton
                     className={styles.fileSelectButton}
                     icon="paperclip"
@@ -365,6 +391,7 @@ function RentalDetailModal({
               </div>
             </section>
           ) : null}
+          {uploadRetry ? <p className={styles.errorMessage} role="alert">⚠ {uploadRetry.message}</p> : null}
           {error ? <p className={styles.errorMessage} role="alert">⚠ {error.message || `${processTitle} 처리에 실패했습니다.`}</p> : null}
           {fileError ? <p className={styles.errorMessage} role="alert">⚠ {fileError}</p> : null}
         </div>
@@ -377,9 +404,9 @@ function RentalDetailModal({
               size="Default"
               color="Neutral"
               status="Default"
-              text="돌아가기"
+              text={uploadRetry ? "닫기" : "돌아가기"}
               type="button"
-              onClick={handleBackToDetail}
+              onClick={uploadRetry ? handleRequestClose : handleBackToDetail}
               disabled={isPending}
             />
 
@@ -391,7 +418,7 @@ function RentalDetailModal({
               status="Default"
               text={isPending ? "처리 중" : completeButtonText}
               type="button"
-              disabled={(isProcessPhotoRequired && processPhoto.length === 0) || isPending}
+              disabled={(isProcessPhotoRequired && selectedPhotos.length === 0) || isPending}
               onClick={handleComplete}
             />
           </footer>
@@ -412,8 +439,7 @@ function RentalDetailModal({
                 text="수령 처리"
                 type="button"
                 onClick={handleStartProcess}
-                disabled={!isMockMode}
-                title={!isMockMode ? "수령 처리는 다음 단계에서 연결됩니다." : undefined}
+                disabled={isPending}
               />
             ) : (
               <>
@@ -425,8 +451,9 @@ function RentalDetailModal({
                   status="Default"
                   text="대여 시 사진 보기"
                   type="button"
-                  aria-disabled="true"
-                  title="대여 사진 데이터가 연결되지 않았습니다."
+                  disabled={isMockMode}
+                  title={isMockMode ? "mock 사진 조회는 제공되지 않습니다." : undefined}
+                  onClick={() => setShowPickupImages((current) => !current)}
                 />
 
                 {isOverdue ? (
@@ -452,8 +479,7 @@ function RentalDetailModal({
                   text="반납 처리"
                   type="button"
                   onClick={handleStartProcess}
-                  disabled={!isMockMode}
-                  title={!isMockMode ? "반납 처리는 다음 단계에서 연결됩니다." : undefined}
+                  disabled={isPending}
                 />
               </>
             )}

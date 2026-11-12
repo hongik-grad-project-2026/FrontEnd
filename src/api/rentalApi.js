@@ -43,6 +43,7 @@ function normalizeListParams(params = {}, defaultSize = 10) {
 export const rentalKeys = {
   all: ["rentals"],
   adminDetail: (rentalId) => ["rentals", "admin", "detail", String(rentalId)],
+  adminImages: (rentalId, imageType) => ["rentals", "admin", "images", String(rentalId), imageType ?? "all"],
   adminApprovalLists: () => ["rentals", "admin", "approval", "list"],
   adminApprovalList: (params) => [
     "rentals",
@@ -336,13 +337,56 @@ export async function getAdminRentalStatusCounts(options = {}) {
 }
 
 export async function pickupRental(values) {
-  assertRentalMockMode();
-  return pickupMockRental(values);
+  if (isMockMode) return pickupMockRental(values);
+
+  const rentalId = requireRentalId(values.rentalId);
+  const result = await api.patch(`/admin/rentals/${rentalId}/checkout`);
+  if (result?.rentalId !== rentalId || result.status !== "RENTING") {
+    throw new Error("대여 수령 처리 결과를 확인할 수 없습니다.");
+  }
+  return result;
 }
 
 export async function returnRental(values) {
-  assertRentalMockMode();
-  return returnMockRental(values);
+  if (isMockMode) return returnMockRental(values);
+
+  const rentalId = requireRentalId(values.rentalId);
+  const result = await api.patch(`/admin/rentals/${rentalId}/return`);
+  if (result?.rentalId !== rentalId || result.status !== "RETURNED") {
+    throw new Error("대여 반납 처리 결과를 확인할 수 없습니다.");
+  }
+  return result;
+}
+
+export async function getAdminRentalImages(rentalId, { imageType, signal } = {}) {
+  const requestedId = requireRentalId(rentalId);
+  if (imageType && !["PICKUP", "RETURN"].includes(imageType)) {
+    throw new Error("대여 사진 종류가 올바르지 않습니다.");
+  }
+  const query = imageType ? `?imageType=${imageType}` : "";
+  const result = await api.get(`/admin/rentals/${requestedId}/images${query}`, { signal });
+  if (result?.rentalId !== requestedId || !Array.isArray(result.images)) {
+    throw new Error("대여 사진 조회 결과를 확인할 수 없습니다.");
+  }
+  return result.images;
+}
+
+export async function uploadAdminRentalImage({ rentalId, imageType, image }) {
+  const requestedId = requireRentalId(rentalId);
+  if (!["PICKUP", "RETURN"].includes(imageType) || !image) {
+    throw new Error("업로드할 대여 사진을 확인해 주세요.");
+  }
+  const formData = new FormData();
+  formData.append("image", image);
+  const result = await api.post(
+    `/admin/rentals/${requestedId}/images?imageType=${imageType}`,
+    formData,
+  );
+  if (result?.rentalId !== requestedId || result.imageType !== imageType ||
+      !Number.isSafeInteger(result.imageId)) {
+    throw new Error("대여 사진 업로드 결과를 확인할 수 없습니다.");
+  }
+  return result;
 }
 
 export async function getAdminRentalHistory(params = {}) {
