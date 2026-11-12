@@ -1,5 +1,6 @@
 // 기자재 모델 수정 모달임.
 import { useId, useRef, useState } from "react";
+import { isMockMode } from "../../api/client";
 import Button from "../common/Button";
 import IconButton, { IconTextButton } from "../common/IconButton";
 import InputBar from "../common/Input";
@@ -71,11 +72,11 @@ function getDateTimestamp(value) {
   return value.getTime();
 }
 
-function hasChangedValues(currentValues, initialValues) {
+function hasChangedValues(currentValues, initialValues, { includeImage = true } = {}) {
   return (
     currentValues.category !== initialValues.category ||
     currentValues.status !== initialValues.status ||
-    currentValues.rentalPolicies !== initialValues.rentalPolicies ||
+    (isMockMode && currentValues.rentalPolicies !== initialValues.rentalPolicies) ||
     getDateTimestamp(currentValues.receivedDate) !==
     getDateTimestamp(initialValues.receivedDate) ||
     getDateTimestamp(currentValues.disposalDate) !==
@@ -91,7 +92,7 @@ function hasChangedValues(currentValues, initialValues) {
     normalizeText(initialValues.description) ||
     normalizeText(currentValues.labelPrefix) !==
     normalizeText(initialValues.labelPrefix) ||
-    currentValues.replacementImageFile !== initialValues.replacementImageFile
+    (includeImage && currentValues.replacementImageFile !== initialValues.replacementImageFile)
   );
 }
 
@@ -142,6 +143,7 @@ function EquipmentItemEditModal({
   equipment,
   isOpen = false,
   isPending = false,
+  isMetadataLocked = false,
   onClose,
   onConfirm,
   returnFocusRef,
@@ -182,9 +184,14 @@ function EquipmentItemEditModal({
   const isOtherCategorySelected = isOtherCategory(selectedCategoryOption);
   const hasRequiredLabelPrefix =
     isOtherCategorySelected || Boolean(normalizeText(formValues.labelPrefix));
-  const hasRentalPolicies = Boolean(formValues.rentalPolicies);
-
-  const hasFormChanges = hasChangedValues(formValues, initialFormValues);
+  const hasRentalPolicies = !isMockMode || Boolean(formValues.rentalPolicies);
+  const hasMetadataChanges = hasChangedValues(formValues, initialFormValues, { includeImage: false });
+  const hasFormChanges = hasMetadataChanges ||
+    formValues.replacementImageFile !== initialFormValues.replacementImageFile;
+  const metadataInputsDisabled = isPending || isMetadataLocked;
+  const canSubmit = isMetadataLocked
+    ? Boolean(formValues.replacementImageFile) && !isPending
+    : hasFormChanges && hasRentalPolicies && hasRequiredLabelPrefix && !isPending;
 
   const updateFormValue = (field, value) => {
     setFormValues((previousValues) => ({
@@ -279,17 +286,11 @@ function EquipmentItemEditModal({
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (
-      !hasFormChanges ||
-      !hasRentalPolicies ||
-      !hasRequiredLabelPrefix ||
-      isPending
-    ) {
-      return;
-    }
+    if (!canSubmit) return;
 
     const submittedValues = {
       modelId: equipment.modelId,
+      hasMetadataChanges,
       categoryKey: formValues.category,
       status: formValues.status,
       rentalPolicies: formValues.rentalPolicies,
@@ -351,6 +352,7 @@ function EquipmentItemEditModal({
                   value={formValues.category}
                   placeholder="카테고리를 선택하세요."
                   ariaLabel="기자재 카테고리"
+                  disabled={metadataInputsDisabled}
                   onChange={handleCategoryChange}
                 />
               </div>
@@ -370,6 +372,7 @@ function EquipmentItemEditModal({
                       placeholder="예) ABC"
                       required
                       maxLength={10}
+                      status={metadataInputsDisabled ? "disabled" : "default"}
                       onChange={handleTextChange("labelPrefix")}
                     />
                   </div>
@@ -382,7 +385,7 @@ function EquipmentItemEditModal({
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={rentalPolicyId}>
-                  대여정책*
+                  대여정책{isMockMode ? "*" : " (저장 미지원)"}
                 </label>
                 <Select
                   id={rentalPolicyId}
@@ -390,8 +393,8 @@ function EquipmentItemEditModal({
                   width="100%"
                   options={RENTAL_POLICY_OPTIONS}
                   value={formValues.rentalPolicies}
-                  disabled={!allowsFlexiblePolicies}
-                  placeholder="대여정책을 선택하세요"
+                  disabled={!isMockMode || metadataInputsDisabled || !allowsFlexiblePolicies}
+                  placeholder={isMockMode ? "대여정책을 선택하세요" : "서버 저장 미지원"}
                   ariaLabel="대여정책"
                   onChange={handleRentalPolicyChange}
                 />
@@ -409,6 +412,7 @@ function EquipmentItemEditModal({
                   value={formValues.status}
                   placeholder="대여 상태를 선택하세요."
                   ariaLabel="기자재 대여 상태"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextValue) => updateFormValue("status", nextValue)}
                 />
               </div>
@@ -427,6 +431,7 @@ function EquipmentItemEditModal({
                   value={formValues.receivedDate}
                   placeholder="날짜를 선택하세요."
                   ariaLabel="기자재 입고일"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextDate) =>
                     updateFormValue("receivedDate", nextDate)
                   }
@@ -446,6 +451,7 @@ function EquipmentItemEditModal({
                   value={formValues.disposalDate}
                   placeholder="날짜를 선택하세요."
                   ariaLabel="기자재 폐기일"
+                  disabled={metadataInputsDisabled}
                   onChange={(nextDate) =>
                     updateFormValue("disposalDate", nextDate)
                   }
@@ -466,6 +472,7 @@ function EquipmentItemEditModal({
                   name="equipmentName"
                   value={formValues.name}
                   placeholder="모델명을 입력하세요"
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("name")}
                 />
               </div>
@@ -484,6 +491,7 @@ function EquipmentItemEditModal({
                   name="accessories"
                   value={formValues.accessories}
                   placeholder="구성품을 입력하세요"
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("accessories")}
                 />
               </div>
@@ -502,6 +510,7 @@ function EquipmentItemEditModal({
                   name="specification"
                   value={formValues.specification}
                   placeholder="성능을 입력하세요 (선택)"
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("specification")}
                 />
               </div>
@@ -520,6 +529,7 @@ function EquipmentItemEditModal({
                   name="description"
                   value={formValues.description}
                   placeholder="설명을 입력하세요 (선택)"
+                  status={metadataInputsDisabled ? "disabled" : "default"}
                   onChange={handleTextChange("description")}
                 />
               </div>
@@ -529,7 +539,10 @@ function EquipmentItemEditModal({
 
 
             <div className={styles.field}>
-              <span className={styles.label}>모델 사진*</span>
+              <span className={styles.label}>모델 사진{isMockMode ? "*" : " (선택)"}</span>
+              {isMetadataLocked ? (
+                <p role="status">사진 업로드만 다시 시도해 주세요.</p>
+              ) : null}
 
               <input
                 ref={fileInputRef}
@@ -538,6 +551,7 @@ function EquipmentItemEditModal({
                 type="file"
                 name="replacementImageFile"
                 accept="image/*"
+                disabled={isPending}
                 onChange={handleFileSelect}
               />
 
@@ -559,6 +573,7 @@ function EquipmentItemEditModal({
                     size={24}
                     type="button"
                     ariaLabel={`${formValues.replacementImageFile.name} 교체 파일 제거`}
+                    disabled={isPending}
                     onClick={handleRemoveFile}
                   />
                 </div>
@@ -570,6 +585,7 @@ function EquipmentItemEditModal({
                   type="button"
                   text="파일 교체"
                   ariaLabel="기자재 모델 사진 교체"
+                  disabled={isPending}
                   onClick={() => fileInputRef.current?.click()}
                 />
               )}
@@ -597,14 +613,9 @@ function EquipmentItemEditModal({
               size="Default"
               color="Primary"
               status="Default"
-              text={isPending ? "처리 중" : "수정 완료"}
+              text={isPending ? "처리 중" : isMetadataLocked ? "사진 업로드 재시도" : "수정 완료"}
               type="submit"
-              disabled={
-                !hasFormChanges ||
-                !hasRentalPolicies ||
-                !hasRequiredLabelPrefix ||
-                isPending
-              }
+              disabled={!canSubmit}
             />
           </footer>
         </form>
@@ -613,8 +624,10 @@ function EquipmentItemEditModal({
       <ConfirmModal
         isOpen={isCancelConfirmOpen}
         icon="warning"
-        title="취소하고 나가시겠습니까?"
-        description="작성 중이던 내용이 모두 초기화됩니다."
+        title={isMetadataLocked ? "사진 교체를 중단하시겠습니까?" : "취소하고 나가시겠습니까?"}
+        description={isMetadataLocked
+          ? "사진 교체가 완료되지 않았습니다."
+          : "작성 중이던 내용이 모두 초기화됩니다."}
         cancelText="취소"
         confirmText="확인"
         confirmColor="Danger"

@@ -830,15 +830,35 @@ export async function uploadAdminEquipmentModelImage({ modelId, imageFile }) {
   return normalizeUploadedEquipmentModelImage(result, modelId);
 }
 
-// 모델 수정·폐기와 개별 기기 업무는 실제 API 연결 전까지 mock 모드로 제한함.
 export async function updateAdminEquipmentModel(values) {
-  assertMockMode();
-  return updateMockAdminEquipmentModel(values);
+  if (isMockMode) return updateMockAdminEquipmentModel(values);
+
+  const modelId = normalizeRequestedModelId(values.modelId);
+  const request = createAdminEquipmentModelRequest(values);
+  const result = await api.patch(
+    `/admin/equipment-models/${modelId}`,
+    {
+      ...request,
+      description: values.description?.trim() ?? "",
+      specification: values.specification?.trim() ?? "",
+    },
+  );
+
+  if (result?.modelId !== modelId) {
+    throw createEquipmentModelContractError(
+      "수정된 기자재 모델 식별자를 확인할 수 없습니다.",
+      result,
+    );
+  }
+
+  return { modelId };
 }
 
 export async function disposeAdminEquipmentModel(values) {
-  assertMockMode();
-  return disposeMockAdminEquipmentModel(values);
+  if (isMockMode) return disposeMockAdminEquipmentModel(values);
+
+  const modelId = normalizeRequestedModelId(values.modelId);
+  return api.patch(`/admin/equipment-models/${modelId}/retire`);
 }
 
 export async function getAdminEquipmentModelSummary(modelId, options) {
