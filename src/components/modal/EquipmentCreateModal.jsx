@@ -95,7 +95,6 @@ function EquipmentCreateModal({
   const titleId = `${generatedId}-title`;
   const categoryId = `${generatedId}-category`;
   const statusId = `${generatedId}-status`;
-  const rentalPolicyId = `${generatedId}-rental-policy`;
   const receivedDateId = `${generatedId}-received-date`;
   const disposalDateId = `${generatedId}-disposal-date`;
   const nameId = `${generatedId}-name`;
@@ -108,9 +107,7 @@ function EquipmentCreateModal({
   const selectedCategoryOption = categoryOptions.find(
     (option) => option.value === formValues.category,
   );
-  const allowsFlexiblePolicies = allowsFlexibleRentalPolicies(
-    selectedCategoryOption,
-  );
+
   const isOtherCategorySelected = isOtherCategory(selectedCategoryOption);
   const metadataInputsDisabled = isPending || isMetadataLocked;
 
@@ -174,14 +171,6 @@ function EquipmentCreateModal({
             : "",
       };
     });
-  };
-
-  const handleRentalPolicyChange = (nextPolicy) => {
-    if (metadataInputsDisabled) {
-      return;
-    }
-
-    updateFormValue("rentalPolicies", nextPolicy);
   };
 
   const resetForm = () => {
@@ -299,12 +288,8 @@ function EquipmentCreateModal({
           </header>
 
           <div className={styles.content}>
-            <div
-              className={`${styles.pairRow} ${
-                isOtherCategorySelected ? styles.singleFieldRow : ""
-              }`}
-            >
 
+            <div className={styles.pairRow}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={categoryId}>
                   카테고리*
@@ -320,6 +305,99 @@ function EquipmentCreateModal({
                   disabled={metadataInputsDisabled}
                   onChange={handleCategoryChange}
                 />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor={statusId}>
+                  상태*
+                </label>
+                <Select
+                  id={statusId}
+                  className={styles.select}
+                  width="100%"
+                  options={STATUS_OPTIONS}
+                  value={formValues.status}
+                  placeholder="대여 상태를 선택하세요."
+                  ariaLabel="모델 대여 상태"
+                  disabled={metadataInputsDisabled}
+                  onChange={(nextValue) => updateFormValue("status", nextValue)}
+                />
+              </div>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={nameId}>
+                모델명*
+              </label>
+
+              <div className={styles.inputWrap}>
+                <InputBar
+                  id={nameId}
+                  width="100%"
+                  height="md"
+                  name="equipmentName"
+                  value={formValues.name}
+                  placeholder="모델명을 입력하세요"
+                  required
+                  maxLength={100}
+                  status={metadataInputsDisabled ? "disabled" : "default"}
+                  onChange={handleTextChange("name")}
+                />
+              </div>
+            </div>
+
+            <div
+              className={`${styles.pairRow} ${isOtherCategorySelected ? styles.singleFieldRow : ""
+                }`}
+            >
+              <div className={styles.field}>
+                <span className={styles.label}>모델 사진*</span>
+
+                <input
+                  ref={fileInputRef}
+                  id={imageFileId}
+                  className={styles.fileInput}
+                  type="file"
+                  name="imageFile"
+                  accept="image/*"
+                  required
+                  disabled={isPending}
+                  onChange={handleFileSelect}
+                />
+
+                {formValues.imageFile ? (
+                  <div className={styles.fileItem}>
+                    <span
+                      className={styles.fileName}
+                      title={formValues.imageFile.name}
+                    >
+                      {formValues.imageFile.name}
+                    </span>
+
+                    <span className={styles.fileSize}>
+                      {formatFileSize(formValues.imageFile.size)}
+                    </span>
+
+                    <IconButton
+                      icon="trash"
+                      size={24}
+                      type="button"
+                      ariaLabel={`${formValues.imageFile.name} 파일 제거`}
+                      disabled={isPending}
+                      onClick={handleRemoveFile}
+                    />
+                  </div>
+                ) : (
+                  <IconTextButton
+                    className={styles.fileSelectButton}
+                    icon="paperclip"
+                    border
+                    type="button"
+                    text="파일 선택"
+                    ariaLabel="모델 사진 선택"
+                    disabled={isPending}
+                    onClick={() => fileInputRef.current?.click()}
+                  />
+                )}
               </div>
               {!isOtherCategorySelected ? (
                 <div className={styles.field}>
@@ -343,45 +421,6 @@ function EquipmentCreateModal({
                   </div>
                 </div>
               ) : null}
-            </div>
-
-
-            <div className={styles.pairRow}>
-
-
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={rentalPolicyId}>
-                  대여정책*
-                </label>
-                <Select
-                  id={rentalPolicyId}
-                  className={styles.select}
-                  width="100%"
-                  options={RENTAL_POLICY_OPTIONS}
-                  value={formValues.rentalPolicies}
-                  disabled={metadataInputsDisabled || !allowsFlexiblePolicies}
-                  placeholder="대여정책을 선택하세요"
-                  ariaLabel="대여정책"
-                  onChange={handleRentalPolicyChange}
-                />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={statusId}>
-                  상태*
-                </label>
-                <Select
-                  id={statusId}
-                  className={styles.select}
-                  width="100%"
-                  options={STATUS_OPTIONS}
-                  value={formValues.status}
-                  placeholder="대여 상태를 선택하세요."
-                  ariaLabel="모델 대여 상태"
-                  disabled={metadataInputsDisabled}
-                  onChange={(nextValue) => updateFormValue("status", nextValue)}
-                />
-              </div>
-
             </div>
 
             <div className={styles.pairRow}>
@@ -424,26 +463,6 @@ function EquipmentCreateModal({
               </div>
             </div>
 
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor={nameId}>
-                모델명*
-              </label>
-
-              <div className={styles.inputWrap}>
-                <InputBar
-                  id={nameId}
-                  width="100%"
-                  height="md"
-                  name="equipmentName"
-                  value={formValues.name}
-                  placeholder="모델명을 입력하세요"
-                  required
-                  maxLength={100}
-                  status={metadataInputsDisabled ? "disabled" : "default"}
-                  onChange={handleTextChange("name")}
-                />
-              </div>
-            </div>
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor={accessoriesId}>
@@ -501,60 +520,6 @@ function EquipmentCreateModal({
                   onChange={handleTextChange("description")}
                 />
               </div>
-            </div>
-
-
-
-
-            <div className={styles.field}>
-              <span className={styles.label}>모델 사진*</span>
-
-              <input
-                ref={fileInputRef}
-                id={imageFileId}
-                className={styles.fileInput}
-                type="file"
-                name="imageFile"
-                accept="image/*"
-                required
-                disabled={isPending}
-                onChange={handleFileSelect}
-              />
-
-              {formValues.imageFile ? (
-                <div className={styles.fileItem}>
-                  <span
-                    className={styles.fileName}
-                    title={formValues.imageFile.name}
-                  >
-                    {formValues.imageFile.name}
-                  </span>
-
-                  <span className={styles.fileSize}>
-                    {formatFileSize(formValues.imageFile.size)}
-                  </span>
-
-                  <IconButton
-                    icon="trash"
-                    size={24}
-                    type="button"
-                    ariaLabel={`${formValues.imageFile.name} 파일 제거`}
-                    disabled={isPending}
-                    onClick={handleRemoveFile}
-                  />
-                </div>
-              ) : (
-                <IconTextButton
-                  className={styles.fileSelectButton}
-                  icon="paperclip"
-                  border
-                  type="button"
-                  text="파일 선택"
-                  ariaLabel="모델 사진 선택"
-                  disabled={isPending}
-                  onClick={() => fileInputRef.current?.click()}
-                />
-              )}
             </div>
 
           </div>
