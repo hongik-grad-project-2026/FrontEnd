@@ -106,7 +106,6 @@ function StudentEquipmentListPage() {
 
   const handleWishChange = (modelId, isWish) => {
     if (
-      !isMockMode ||
       pendingWishlistModelIdsRef.current.has(modelId)
     ) {
       return;
@@ -244,7 +243,7 @@ function StudentEquipmentListPage() {
                 />
               </p>
             ) : null}
-            {isMockMode && wishlistMutation.isError ? (
+            {wishlistMutation.isError ? (
               <p className={styles.equipmentState} role="alert">
                 찜 상태를 변경하지 못했습니다.
               </p>
@@ -267,7 +266,6 @@ function StudentEquipmentListPage() {
                     category={categoryLabel}
                     {...equipment}
                     isRentPending={rentalMutation.isPending}
-                    isWishDisabled={!isMockMode}
                     onRent={(event) =>
                       handleOpenRental(equipment, categoryLabel, event)
                     }

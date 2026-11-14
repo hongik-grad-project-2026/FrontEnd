@@ -253,7 +253,6 @@ function StudentDashboardPage() {
 
   const handleWishChange = (modelId, isWish) => {
     if (
-      !isMockMode ||
       pendingWishlistModelIdsRef.current.has(modelId)
     ) {
       return;
@@ -294,7 +293,6 @@ function StudentDashboardPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteScroll({
-    enabled: isMockMode,
     queryKey: equipmentKeys.wishlist({ size: 12 }),
     queryFn: ({ pageParam, signal }) =>
       getMyWishlistedEquipmentModels({ page: pageParam, size: 12, signal }),
@@ -304,10 +302,11 @@ function StudentDashboardPage() {
       return nextPage < lastPage.totalPages ? nextPage : undefined;
     },
   });
+  const canShowWishlist =
+    !isMockMode ||
+    (categoryQuery.isSuccess && (categoryQuery.data?.length ?? 0) > 0);
   const isEmptyWishlist =
-    isMockMode &&
-    categoryQuery.isSuccess &&
-    (categoryQuery.data?.length ?? 0) > 0 &&
+    canShowWishlist &&
     isSuccess &&
     !isLoading &&
     !isError &&
@@ -418,7 +417,6 @@ function StudentDashboardPage() {
         <h3>찜목록</h3>
         <div className={styles.wishListGrid}>
 
-          {!isMockMode ? <p>찜 API가 아직 제공되지 않았습니다.</p> : null}
           {isMockMode && categoryQuery.isPending ? <p>카테고리 정보를 불러오는 중입니다.</p> : null}
           {isMockMode && categoryQuery.isError ? (
             <div className={styles.wishlistState} role="alert">
@@ -434,8 +432,8 @@ function StudentDashboardPage() {
           {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length === 0 ? (
             <p>등록된 카테고리가 없습니다.</p>
           ) : null}
-          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && isLoading ? <p>찜 목록을 불러오는 중입니다.</p> : null}
-          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && isError ? (
+          {canShowWishlist && isLoading ? <p>찜 목록을 불러오는 중입니다.</p> : null}
+          {canShowWishlist && isError ? (
             <div className={styles.wishlistState} role="alert">
               <p>찜 목록을 불러오지 못했습니다.</p>
               <IconTextButton
@@ -446,23 +444,30 @@ function StudentDashboardPage() {
               />
             </div>
           ) : null}
-          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && wishlistMutation.isError ? (
+          {canShowWishlist && wishlistMutation.isError ? (
             <p role="alert">찜 상태를 변경하지 못했습니다.</p>
           ) : null}
           {isEmptyWishlist ? <p>찜한 기자재가 없습니다.</p> : null}
 
-          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && isSuccess ? items
+          {canShowWishlist && isSuccess ? items
             .map((equipment) => (
               <EquipmentCard
                 key={equipment.modelId}
                 {...equipment}
-                category={getCategoryLabel(equipment.categoryId)}
+                category={isMockMode
+                  ? getCategoryLabel(equipment.categoryId)
+                  : equipment.categoryName ?? "카테고리"}
                 isRentPending={applicationMutation.isPending && rentalTarget?.modelId === equipment.modelId}
                 onRent={(event) => {
                   if (rentalSubmitGuardRef.current) return;
                   rentalTriggerRef.current = event.currentTarget;
                   applicationMutation.reset();
-                  setRentalTarget({ ...equipment, category: getCategoryLabel(equipment.categoryId) });
+                  setRentalTarget({
+                    ...equipment,
+                    category: isMockMode
+                      ? getCategoryLabel(equipment.categoryId)
+                      : equipment.categoryName ?? "카테고리",
+                  });
                 }}
                 isWishPending={pendingWishlistModelIds.has(equipment.modelId)}
                 onWishChange={(nextIsWish) =>
@@ -471,9 +476,9 @@ function StudentDashboardPage() {
               />
             )) : null}
 
-          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 ? <div ref={loadMoreRef} aria-hidden="true" /> : null}
-          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && isFetchingNextPage ? <p>찜 목록을 더 불러오는 중입니다.</p> : null}
-          {isMockMode && categoryQuery.isSuccess && categoryQuery.data.length > 0 && !hasNextPage && items.length > 0 ? <p>마지막 찜 항목입니다.</p> : null}
+          {canShowWishlist ? <div ref={loadMoreRef} aria-hidden="true" /> : null}
+          {canShowWishlist && isFetchingNextPage ? <p>찜 목록을 더 불러오는 중입니다.</p> : null}
+          {canShowWishlist && !hasNextPage && items.length > 0 ? <p>마지막 찜 항목입니다.</p> : null}
         </div>
       </section>
 

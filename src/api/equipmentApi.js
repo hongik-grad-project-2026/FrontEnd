@@ -463,39 +463,63 @@ function normalizeAdminEquipmentModelPage(result) {
   };
 }
 
+function normalizeStudentEquipmentModel(model, isWish = model.favorite === true) {
+  const modelId = Number(model.modelId);
+  const stockRemaining = normalizeOptionalCount(model.availableCount);
+  const stockTotal = normalizeOptionalCount(model.totalCount);
+
+  if (!Number.isSafeInteger(modelId) || modelId < 1 ||
+      stockRemaining === null || stockTotal === null) {
+    throw createEquipmentListContractError(
+      "학생 기자재 목록의 모델 ID 또는 재고를 확인할 수 없습니다.",
+      model,
+    );
+  }
+
+  return {
+    modelId,
+    modelImageUrl: normalizeOptionalText(model.modelImageUrl),
+    categoryId: model.categoryId ?? null,
+    categoryName: normalizeOptionalText(model.categoryName),
+    modelName: normalizeDisplayText(model.name),
+    specification: normalizeOptionalText(model.specification) ?? "-",
+    components: normalizeOptionalText(model.components) ?? "-",
+    description: normalizeOptionalText(model.description) ?? "-",
+    stockTotal,
+    stockRemaining,
+    isWish,
+    isRentalAvailable: model.rentalStatus === "AVAILABLE",
+  };
+}
+
 function normalizeStudentEquipmentModelPage(result) {
   const page = normalizeAdminEquipmentModelPage(result);
 
   return {
     ...page,
-    content: result.models.map((model) => {
-      const modelId = Number(model.modelId);
-      const stockRemaining = normalizeOptionalCount(model.availableCount);
-      const stockTotal = normalizeOptionalCount(model.totalCount);
+    content: result.models.map((model) => normalizeStudentEquipmentModel(model)),
+  };
+}
 
-      if (!Number.isSafeInteger(modelId) || modelId < 1 ||
-          stockRemaining === null || stockTotal === null) {
-        throw createEquipmentListContractError(
-          "학생 기자재 목록의 모델 ID 또는 재고를 확인할 수 없습니다.",
-          model,
-        );
-      }
+function normalizeFavoriteModelPage(result) {
+  if (!result || !Array.isArray(result.favorites) ||
+      typeof result.hasNext !== "boolean") {
+    throw createEquipmentListContractError(
+      "찜 목록 응답 형식을 확인할 수 없습니다.",
+      result,
+    );
+  }
 
-      return {
-        modelId,
-        modelImageUrl: normalizeOptionalText(model.modelImageUrl),
-        categoryId: model.categoryId ?? null,
-        categoryName: normalizeOptionalText(model.categoryName),
-        modelName: normalizeDisplayText(model.name),
-        specification: normalizeOptionalText(model.specification) ?? "-",
-        components: normalizeOptionalText(model.components) ?? "-",
-        description: normalizeOptionalText(model.description) ?? "-",
-        stockTotal,
-        stockRemaining,
-        isWish: model.favorite === true,
-        isRentalAvailable: model.rentalStatus === "AVAILABLE",
-      };
-    }),
+  return {
+    content: result.favorites.map((model) =>
+      normalizeStudentEquipmentModel(model, true),
+    ),
+    page: normalizeRequiredInteger(result.page, "page", result),
+    size: normalizeRequiredInteger(result.size, "size", result),
+    totalElements: normalizeRequiredInteger(result.totalElements, "totalElements", result),
+    totalPages: normalizeRequiredInteger(result.totalPages, "totalPages", result),
+    hasNext: result.hasNext,
+    last: !result.hasNext,
   };
 }
 
@@ -717,13 +741,35 @@ export async function getEquipmentModels(params = {}) {
 }
 
 export async function getMyWishlistedEquipmentModels(params = {}) {
-  assertMockMode();
-  return queryMockWishlistedEquipmentModels(params);
+  if (isMockMode) return queryMockWishlistedEquipmentModels(params);
+
+  const { page = 0, size = 20, signal } = params;
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+  const result = await api.get(`/users/me/favorites?${searchParams.toString()}`, {
+    signal,
+  });
+  return normalizeFavoriteModelPage(result);
 }
 
 export async function setEquipmentModelWishlist(values) {
-  assertMockMode();
-  return updateMockEquipmentWishlist(values);
+  if (isMockMode) return updateMockEquipmentWishlist(values);
+
+  const modelId = normalizeRequestedModelId(values.modelId);
+  if (typeof values.isWish !== "boolean") {
+    throw new Error("찜 상태를 확인할 수 없습니다.");
+  }
+
+  const path = `/equipment-models/${modelId}/favorites`;
+  if (values.isWish) {
+    await api.post(path);
+  } else {
+    await api.del(path);
+  }
+
+  return { modelId, isWish: values.isWish };
 }
 
 export async function getAdminEquipmentModelByID(modelId, options = {}) {
