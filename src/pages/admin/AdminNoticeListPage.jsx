@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { fetchNotices, noticeKeys } from "../../api/noticeApi";
-import { isMockMode } from "../../api/client";
 import Button from "../../components/common/Button";
 import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/common/SearchBar";
@@ -37,16 +36,19 @@ function AdminNoticeListPage() {
   const [screenPage, setScreenPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const serverPage = screenPage - 1;
+  const keyword = searchTerm.trim();
 
   const noticeQuery = useQuery({
     queryKey: noticeKeys.list({
       important: IMPORTANT_FILTER,
+      keyword,
       page: serverPage,
       size: PAGE_SIZE,
     }),
     queryFn: ({ signal }) =>
       fetchNotices({
         important: IMPORTANT_FILTER,
+        keyword,
         page: serverPage,
         size: PAGE_SIZE,
         signal,
@@ -54,11 +56,6 @@ function AdminNoticeListPage() {
   });
 
   const notices = noticeQuery.data?.content ?? [];
-  const visibleNotices = isMockMode && searchTerm.trim()
-    ? notices.filter((notice) =>
-        notice.title.toLowerCase().includes(searchTerm.trim().toLowerCase()),
-      )
-    : notices;
 
   const columns = [
     {
@@ -103,7 +100,9 @@ function AdminNoticeListPage() {
     ? "공지사항을 불러오는 중입니다."
     : noticeQuery.isError
       ? noticeQuery.error?.message || "공지사항을 불러오지 못했습니다."
-      : "등록된 공지사항이 없습니다.";
+      : keyword
+        ? "검색 결과가 없습니다."
+        : "등록된 공지사항이 없습니다.";
 
   return (
     <div className={styles.noticeListPage}>
@@ -123,15 +122,16 @@ function AdminNoticeListPage() {
           }
           search={
             <SearchBar
-              placeholder={
-                isMockMode
-                  ? "현재 mock 페이지에서 제목 검색"
-                  : "검색 API 미지원"
-              }
+              placeholder="제목·본문 검색"
               value={searchTerm}
-              disabled={!isMockMode}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              onSubmit={(nextSearchTerm) => setSearchTerm(nextSearchTerm)}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setScreenPage(1);
+              }}
+              onSubmit={(nextSearchTerm) => {
+                setSearchTerm(nextSearchTerm);
+                setScreenPage(1);
+              }}
             />
           }
           pagination={
@@ -142,7 +142,7 @@ function AdminNoticeListPage() {
               totalPages={Math.max(noticeQuery.data?.totalPages ?? 1, 1)}
             />
           }
-          rows={visibleNotices}
+          rows={notices}
           columns={columns}
           emptyMessage={emptyMessage}
           getRowId={(notice) => notice.noticeId}

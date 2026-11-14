@@ -755,7 +755,7 @@ function AdminEquipmentListPage() {
               onSubmit={handleSearchSubmit}
               ariaLabel="모델명 검색"
               placeholder="모델명으로 검색..."
-              disabled={!isMockMode || !hasCategories}
+              disabled={!hasCategories}
             />
           </div>
 

@@ -3,10 +3,10 @@ import { api, ApiError } from "./client";
 export const noticeKeys = {
   all: ["notices"],
   lists: () => ["notices", "list"],
-  list: ({ important = null, page = 0, size = 10 } = {}) => [
+  list: ({ important = null, keyword = "", page = 0, size = 10 } = {}) => [
     "notices",
     "list",
-    { important, page, size },
+    { important, keyword: keyword.trim(), page, size },
   ],
   details: () => ["notices", "detail"],
   detail: (noticeId) => ["notices", "detail", String(noticeId)],
@@ -63,16 +63,21 @@ function createNoticePath(noticeId) {
   return `/notices/${encodeURIComponent(String(noticeId))}`;
 }
 
-export async function fetchNotices({
+async function fetchNoticePage({
   important,
+  keyword = "",
   page = 0,
   size = 10,
   signal,
-} = {}) {
+}) {
   const searchParams = new URLSearchParams({
     page: String(page),
     size: String(size),
   });
+
+  if (keyword.trim()) {
+    searchParams.set("keyword", keyword.trim());
+  }
 
   if (typeof important === "boolean") {
     searchParams.set("important", String(important));
@@ -100,6 +105,93 @@ export async function fetchNotices({
     totalPages: Number(result?.totalPages ?? 0),
     hasNext: Boolean(result?.hasNext),
     last: !result?.hasNext,
+  };
+}
+
+async function fetchNoticeRange({
+  firstPage,
+  important,
+  keyword,
+  offset,
+  length,
+  size,
+  signal,
+}) {
+  if (length === 0) return [];
+
+  const firstIndex = Math.floor(offset / size);
+  const lastIndex = Math.floor((offset + length - 1) / size);
+  const pages = await Promise.all(
+    Array.from({ length: lastIndex - firstIndex + 1 }, (_, index) => {
+      const page = firstIndex + index;
+      return page === 0
+        ? firstPage
+        : fetchNoticePage({ important, keyword, page, size, signal });
+    }),
+  );
+
+  return pages
+    .flatMap((page) => page.content)
+    .slice(offset - firstIndex * size, offset - firstIndex * size + length);
+}
+
+export async function fetchNotices({
+  important,
+  keyword = "",
+  page = 0,
+  size = 10,
+  signal,
+} = {}) {
+  if (typeof important === "boolean") {
+    return fetchNoticePage({ important, keyword, page, size, signal });
+  }
+
+  const [importantFirst, regularFirst] = await Promise.all([
+    fetchNoticePage({ important: true, keyword, page: 0, size, signal }),
+    fetchNoticePage({ important: false, keyword, page: 0, size, signal }),
+  ]);
+  const importantCount = importantFirst.totalElements;
+  const regularCount = regularFirst.totalElements;
+  const totalElements = importantCount + regularCount;
+  const start = page * size;
+  const importantLength = Math.max(0, Math.min(size, importantCount - start));
+  const regularStart = Math.max(0, start - importantCount);
+  const regularLength = Math.max(
+    0,
+    Math.min(size - importantLength, regularCount - regularStart),
+  );
+
+  const [importantNotices, regularNotices] = await Promise.all([
+    fetchNoticeRange({
+      firstPage: importantFirst,
+      important: true,
+      keyword,
+      offset: start,
+      length: importantLength,
+      size,
+      signal,
+    }),
+    fetchNoticeRange({
+      firstPage: regularFirst,
+      important: false,
+      keyword,
+      offset: regularStart,
+      length: regularLength,
+      size,
+      signal,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalElements / size);
+  const hasNext = page + 1 < totalPages;
+  return {
+    content: [...importantNotices, ...regularNotices],
+    page,
+    size,
+    totalElements,
+    totalPages,
+    hasNext,
+    last: !hasNext,
   };
 }
 

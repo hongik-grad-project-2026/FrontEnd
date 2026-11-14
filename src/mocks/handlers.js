@@ -124,6 +124,7 @@ export const handlers = [
         const important = importantValue === null
             ? null
             : importantValue === "true";
+        const keyword = searchParams.get("keyword")?.trim().toLowerCase() ?? "";
 
         if (!Number.isInteger(page) || page < 0 || !Number.isInteger(size) || size < 1 || size > 100) {
             return HttpResponse.json(
@@ -139,6 +140,11 @@ export const handlers = [
 
         const filteredNotices = mockNotices
             .filter((notice) => important === null || notice.important === important)
+            .filter((notice) =>
+                !keyword ||
+                notice.title.toLowerCase().includes(keyword) ||
+                notice.content.toLowerCase().includes(keyword),
+            )
             .sort((firstNotice, secondNotice) => {
                 const importantOrder = Number(secondNotice.important) - Number(firstNotice.important);
 
