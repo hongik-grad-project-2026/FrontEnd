@@ -90,10 +90,12 @@ function StudentRentalDetailModal({
   const isRenting = rental?.status === "renting";
   const isOverdue = rental?.status === "overdue";
   const isCanceled = rental?.status === "canceled";
+  const isNoShow = rental?.status === "noShow";
+  const isRejected = rental?.status === "rejected";
   const isReturned = rental?.status === "returned";
   const showApprovedInfo =
     isPickupPending || isRenting || isOverdue || isReturned;
-  const showRentalInfo = showApprovedInfo || isCanceled;
+  const showRentalInfo = showApprovedInfo || isCanceled || isNoShow || isRejected;
   const showMediaActions = isRenting || isOverdue || isReturned;
   const hasCheckoutPhoto = hasResourceUrl(rental?.checkoutPhotoUrl);
   const hasReturnPhoto = hasResourceUrl(rental?.returnPhotoUrl);
@@ -233,6 +235,24 @@ function StudentRentalDetailModal({
                           value={rental.cancelReason}
                         />
                       </>
+                    ) : null}
+                    {isRejected ? (
+                      <>
+                        <ModalInfoCell
+                          label="반려일"
+                          value={rental.rejectedAt}
+                        />
+                        <ModalInfoCell
+                          label="반려 사유"
+                          value={rental.rejectReasonDetail}
+                        />
+                      </>
+                    ) : null}
+                    {isNoShow ? (
+                      <ModalInfoCell
+                        label="노쇼 처리일"
+                        value={rental.noShowAt}
+                      />
                     ) : null}
                   </dl>
                 </InfoSection>
