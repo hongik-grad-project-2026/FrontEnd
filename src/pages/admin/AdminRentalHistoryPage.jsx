@@ -11,12 +11,12 @@ import StatusBadge from "../../components/common/StatusBadge";
 import Tabs from "../../components/common/Tabs";
 import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
+import RentalDetailModal from "../../components/modal/RentalDetailModal";
+
 import { RENTAL_STATUS, getRentalStatus } from "../../constants/status";
 import styles from "./AdminRentalHistoryPage.module.css";
 
 const ROWS_PER_PAGE = 10;
-// const STATUS_BADGES = { canceled: "대여-신청취소", returned: "대여-반납완료" };
-
 function EquipmentCell({ record }) {
   return (
     <div className={styles.equipmentCell}>
@@ -200,6 +200,7 @@ function AdminRentalHistoryPage() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [detailModalState, setDetailModalState] = useState(null);
   const params = { status: selectedStatus, keyword: searchTerm, page: currentPage - 1, size: ROWS_PER_PAGE };
   const historyQuery = useQuery({
     queryKey: rentalKeys.adminHistoryList(params),
@@ -212,9 +213,17 @@ function AdminRentalHistoryPage() {
   const counts = countQuery.data ?? {};
   const tabs = [
     { value: "all", label: "전체", count: counts.all ?? "-", controlsId: panelId },
-    { value: "canceled", label: RENTAL_STATUS.canceled.label, count: counts.canceled ?? "-", controlsId: panelId },
     { value: "returned", label: RENTAL_STATUS.returned.label, count: counts.returned ?? "-", controlsId: panelId },
+    {
+      value: "inactive",
+      label: "취소 및 반려",
+      count: countQuery.data
+        ? (counts.canceled ?? 0) + (counts.rejected ?? 0) + (counts.noShow ?? 0)
+        : "-",
+      controlsId: panelId,
+    },
   ];
+
   const data = historyQuery.data;
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
   const emptyMessage = searchTerm.trim() ? "검색 조건에 해당하는 대여 기록이 없습니다." : selectedStatus === "all" ? "표시할 대여 기록이 없습니다." : `${tabs.find((tab) => tab.value === selectedStatus)?.label} 기록이 없습니다.`;
@@ -232,11 +241,31 @@ function AdminRentalHistoryPage() {
             {historyQuery.isPending ? <p>대여 기록을 불러오는 중입니다.</p> : null}
             {historyQuery.isError ? <p role="alert">{historyQuery.error?.message || "대여 기록을 불러오지 못했습니다."}</p> : null}
             {countQuery.isError ? <p role="alert">상태별 개수를 불러오지 못했습니다.</p> : null}
-            {historyQuery.isSuccess ? <DataTable className={styles.dataTable} ariaLabel="관리자 대여 기록 목록" columns={HISTORY_COLUMNS} rows={data.content} getRowId={(record) => record.rentalId} minWidth={1120} emptyMessage={emptyMessage} /> : null}
+            {historyQuery.isSuccess ?
+              <DataTable
+                className={styles.dataTable}
+                ariaLabel="관리자 대여 기록 목록"
+                columns={HISTORY_COLUMNS}
+                rows={data.content}
+                getRowId={(record) => record.rentalId}
+                minWidth={1120}
+                emptyMessage={emptyMessage}
+                onRowClick={setDetailModalState}
+              /> : null
+            }
           </div>
           {historyQuery.isSuccess ? <div className={styles.footer}><Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} ariaLabel="대여 기록 목록 페이지 이동" /></div> : null}
         </div>
       </div>
+      {detailModalState ? (
+        <RentalDetailModal
+          key={detailModalState.rentalId}
+          isOpen
+          rental={detailModalState}
+          readOnly={true}
+          onClose={() => setDetailModalState(null)}
+        />
+      ) : null}
     </section>
   );
 }

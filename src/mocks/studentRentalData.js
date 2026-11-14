@@ -9,12 +9,29 @@ export const MOCK_STUDENT_RENTAL_STATUSES = Object.freeze(
 // 관리자 반려는 학생 신청 취소와 다른 mock 결과로 관리함.
 // 실제 서버 상태값은 대여 API 계약이 나온 뒤 별도로 변환함.
 export const MOCK_ADMIN_RENTAL_RESULTS = Object.freeze(["rejected"]);
+const MOCK_ADMIN_RENTAL_REJECTION_TYPES = Object.freeze([
+  "INSUFFICIENT_STOCK",
+  "RENTAL_SUSPENDED",
+  "OTHER",
+]);
 
 export const MOCK_STUDENT_RENTAL_CANCEL_REASONS = Object.freeze([
   "필요 없어짐",
   "신청 정보 잘못 입력함",
   "승인이 늦음",
 ]);
+
+const CANCEL_REASON_CODE_BY_LABEL = Object.freeze({
+  "필요 없어짐": "NO_LONGER_NEEDED",
+  "신청 정보 잘못 입력함": "WRONG_APPLICATION_INFO",
+  "승인이 늦음": "APPROVAL_DELAYED",
+});
+
+const CANCEL_REASON_LABEL_BY_CODE = Object.freeze(
+  Object.fromEntries(
+    Object.entries(CANCEL_REASON_CODE_BY_LABEL).map(([label, code]) => [code, label]),
+  ),
+);
 
 const INITIAL_STUDENT_RENTALS = [
   {
@@ -180,6 +197,67 @@ const INITIAL_STUDENT_RENTALS = [
     pledgeUrl: null,
   },
   {
+    rentalId: "R2026091701",
+    modelId: "mock-catalog-model-8",
+    itemId: null,
+    assetNumber: null,
+    labelNumber: null,
+    status: "rejected",
+    categoryId: 2,
+    category: "태블릿",
+    equipmentName: "iPad Air 11",
+    imageUrl: null,
+    description: "필기와 강의 자료 확인에 사용할 수 있는 태블릿입니다.",
+    components: "본체, 케이스, 충전 케이블",
+    rentalType: "상시",
+    requestedAt: "2026.09.17. 09:40:00",
+    expectedPickupAt: "2026.09.20. 13:00",
+    expectedReturnAt: "2026.09.23. 17:00",
+    reason: "수업 자료 필기와 발표 준비에 사용합니다.",
+    approvedAt: null,
+    actualPickupAt: null,
+    actualReturnAt: null,
+    canceledAt: null,
+    cancelReason: null,
+    rejectedAt: "2026.09.17. 14:20:00",
+    rejectReasonType: "INSUFFICIENT_STOCK",
+    rejectReasonDetail: "대여 가능한 기기가 없습니다.",
+    checkoutPhotoUrl: null,
+    returnPhotoUrl: null,
+    pledgeUrl: null,
+  },
+  {
+    rentalId: "R2026091601",
+    modelId: "mock-catalog-model-9",
+    itemId: null,
+    assetNumber: null,
+    labelNumber: null,
+    status: "noShow",
+    categoryId: 3,
+    category: "보조배터리",
+    equipmentName: "Anker 보조배터리",
+    imageUrl: null,
+    description: "휴대용 기기를 충전할 수 있는 보조배터리입니다.",
+    components: "보조배터리 본체, 충전 케이블",
+    rentalType: "사전",
+    requestedAt: "2026.09.14. 11:15:00",
+    expectedPickupAt: "2026.09.16. 10:00",
+    expectedReturnAt: "2026.09.18. 17:00",
+    reason: "학과 행사 촬영에 사용합니다.",
+    approvedAt: "2026.09.15. 09:30:00",
+    actualPickupAt: null,
+    actualReturnAt: null,
+    canceledAt: null,
+    cancelReason: null,
+    rejectedAt: null,
+    rejectReasonType: null,
+    rejectReasonDetail: null,
+    noShowAt: "2026.09.16. 17:00:00",
+    checkoutPhotoUrl: null,
+    returnPhotoUrl: null,
+    pledgeUrl: null,
+  },
+  {
     rentalId: "R2026081201",
     modelId: "mock-catalog-model-7",
     itemId: "mock-item-0711",
@@ -286,7 +364,8 @@ const INITIAL_ADMIN_APPROVAL_RENTALS = Array.from(
       canceledAt: null,
       cancelReason: null,
       rejectedAt: null,
-      rejectionReason: null,
+      rejectReasonType: null,
+      rejectReasonDetail: null,
       checkoutPhotoUrl: null,
       returnPhotoUrl: null,
       pledgeUrl: null,
@@ -463,7 +542,8 @@ const INITIAL_ADMIN_STATUS_RENTALS = ADMIN_STATUS_MOCK_DEFINITIONS.map(
     canceledAt: null,
     cancelReason: null,
     rejectedAt: null,
-    rejectionReason: null,
+    rejectReasonType: null,
+    rejectReasonDetail: null,
     checkoutPhotoUrl: null,
     returnPhotoUrl: null,
     pledgeUrl: null,
@@ -504,7 +584,8 @@ const INITIAL_MEMBER_RENTALS = [
     canceledAt: null,
     cancelReason: null,
     rejectedAt: null,
-    rejectionReason: null,
+    rejectReasonType: null,
+    rejectReasonDetail: null,
     checkoutPhotoUrl: null,
     returnPhotoUrl: null,
     pledgeUrl: null,
@@ -541,7 +622,8 @@ const INITIAL_MEMBER_RENTALS = [
     canceledAt: null,
     cancelReason: null,
     rejectedAt: null,
-    rejectionReason: null,
+    rejectReasonType: null,
+    rejectReasonDetail: null,
     checkoutPhotoUrl: null,
     returnPhotoUrl: null,
     pledgeUrl: null,
@@ -554,7 +636,8 @@ const INITIAL_MOCK_RENTALS = [
     modelName: rental.equipmentName,
     os: null,
     rejectedAt: null,
-    rejectionReason: null,
+    rejectReasonType: null,
+    rejectReasonDetail: null,
     ...rental,
   })),
   ...INITIAL_ADMIN_APPROVAL_RENTALS,
@@ -566,6 +649,16 @@ let mockRentals = structuredClone(INITIAL_MOCK_RENTALS);
 
 function clone(value) {
   return structuredClone(value);
+}
+
+function toMockStudentRentalView(rental) {
+  const view = clone(rental);
+
+  return {
+    ...view,
+    cancelReason:
+      CANCEL_REASON_LABEL_BY_CODE[view.cancelReason] ?? view.cancelReason ?? null,
+  };
 }
 
 function createMockError(message, code) {
@@ -600,6 +693,10 @@ function matchesStatus(status, selectedStatus) {
 
   if (selectedStatus === "renting") {
     return status === "renting" || status === "overdue";
+  }
+
+  if (selectedStatus === "inactive") {
+    return status === "noShow" || status === "rejected" || status === "canceled";
   }
 
   return status === selectedStatus;
@@ -757,10 +854,12 @@ function toAdminStatusRecord(rental) {
 
 function toHistoryRecord(rental) {
   return {
+    ...clone(rental),
     id: rental.rentalId,
     rentalId: rental.rentalId,
     status: rental.status,
     imageSrc: rental.imageUrl,
+    accessories: rental.components,
     equipmentName: rental.equipmentName,
     modelName: rental.modelName,
     category: rental.category,
@@ -770,6 +869,8 @@ function toHistoryRecord(rental) {
     studentId: rental.studentId,
     department: rental.department,
     rentalType: rental.rentalType,
+    cancelReason:
+      CANCEL_REASON_LABEL_BY_CODE[rental.cancelReason] ?? rental.cancelReason ?? null,
     requestedDate: getDatePart(rental.requestedAt),
     pickupDate: getDatePart(rental.actualPickupAt),
     returnedDate: getDatePart(rental.actualReturnAt),
@@ -821,7 +922,7 @@ export async function queryMockStudentRentals({
   const filteredRentals = mockRentals.filter(
     (rental) =>
       String(rental.userId) === String(MOCK_CURRENT_STUDENT.userId) &&
-      rental.status !== "rejected" &&
+      // rental.status !== "rejected" &&
       matchesStatus(rental.status, status) &&
       matchesKeyword(rental, keyword),
   );
@@ -832,9 +933,9 @@ export async function queryMockStudentRentals({
   const startIndex = resolvedPage * resolvedSize;
 
   return {
-    content: clone(
-      filteredRentals.slice(startIndex, startIndex + resolvedSize),
-    ),
+    content: filteredRentals
+      .slice(startIndex, startIndex + resolvedSize)
+      .map(toMockStudentRentalView),
     page: resolvedPage,
     size: resolvedSize,
     totalElements,
@@ -848,8 +949,7 @@ export async function getMockStudentRentalCounts({ signal } = {}) {
 
   const studentRentals = mockRentals.filter(
     (rental) =>
-      String(rental.userId) === String(MOCK_CURRENT_STUDENT.userId) &&
-      rental.status !== "rejected",
+      String(rental.userId) === String(MOCK_CURRENT_STUDENT.userId)
   );
 
   return {
@@ -869,6 +969,9 @@ export async function getMockStudentRentalCounts({ signal } = {}) {
       .length,
     returned: studentRentals.filter((rental) => rental.status === "returned")
       .length,
+    inactive: studentRentals.filter(
+      (rental) => rental.status === "noShow" || rental.status === "rejected" || rental.status === "canceled"
+    ).length
   };
 }
 
@@ -878,8 +981,8 @@ export async function getMockStudentRentalDetail(rentalId, { signal } = {}) {
   const rental = mockRentals.find(
     (candidate) =>
       candidate.rentalId === String(rentalId) &&
-      String(candidate.userId) === String(MOCK_CURRENT_STUDENT.userId) &&
-      candidate.status !== "rejected",
+      String(candidate.userId) === String(MOCK_CURRENT_STUDENT.userId)
+    // && candidate.status !== "rejected",
   );
 
   if (!rental) {
@@ -889,7 +992,7 @@ export async function getMockStudentRentalDetail(rentalId, { signal } = {}) {
     );
   }
 
-  return clone(rental);
+  return toMockStudentRentalView(rental);
 }
 
 export async function cancelMockStudentRental({ rentalId, reason }) {
@@ -929,21 +1032,19 @@ export async function cancelMockStudentRental({ rentalId, reason }) {
     );
   }
 
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, "0");
-  const canceledAt = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())}. ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const canceledAt = formatMockDateTime();
   const canceledRental = {
     ...rental,
     status: "canceled",
     canceledAt,
-    cancelReason: reason,
+    cancelReason: CANCEL_REASON_CODE_BY_LABEL[reason],
   };
 
   mockRentals = mockRentals.map((candidate, index) =>
     index === rentalIndex ? canceledRental : candidate,
   );
 
-  return clone(canceledRental);
+  return toMockStudentRentalView(canceledRental);
 }
 
 export async function createMockStudentRental({
@@ -1006,7 +1107,8 @@ export async function createMockStudentRental({
     canceledAt: null,
     cancelReason: null,
     rejectedAt: null,
-    rejectionReason: null,
+    rejectReasonType: null,
+    rejectReasonDetail: null,
     checkoutPhotoUrl: null,
     returnPhotoUrl: null,
     pledgeUrl: null,
@@ -1073,15 +1175,23 @@ export async function rejectMockRental({ rentalId, reason }) {
     );
   }
 
-  if (!reason) {
+  const rejectReasonType = reason?.type;
+  const rejectReasonDetail = reason?.detail?.trim() ?? "";
+
+  if (!MOCK_ADMIN_RENTAL_REJECTION_TYPES.includes(rejectReasonType)) {
     throw createMockError("반려 사유를 선택해 주세요.", "REJECTION_REQUIRED");
+  }
+
+  if (rejectReasonType === "OTHER" && !rejectReasonDetail) {
+    throw createMockError("반려 사유를 입력해 주세요.", "REJECTION_DETAIL_REQUIRED");
   }
 
   return replaceRental({
     ...rental,
     status: "rejected",
     rejectedAt: formatMockDateTime(),
-    rejectionReason: reason,
+    rejectReasonType,
+    rejectReasonDetail: rejectReasonDetail || null,
   });
 }
 
@@ -1201,12 +1311,15 @@ export async function queryMockAdminRentalHistory({
 } = {}) {
   await waitForMock(signal);
   const normalizedKeyword = normalizeSearch(keyword);
+  const statuses = status === "inactive"
+    ? ["canceled", "rejected", "noShow"]
+    : status === "returned"
+      ? ["returned"]
+      : status === "canceled"
+        ? ["canceled"]
+        : ["canceled", "returned", "rejected", "noShow"];
   const records = mockRentals
-    .filter(
-      (rental) =>
-        ["canceled", "returned"].includes(rental.status) &&
-        (status === "all" || rental.status === status),
-    )
+    .filter((rental) => statuses.includes(rental.status))
     .filter(
       (rental) =>
         !normalizedKeyword ||
@@ -1229,13 +1342,15 @@ export async function queryMockAdminRentalHistory({
 export async function getMockAdminRentalHistoryCounts({ signal } = {}) {
   await waitForMock(signal);
   const history = mockRentals.filter((rental) =>
-    ["canceled", "returned"].includes(rental.status),
+    ["canceled", "returned", "rejected", "noShow"].includes(rental.status),
   );
 
   return {
     all: history.length,
     canceled: history.filter((rental) => rental.status === "canceled").length,
     returned: history.filter((rental) => rental.status === "returned").length,
+    rejected: history.filter((rental) => rental.status === "rejected").length,
+    noShow: history.filter((rental) => rental.status === "noShow").length,
   };
 }
 

@@ -7,9 +7,9 @@ export const RENTAL_STATUS = Object.freeze({
     renting: { id: 2, label: "대여 중", color: "green" },
     overdue: { id: 3, label: "연체", color: "red" },
     returned: { id: 4, label: "반납 완료", color: "light" },
-    rejected: { id: 5, label: "반려", color: "red" },
+    rejected: { id: 5, label: "반려", color: "gray" },
     canceled: { id: 6, label: "신청 취소", color: "gray" },
-    noShow: { id: 7, label: "미수령", color: "red" },
+    noShow: { id: 7, label: "미수령", color: "gray" },
 });
 export const getRentalStatus = (value) => RENTAL_STATUS[value] ?? UNKNOWN_STATUS;
 
@@ -33,7 +33,7 @@ export const getModelStatus = (value) => MODEL_STATUS[value] ?? UNKNOWN_STATUS;
 // '기기' 상태
 export const ITEM_STATUS = Object.freeze({
     available: { id: 0, label: "대여 가능", color: "blue" },
-    reserved: { id: 1, label: "예약됨", color: "yellow" },
+    reserved: { id: 1, label: "신청 됨", color: "yellow" },
     rented: { id: 2, label: "대여 중", color: "green" },
     broken: { id: 3, label: "고장", color: "red" },
 });

@@ -6,34 +6,15 @@ import Button from "../common/Button";
 import InputBar from "../common/Input";
 import Select from "../common/Select";
 import BaseModal from "./BaseModal";
-
+import { ITEM_STATUS } from "../../constants/status.js";
 import styles from "./AssetFormModal.module.css";
 
-const STATUS_OPTIONS = [
-  {
-    value: "available",
-    label: "대여 가능",
-  },
-  {
-    value: "rented",
-    label: "대여 중",
-  },
-  {
-    value: "broken",
-    label: "고장",
-  },
-  {
-    value: "disposalScheduled",
-    label: "폐기 예정",
-  },
-];
-
-const REAL_STATUS_OPTIONS = [
-  { value: "available", label: "대여 가능" },
-  { value: "reserved", label: "신청됨" },
-  { value: "rented", label: "대여 중" },
-  { value: "broken", label: "고장" },
-];
+const STATUS_OPTIONS = Object.entries(ITEM_STATUS)
+  .filter(([statusKey]) => ["available", "broken"].includes(statusKey))
+  .map(([statusKey, status]) => ({
+    value: statusKey,
+    label: status.label,
+  }));
 
 function normalizeText(value) {
   return String(value ?? "").trim();
@@ -276,7 +257,7 @@ function AssetFormModalContent({
                     id={statusId}
                     className={styles.select}
                     width="100%"
-                    options={isMockMode ? STATUS_OPTIONS : REAL_STATUS_OPTIONS}
+                    options={STATUS_OPTIONS}
                     value={formValues.status}
                     placeholder="상태 선택"
                     ariaLabel="기기 상태"
@@ -298,9 +279,9 @@ function AssetFormModalContent({
                     id={statusId}
                     className={styles.select}
                     width="100%"
-                    options={isMockMode ? STATUS_OPTIONS : REAL_STATUS_OPTIONS}
+                    options={STATUS_OPTIONS}
                     value={formValues.status}
-                    placeholder="상태 선택"
+                    placeholder={ITEM_STATUS[formValues.status]?.label ?? "상태 선택"}
                     ariaLabel="기기 상태"
                     disabled={isPending}
                     onChange={(nextValue) =>

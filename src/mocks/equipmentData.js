@@ -638,9 +638,9 @@ export async function getMockAdminEquipmentItemCounts(
   const counts = {
     all: items.length,
     available: 0,
+    reserved: 0,
     rented: 0,
     broken: 0,
-    disposalScheduled: 0,
   };
 
   items.forEach((item) => {

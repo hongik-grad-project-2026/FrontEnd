@@ -37,12 +37,12 @@ const ACTUAL_ASSET_TABS = [
   })),
 ];
 
-// 폐기 예정은 실제 서버 enum이 아닌 기존 mock 화면 전용 상태임.
+
 const MOCK_ASSET_TABS = [
   { value: "all", label: "전체" },
-  ...Object.values(ITEM_STATUS).map((status) => ({
-    value: status.id,
-    label: status.label,
+  ...Object.entries(ITEM_STATUS).map(([key, value]) => ({
+    value: key,
+    label: value.label,
   })),
 ];
 

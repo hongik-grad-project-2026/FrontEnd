@@ -172,14 +172,15 @@ export async function getStudentRentalCounts(options = {}) {
   if (isMockMode) return getMockStudentRentalCounts(options);
   const page = await getStudentRentals({ page: 0, size: 1, signal: options.signal });
   const counts = page.statusCounts;
+
   return {
     all: page.totalElements,
     pendingApproval: counts?.pendingApproval ?? null,
     readyForPickup: counts?.readyForPickup ?? null,
     renting: counts ? counts.renting + counts.overdue : null,
     overdue: counts?.overdue ?? null,
-    canceled: counts?.canceled ?? null,
     returned: counts?.returned ?? null,
+    inactive: counts ? counts.canceled + counts.noShow + counts.rejected : null,
   };
 }
 
@@ -405,7 +406,7 @@ export async function uploadAdminRentalImage({ rentalId, imageType, image }) {
     formData,
   );
   if (result?.rentalId !== requestedId || result.imageType !== imageType ||
-      !Number.isSafeInteger(result.imageId)) {
+    !Number.isSafeInteger(result.imageId)) {
     throw new Error("대여 사진 업로드 결과를 확인할 수 없습니다.");
   }
   return result;
@@ -418,11 +419,11 @@ export async function getAdminRentalHistory(params = {}) {
       signal: params.signal,
     });
   }
-  const statuses = params.status === "canceled"
-    ? ["CANCELED"]
+  const statuses = params.status === "inactive"
+    ? ["CANCELED", "REJECTED", "NO_SHOW"]
     : params.status === "returned"
       ? ["RETURNED"]
-      : ["CANCELED", "RETURNED"];
+      : ["CANCELED", "REJECTED", "NO_SHOW", "RETURNED"];
   return getRentalPage("/admin/rentals", { ...params, statuses }, mapAdminHistory);
 }
 
@@ -431,8 +432,10 @@ export async function getAdminRentalHistoryCounts(options = {}) {
   const page = await getRentalPage("/admin/rentals", { page: 0, size: 1, signal: options.signal }, mapAdminHistory);
   const counts = page.statusCounts;
   return {
-    all: counts ? counts.canceled + counts.returned : null,
+    all: counts ? counts.canceled + counts.rejected + counts.noShow + counts.returned : null,
     canceled: counts?.canceled ?? null,
+    rejected: counts?.rejected ?? null,
+    noShow: counts?.noShow ?? null,
     returned: counts?.returned ?? null,
   };
 }

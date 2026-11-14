@@ -44,6 +44,21 @@ function getCardFields(rental) {
       { id: "cancel-reason", label: "취소 사유", value: rental.cancelReason },
     ];
   }
+  if (rental.status === "noShow") {
+    return [
+      ...commonFields,
+      { id: "no-show", label: "취소 사유", value: "미수령" },
+    ];
+  }
+  if (rental.status === "rejected") {
+    return [
+      ...commonFields,
+      ...(rental.rejectedAt
+        ? [{ id: "rejected-at", label: "반려일", value: rental.rejectedAt }]
+        : []),
+      { id: "rejected-reason", label: "반려 사유", value: rental.rejectReasonDetail },
+    ];
+  }
 
   if (rental.status === "returned") {
     return [
@@ -167,32 +182,15 @@ function StudentRentalHistoryPage() {
   const countValue = (key) => counts?.[key] ?? "-";
   const rentalTabs = [
     { value: "all", label: "전체", count: countValue("all") },
-    {
-      value: "pendingApproval",
-      label: RENTAL_STATUS.pendingApproval.label,
-      count: countValue("pendingApproval"),
-    },
-    {
-      value: "readyForPickup",
-      label: RENTAL_STATUS.readyForPickup.label,
-      count: countValue("readyForPickup"),
-    },
-    {
-      value: "renting",
-      label: RENTAL_STATUS.renting.label,
-      count: countValue("renting"),
-      badge: counts?.overdue > 0 ? "⚠ 연체" : null,
-    },
-    {
-      value: "canceled",
-      label: RENTAL_STATUS.canceled.label,
-      count: countValue("canceled"),
-    },
-    {
-      value: "returned",
-      label: RENTAL_STATUS.returned.label,
-      count: countValue("returned"),
-    },
+    ...Object.entries(RENTAL_STATUS)
+      .filter(([key]) => !["rejected", "noShow", "canceled", "overdue"].includes(key))
+      .map(([key, value]) => ({
+        value: key,
+        label: value.label,
+        count: countValue(key),
+        badge: key === "renting" && counts?.overdue > 0 ? "⚠ 연체" : null,
+      })),
+    { value: "inactive", label: "취소 및 반려", count: countValue("inactive") },
   ];
   const activeTab = rentalTabs.some((tab) => tab.value === requestedTab)
     ? requestedTab

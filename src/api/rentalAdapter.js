@@ -1,3 +1,5 @@
+import { RENTAL_STATUS } from "../constants/status.js";
+
 const SERVER_STATUS = Object.freeze({
   PENDING_APPROVAL: "pendingApproval",
   READY_FOR_PICKUP: "readyForPickup",
@@ -71,6 +73,7 @@ function screenStatus(value) {
 export function serverStatusesFor(status) {
   if (status === "all" || !status) return [];
   if (status === "renting") return ["RENTING", "OVERDUE"];
+  if (status === "inactive") return ["NO_SHOW", "REJECTED", "CANCELED"];
   const serverStatus = SCREEN_STATUS[status];
   if (!serverStatus) throw new Error("지원하지 않는 대여 상태 필터입니다.");
   return [serverStatus];
@@ -95,10 +98,10 @@ export function statusCounts(value) {
 export function mapRentalPage(value, mapRecord, requestedPage) {
   const page = requireObject(value, "대여 목록");
   if (!Array.isArray(page.content) || !Number.isSafeInteger(page.page) || page.page !== requestedPage ||
-      !Number.isSafeInteger(page.size) || page.size < 1 ||
-      !Number.isSafeInteger(page.totalElements) || page.totalElements < 0 ||
-      !Number.isSafeInteger(page.totalPages) || page.totalPages < 0 ||
-      typeof page.hasNext !== "boolean") {
+    !Number.isSafeInteger(page.size) || page.size < 1 ||
+    !Number.isSafeInteger(page.totalElements) || page.totalElements < 0 ||
+    !Number.isSafeInteger(page.totalPages) || page.totalPages < 0 ||
+    typeof page.hasNext !== "boolean") {
     throw new Error("대여 목록의 페이지 정보를 확인할 수 없습니다.");
   }
   return {
@@ -130,6 +133,10 @@ export function mapStudentSummary(value) {
     actualReturnAt: formatDateTime(rental.actualReturnAt),
     canceledAt: formatDateTime(rental.canceledAt),
     cancelReason: CANCEL_REASON[rental.cancelReason] ?? optionalText(rental.cancelReason),
+    rejectedAt: null,
+    rejectReasonType: optionalText(rental.rejectReasonType),
+    rejectReasonDetail: optionalText(rental.rejectReasonDetail),
+    noShowAt: null,
   };
 }
 
@@ -144,7 +151,8 @@ export function mapStudentDetail(value, requestedId) {
     components: optionalText(rental.components),
     reason: optionalText(rental.purpose),
     memo: optionalText(rental.memo),
-    approvedAt: formatDateTime(rental.reviewedAt),
+    approvedAt: rental.status === "REJECTED" ? null : formatDateTime(rental.reviewedAt),
+    rejectedAt: rental.status === "REJECTED" ? formatDateTime(rental.reviewedAt) : null,
     checkoutPhotoUrl: optionalText(rental.pickupImageUrl),
     returnPhotoUrl: optionalText(rental.returnImageUrl),
     pledgeUrl: null,
@@ -246,8 +254,13 @@ export function mapAdminDetail(value, requestedId) {
     expectedPickupAt: formatDate(rental.expectedPickupDate),
     expectedReturnAt: formatDateTime(rental.expectedReturnAt),
     approvedAt: formatDateTime(rental.reviewedAt),
+    rejectedAt: formatDateTime(rental.reviewedAt),
     actualPickupAt: formatDateTime(rental.actualPickupAt),
     actualReturnAt: formatDateTime(rental.actualReturnAt),
+    canceledAt: formatDateTime(rental.canceledAt),
+    cancelReason: CANCEL_REASON[rental.cancelReason] ?? optionalText(rental.cancelReason),
+    rejectReasonType: optionalText(rental.rejectReasonType),
+    rejectReasonDetail: optionalText(rental.rejectReasonDetail),
     images: Array.isArray(rental.images) ? rental.images : [],
   };
 }

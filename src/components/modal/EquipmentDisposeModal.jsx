@@ -3,11 +3,7 @@ import { useId, useRef } from "react";
 import Button from "../common/Button";
 import BaseModal from "./BaseModal";
 import styles from "./EquipmentDisposeModal.module.css";
-
-const STATUS_LABELS = {
-  active: "대여 진행",
-  paused: "대여 중지",
-};
+import { MODEL_STATUS } from "../../constants/status.js";
 
 function EquipmentDisposeModal({
   categoryLabel,
@@ -78,7 +74,7 @@ function EquipmentDisposeModal({
 
                 <div className={styles.informationItem}>
                   <dt>상태</dt>
-                  <dd>{STATUS_LABELS[equipment.status] ?? "-"}</dd>
+                  <dd>{MODEL_STATUS[equipment.status]?.label ?? "-"}</dd>
                 </div>
 
                 <div className={styles.informationItem}>
