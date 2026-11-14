@@ -253,8 +253,13 @@ export function mapAdminDetail(value, requestedId) {
     expectedPickupAt: formatDate(rental.expectedPickupDate),
     expectedReturnAt: formatDateTime(rental.expectedReturnAt),
     approvedAt: formatDateTime(rental.reviewedAt),
+    rejectedAt: formatDateTime(rental.reviewedAt),
     actualPickupAt: formatDateTime(rental.actualPickupAt),
     actualReturnAt: formatDateTime(rental.actualReturnAt),
+    canceledAt: formatDateTime(rental.canceledAt),
+    cancelReason: CANCEL_REASON[rental.cancelReason] ?? optionalText(rental.cancelReason),
+    rejectReasonType: optionalText(rental.rejectReasonType),
+    rejectReasonDetail: optionalText(rental.rejectReasonDetail),
     images: Array.isArray(rental.images) ? rental.images : [],
   };
 }

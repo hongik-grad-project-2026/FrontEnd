@@ -194,7 +194,19 @@ function AdminRentalStatusPage() {
                 <RentalCard
                   key={rental.rentalId} ariaLabel={rental.ariaLabel}
                   badge={<StatusBadge text={status.label} color={status.color} size="lg" />}
-                  actions={<>{primary ? <Button kind={primary.kind} status="Default" size="Default" color={primary.color} text={primary.text} disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "process", rental }); }} /> : null}<Button kind="border" status="Default" size="Default" color="Primary" text="상세 보기" disabled={processMutation.isPending} onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "detail", rental }); }} /></>}>
+                  actions={<>{primary ?
+                    <Button kind={primary.kind} status="Default" size="Default" color={primary.color} text={primary.text} disabled={processMutation.isPending}
+                      onClick={(event) => { modalTriggerRef.current = event.currentTarget; processMutation.reset(); setDetailModalState({ initialMode: "process", rental }); }}
+                    /> : null}
+                    <Button kind="border" status="Default" size="Default" color="Primary"
+                      text="상세 보기" disabled={processMutation.isPending}
+                      onClick={(event) => {
+                        modalTriggerRef.current = event.currentTarget;
+                        processMutation.reset();
+                        setDetailModalState({ initialMode: "detail", rental });
+                      }}
+                    />
+                  </>}>
                   <RentalCardInfo category={rental.category} equipmentName={rental.equipmentName} rentalId={rental.rentalId} fields={rental.infoFields} />
                 </RentalCard>
               );

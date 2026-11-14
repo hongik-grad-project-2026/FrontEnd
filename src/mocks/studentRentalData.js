@@ -854,10 +854,12 @@ function toAdminStatusRecord(rental) {
 
 function toHistoryRecord(rental) {
   return {
+    ...clone(rental),
     id: rental.rentalId,
     rentalId: rental.rentalId,
     status: rental.status,
     imageSrc: rental.imageUrl,
+    accessories: rental.components,
     equipmentName: rental.equipmentName,
     modelName: rental.modelName,
     category: rental.category,
@@ -867,6 +869,8 @@ function toHistoryRecord(rental) {
     studentId: rental.studentId,
     department: rental.department,
     rentalType: rental.rentalType,
+    cancelReason:
+      CANCEL_REASON_LABEL_BY_CODE[rental.cancelReason] ?? rental.cancelReason ?? null,
     requestedDate: getDatePart(rental.requestedAt),
     pickupDate: getDatePart(rental.actualPickupAt),
     returnedDate: getDatePart(rental.actualReturnAt),

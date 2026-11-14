@@ -250,8 +250,8 @@ function StudentRentalDetailModal({
                     ) : null}
                     {isNoShow ? (
                       <ModalInfoCell
-                        label="노쇼 처리일"
-                        value={rental.noShowAt}
+                        label="취소 사유"
+                        value="미수령"
                       />
                     ) : null}
                   </dl>

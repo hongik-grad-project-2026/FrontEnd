@@ -47,7 +47,7 @@ function getCardFields(rental) {
   if (rental.status === "noShow") {
     return [
       ...commonFields,
-      { id: "no-show-at", label: "미수령 처리일", value: rental.noShowAt },
+      { id: "no-show", label: "취소 사유", value: "미수령" },
     ];
   }
   if (rental.status === "rejected") {

@@ -15,6 +15,12 @@ import styles from "./RentalDetailModal.module.css";
 import { isPickupPhotoRequired } from "../../utils/rentalRules";
 import { getRentalStatus } from "../../constants/status";
 
+const REJECT_REASON_LABELS = Object.freeze({
+  INSUFFICIENT_STOCK: "기기 재고 부족",
+  RENTAL_SUSPENDED: "대여 중지된 기기 (기기 고장 등)",
+  OTHER: "기타",
+});
+
 function joinClassNames(...classNames) {
   return classNames.filter(Boolean).join(" ");
 }
@@ -81,6 +87,7 @@ function RentalDetailModal({
   workerName = "",
   isPending = false,
   error,
+  readOnly = false,
   uploadRetry,
 }) {
   const generatedId = useId();
@@ -92,6 +99,7 @@ function RentalDetailModal({
   const [fileError, setFileError] = useState("");
   const [showPickupImages, setShowPickupImages] = useState(false);
   const titleId = `${generatedId}-title`;
+  const modalTitle = readOnly ? "대여기록 상세" : "대여내역 상세";
   const processPhotoId = `${generatedId}-process-photo`;
   const detailQuery = useQuery({
     queryKey: rentalKeys.adminDetail(rentalSummary?.rentalId),
@@ -117,8 +125,8 @@ function RentalDetailModal({
       >
         <div className={styles.layout}>
           <header className={styles.header}>
-            <h2 id={titleId} className={styles.title}>대여내역 상세</h2>
-            <InputIconButton icon="close" type="button" ariaLabel="대여내역 상세 닫기" onClick={onClose} />
+            <h2 id={titleId} className={styles.title}>{modalTitle}</h2>
+            <InputIconButton icon="close" type="button" ariaLabel={`${modalTitle} 닫기`} onClick={onClose} />
           </header>
           <div className={styles.content} role={detailQuery.isError ? "alert" : undefined}>
             <p>{detailQuery.isError ? detailQuery.error?.message || "대여내역을 불러오지 못했습니다." : "대여내역을 불러오는 중입니다."}</p>
@@ -134,8 +142,15 @@ function RentalDetailModal({
 
   const isWaiting = rental.status === "readyForPickup";
   const isOverdue = rental.status === "overdue";
+  const isCanceled = rental.status === "canceled";
+  const isRejected = rental.status === "rejected";
+  const isNoShow = rental.status === "noShow";
+  const isReturned = rental.status === "returned";
   const isProcessing = mode === "process" || Boolean(uploadRetry);
   const status = getRentalStatus(rental.status);
+  const rejectReason = rental.rejectReasonType === "OTHER"
+    ? rental.rejectReasonDetail
+    : REJECT_REASON_LABELS[rental.rejectReasonType] ?? rental.rejectReasonDetail;
 
   const processType = uploadRetry?.processType ?? (isWaiting ? "pickup" : "return");
   const processTitle = processType === "pickup" ? "수령" : "반납";
@@ -224,7 +239,7 @@ function RentalDetailModal({
       <div className={styles.layout} data-mode={mode}>
         <header className={styles.header}>
           <h2 id={titleId} className={styles.title}>
-            대여내역 상세
+            {modalTitle}
           </h2>
 
           <InputIconButton
@@ -232,7 +247,7 @@ function RentalDetailModal({
             className={styles.closeButton}
             icon="close"
             type="button"
-            ariaLabel="대여내역 상세 닫기"
+            ariaLabel={`${modalTitle} 닫기`}
             onClick={(event) => handleRequestClose("close-button", event)}
             disabled={isPending}
           />
@@ -289,12 +304,34 @@ function RentalDetailModal({
 
           <InfoSection title="대여 정보">
             <dl className={styles.infoGrid}>
-              <ModalInfoCell label="승인일" value={rental.approvedAt} />
-              <ModalInfoCell label="라벨번호" value={rental.labelNumber} />
-
-              {!isWaiting ? (
+              {!isCanceled && !isRejected && !isNoShow ? (<>
+                <ModalInfoCell label="승인일" value={rental.approvedAt} />
+                <ModalInfoCell label="라벨번호" value={rental.labelNumber} />
+              </>) : null}
+              {!isWaiting && !isCanceled && !isRejected && !isNoShow ? (
                 <ModalInfoCell label="수령일" value={rental.actualPickupAt} />
               ) : null}
+
+              {isReturned ? (
+                <ModalInfoCell label="반납일" value={rental.actualReturnAt} />
+              ) : null}
+
+              {isCanceled ? (
+                <>
+                  <ModalInfoCell label="취소일" value={rental.canceledAt} />
+                  <ModalInfoCell label="취소 사유" value={rental.cancelReason} />
+                </>
+              ) : null}
+              {isRejected ? (
+                <>
+                  <ModalInfoCell label="반려일" value={rental.rejectedAt} />
+                  <ModalInfoCell label="반려 사유" value={rejectReason} />
+                </>
+              ) : null}
+              {isNoShow ? (
+                <ModalInfoCell label="취소 사유" value="미수령" />
+              ) : null}
+
             </dl>
           </InfoSection>
 
@@ -422,7 +459,7 @@ function RentalDetailModal({
               onClick={handleComplete}
             />
           </footer>
-        ) : (
+        ) : (!isCanceled && !isNoShow && !isRejected) ? (
           <footer
             className={joinClassNames(
               styles.actions,
@@ -469,24 +506,24 @@ function RentalDetailModal({
                     title="회원 상세 경로가 연결되지 않았습니다."
                   />
                 ) : null}
-
-                <Button
-                  className={styles.actionButton}
-                  kind="fill"
-                  size="Default"
-                  color="Primary"
-                  status="Default"
-                  text="반납 처리"
-                  type="button"
-                  onClick={handleStartProcess}
-                  disabled={isPending}
-                />
+                {!isReturned ?
+                  <Button
+                    className={styles.actionButton}
+                    kind="fill"
+                    size="Default"
+                    color="Primary"
+                    status="Default"
+                    text="반납 처리"
+                    type="button"
+                    onClick={handleStartProcess}
+                    disabled={isPending}
+                  /> : null}
               </>
             )}
           </footer>
-        )}
+        ) : null}
       </div>
-    </BaseModal>
+    </BaseModal >
   );
 }
 
