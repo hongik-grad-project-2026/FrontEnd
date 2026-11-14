@@ -171,14 +171,15 @@ export async function getStudentRentalCounts(options = {}) {
   if (isMockMode) return getMockStudentRentalCounts(options);
   const page = await getStudentRentals({ page: 0, size: 1, signal: options.signal });
   const counts = page.statusCounts;
+
   return {
     all: page.totalElements,
     pendingApproval: counts?.pendingApproval ?? null,
     readyForPickup: counts?.readyForPickup ?? null,
     renting: counts ? counts.renting + counts.overdue : null,
     overdue: counts?.overdue ?? null,
-    canceled: counts?.canceled ?? null,
     returned: counts?.returned ?? null,
+    inactive: (counts?.canceled ?? 0) + (counts?.noShow ?? 0) + (counts?.rejected ?? 0),
   };
 }
 
@@ -383,7 +384,7 @@ export async function uploadAdminRentalImage({ rentalId, imageType, image }) {
     formData,
   );
   if (result?.rentalId !== requestedId || result.imageType !== imageType ||
-      !Number.isSafeInteger(result.imageId)) {
+    !Number.isSafeInteger(result.imageId)) {
     throw new Error("대여 사진 업로드 결과를 확인할 수 없습니다.");
   }
   return result;

@@ -1,3 +1,5 @@
+import { RENTAL_STATUS } from "../constants/status.js";
+
 const SERVER_STATUS = Object.freeze({
   PENDING_APPROVAL: "pendingApproval",
   READY_FOR_PICKUP: "readyForPickup",
@@ -71,6 +73,7 @@ function screenStatus(value) {
 export function serverStatusesFor(status) {
   if (status === "all" || !status) return [];
   if (status === "renting") return ["RENTING", "OVERDUE"];
+  if (status === "inactive") return ["NO_SHOW", "REJECTED", "CANCELED"];
   const serverStatus = SCREEN_STATUS[status];
   if (!serverStatus) throw new Error("지원하지 않는 대여 상태 필터입니다.");
   return [serverStatus];
@@ -95,10 +98,10 @@ export function statusCounts(value) {
 export function mapRentalPage(value, mapRecord, requestedPage) {
   const page = requireObject(value, "대여 목록");
   if (!Array.isArray(page.content) || !Number.isSafeInteger(page.page) || page.page !== requestedPage ||
-      !Number.isSafeInteger(page.size) || page.size < 1 ||
-      !Number.isSafeInteger(page.totalElements) || page.totalElements < 0 ||
-      !Number.isSafeInteger(page.totalPages) || page.totalPages < 0 ||
-      typeof page.hasNext !== "boolean") {
+    !Number.isSafeInteger(page.size) || page.size < 1 ||
+    !Number.isSafeInteger(page.totalElements) || page.totalElements < 0 ||
+    !Number.isSafeInteger(page.totalPages) || page.totalPages < 0 ||
+    typeof page.hasNext !== "boolean") {
     throw new Error("대여 목록의 페이지 정보를 확인할 수 없습니다.");
   }
   return {
@@ -130,6 +133,10 @@ export function mapStudentSummary(value) {
     actualReturnAt: formatDateTime(rental.actualReturnAt),
     canceledAt: formatDateTime(rental.canceledAt),
     cancelReason: CANCEL_REASON[rental.cancelReason] ?? optionalText(rental.cancelReason),
+    rejectedAt: formatDateTime(rental.rejectedAt),
+    rejectReasonType: optionalText(rental.rejectReasonType),
+    rejectReasonDetail: optionalText(rental.rejectReasonDetail),
+    noShowAt: formatDateTime(rental.noShowAt),
   };
 }
 

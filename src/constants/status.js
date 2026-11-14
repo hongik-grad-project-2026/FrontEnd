@@ -7,9 +7,9 @@ export const RENTAL_STATUS = Object.freeze({
     renting: { id: 2, label: "대여 중", color: "green" },
     overdue: { id: 3, label: "연체", color: "red" },
     returned: { id: 4, label: "반납 완료", color: "light" },
-    rejected: { id: 5, label: "반려", color: "red" },
+    rejected: { id: 5, label: "반려", color: "gray" },
     canceled: { id: 6, label: "신청 취소", color: "gray" },
-    noShow: { id: 7, label: "미수령", color: "red" },
+    noShow: { id: 7, label: "미수령", color: "gray" },
 });
 export const getRentalStatus = (value) => RENTAL_STATUS[value] ?? UNKNOWN_STATUS;
 
