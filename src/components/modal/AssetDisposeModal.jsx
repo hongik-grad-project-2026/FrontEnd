@@ -3,15 +3,9 @@ import { useId } from "react";
 
 import Button from "../common/Button";
 import BaseModal from "./BaseModal";
+import { ITEM_STATUS } from "../../constants/status.js";
 
 import styles from "./AssetDisposeModal.module.css";
-
-const STATUS_LABELS = {
-  available: "대여 가능",
-  rented: "대여 중",
-  broken: "고장",
-  disposalScheduled: "폐기 예정",
-};
 
 function AssetDisposeModal({
   asset,
@@ -94,7 +88,8 @@ function AssetDisposeModal({
 
                 <div className={styles.informationItem}>
                   <dt>상태</dt>
-                  <dd>{STATUS_LABELS[asset.status] ?? "-"}</dd>
+                  {/* <dd>{STATUS_LABELS[asset.status] ?? "-"}</dd> */}
+                  <dd>{ITEM_STATUS[asset.status]?.label ?? "-"}</dd>
                 </div>
 
                 <div className={styles.informationItem}>

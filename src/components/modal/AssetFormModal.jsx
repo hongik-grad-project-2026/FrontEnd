@@ -5,27 +5,15 @@ import Button from "../common/Button";
 import InputBar from "../common/Input";
 import Select from "../common/Select";
 import BaseModal from "./BaseModal";
-
+import { ITEM_STATUS } from "../../constants/status.js";
 import styles from "./AssetFormModal.module.css";
 
-const STATUS_OPTIONS = [
-  {
-    value: "available",
-    label: "대여 가능",
-  },
-  {
-    value: "rented",
-    label: "대여 중",
-  },
-  {
-    value: "broken",
-    label: "고장",
-  },
-  {
-    value: "disposalScheduled",
-    label: "폐기 예정",
-  },
-];
+const STATUS_OPTIONS = Object.entries(ITEM_STATUS)
+  .filter(([statusKey]) => ["available", "broken"].includes(statusKey))
+  .map(([statusKey, status]) => ({
+    value: statusKey,
+    label: status.label,
+  }));
 
 function normalizeText(value) {
   return String(value ?? "").trim();
