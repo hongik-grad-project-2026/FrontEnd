@@ -8,6 +8,7 @@ import styles from "./AssetDisposeModal.module.css";
 
 const STATUS_LABELS = {
   available: "대여 가능",
+  reserved: "신청됨",
   rented: "대여 중",
   broken: "고장",
   disposalScheduled: "폐기 예정",

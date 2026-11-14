@@ -422,7 +422,7 @@ function AdminEquipmentListPage() {
   };
 
   const handleOpenCreateModal = () => {
-    if (isMutationPending) return;
+    if (!canManageModels || isMutationPending) return;
     setIsCreateModalOpen(true);
   };
 
@@ -452,6 +452,9 @@ function AdminEquipmentListPage() {
   };
 
   const handleCreateEquipment = async (values) => {
+    if (!canManageModels) {
+      throw new Error("모델 등록 권한이 없습니다.");
+    }
     if (isCreateFlowPending || createSubmissionGuardRef.current) {
       throw new Error("모델 등록 요청이 진행 중입니다.");
     }
@@ -849,8 +852,8 @@ function AdminEquipmentListPage() {
                     status="Default"
                     type="button"
                     text="모델 등록"
-                    disabled={!isMockMode || isMutationPending}
-                    onClick={() => setIsCreateModalOpen(true)}
+                    disabled={!canManageModels || isMutationPending}
+                    onClick={handleOpenCreateModal}
                   />
                 </div>
               </div>

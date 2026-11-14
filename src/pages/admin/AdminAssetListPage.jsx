@@ -24,6 +24,7 @@ import AssetFormModal from "../../components/modal/AssetFormModal";
 import AssetResultModal from "../../components/modal/AssetResultModal";
 import DataTable from "../../components/table/DataTable";
 import { ITEM_STATUS, getItemStatus } from "../../constants/status";
+import { useUser } from "../../context/UserContext";
 import styles from "./AdminAssetListPage.module.css";
 
 const PAGE_SIZE = 10;
@@ -72,6 +73,8 @@ function NotesCell({ notes }) {
 }
 
 function AdminAssetListPage() {
+  const { user } = useUser();
+  const canManageItems = isMockMode || user?.serverRole === "ASSISTANT";
   const modelSummary = useLoaderData();
   const resolvedModelId = modelSummary?.modelId ?? null;
   const modelLoadError = modelSummary?.loadError ?? "";
@@ -79,6 +82,7 @@ function AdminAssetListPage() {
 
   const panelId = useId();
   const lastActionTriggerRef = useRef(null);
+  const submissionGuardRef = useRef(false);
 
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [keyword, setKeyword] = useState("");
@@ -135,6 +139,9 @@ function AdminAssetListPage() {
       }),
       queryClient.invalidateQueries({
         queryKey: equipmentKeys.adminModelLists(),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: equipmentKeys.modelLists(),
       }),
     ]);
   };
@@ -289,7 +296,7 @@ function AdminAssetListPage() {
   };
 
   const handleOpenCreate = (event) => {
-    if (!isMockMode || createMutation.isPending) {
+    if (!canManageItems || !resolvedModelId || submissionGuardRef.current) {
       return;
     }
 
@@ -301,7 +308,7 @@ function AdminAssetListPage() {
   const handleOpenEdit = (asset, event) => {
     event.stopPropagation();
 
-    if (!isMockMode || updateMutation.isPending) {
+    if (!canManageItems || submissionGuardRef.current) {
       return;
     }
 
@@ -313,7 +320,7 @@ function AdminAssetListPage() {
   const handleOpenDispose = (asset, event) => {
     event.stopPropagation();
 
-    if (!isMockMode || disposeMutation.isPending) {
+    if (!canManageItems || submissionGuardRef.current) {
       return;
     }
 
@@ -337,6 +344,17 @@ function AdminAssetListPage() {
 
   const handleCloseResultModal = () => {
     setResultModal(null);
+  };
+
+  const submitItemChange = (mutation, values) => {
+    if (!canManageItems || submissionGuardRef.current || mutation.isPending) return;
+
+    submissionGuardRef.current = true;
+    mutation.mutate(values, {
+      onSettled: () => {
+        submissionGuardRef.current = false;
+      },
+    });
   };
 
   const columns = [
@@ -378,7 +396,7 @@ function AdminAssetListPage() {
           icon="edit"
           size={24}
           ariaLabel={`${item.labelNumber} 기기 수정`}
-          disabled={!isMockMode || updateMutation.isPending}
+          disabled={!canManageItems || createMutation.isPending || updateMutation.isPending || disposeMutation.isPending}
           onClick={(event) => handleOpenEdit(item, event)}
         />
       ),
@@ -393,7 +411,7 @@ function AdminAssetListPage() {
           icon="trash"
           size={24}
           ariaLabel={`${item.labelNumber} 기기 폐기`}
-          disabled={!isMockMode || disposeMutation.isPending}
+          disabled={!canManageItems || createMutation.isPending || updateMutation.isPending || disposeMutation.isPending}
           onClick={(event) => handleOpenDispose(item, event)}
         />
       ),
@@ -485,7 +503,7 @@ function AdminAssetListPage() {
                 status="Default"
                 text="기기 등록"
                 type="button"
-                disabled={!isMockMode || !resolvedModelId}
+                disabled={!canManageItems || !resolvedModelId || createMutation.isPending || updateMutation.isPending || disposeMutation.isPending}
                 onClick={handleOpenCreate}
               />
             </div>
@@ -501,7 +519,7 @@ function AdminAssetListPage() {
         isOpen={activeModal === "create"}
         isPending={createMutation.isPending}
         onClose={handleCloseActiveModal}
-        onConfirm={(values) => createMutation.mutate(values)}
+        onConfirm={(values) => submitItemChange(createMutation, values)}
         returnFocusRef={lastActionTriggerRef}
       />
 
@@ -514,7 +532,7 @@ function AdminAssetListPage() {
         isOpen={activeModal === "edit" && selectedAsset !== null}
         isPending={updateMutation.isPending}
         onClose={handleCloseActiveModal}
-        onConfirm={(values) => updateMutation.mutate(values)}
+        onConfirm={(values) => submitItemChange(updateMutation, values)}
         returnFocusRef={lastActionTriggerRef}
       />
 
@@ -524,7 +542,7 @@ function AdminAssetListPage() {
         isOpen={activeModal === "dispose" && selectedAsset !== null}
         isPending={disposeMutation.isPending}
         onClose={handleCloseActiveModal}
-        onConfirm={(values) => disposeMutation.mutate(values)}
+        onConfirm={(values) => submitItemChange(disposeMutation, values)}
         returnFocusRef={lastActionTriggerRef}
       />
 

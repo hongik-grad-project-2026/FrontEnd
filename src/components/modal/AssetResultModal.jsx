@@ -71,14 +71,16 @@ function AssetResultModal({
               </dd>
             </div>
 
-            <div className={styles.detailRow}>
-              <dt>비품 번호 :</dt>
-              <dd>
-                <strong>{details.assetNumberStart}</strong>
-                <span> ~ </span>
-                <strong>{details.assetNumberEnd}</strong>
-              </dd>
-            </div>
+            {details.assetNumberStart && details.assetNumberEnd ? (
+              <div className={styles.detailRow}>
+                <dt>비품 번호 :</dt>
+                <dd>
+                  <strong>{details.assetNumberStart}</strong>
+                  <span> ~ </span>
+                  <strong>{details.assetNumberEnd}</strong>
+                </dd>
+              </div>
+            ) : null}
           </dl>
         ) : null}
 

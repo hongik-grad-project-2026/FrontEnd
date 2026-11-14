@@ -1,5 +1,6 @@
 // 기기 등록·수정 모달임.
 import { useId, useState } from "react";
+import { isMockMode } from "../../api/client";
 
 import Button from "../common/Button";
 import InputBar from "../common/Input";
@@ -25,6 +26,13 @@ const STATUS_OPTIONS = [
     value: "disposalScheduled",
     label: "폐기 예정",
   },
+];
+
+const REAL_STATUS_OPTIONS = [
+  { value: "available", label: "대여 가능" },
+  { value: "reserved", label: "신청됨" },
+  { value: "rented", label: "대여 중" },
+  { value: "broken", label: "고장" },
 ];
 
 function normalizeText(value) {
@@ -126,10 +134,17 @@ function AssetFormModalContent({
   const isCreateMode = mode === "create";
 
   const quantity = Number(formValues.quantity);
+  const labelSuffix = normalizeText(formValues.labelSuffix);
+  const labelChanged = labelSuffix !== normalizeText(initialValues.labelSuffix);
+  const validRealLabel = /^\d+$/.test(labelSuffix) && Number(labelSuffix) >= 1 && Number(labelSuffix) <= 2147483647;
 
   const hasRequiredValues =
     Boolean(formValues.status) &&
-    Boolean(normalizeText(formValues.labelSuffix)) &&
+    (isMockMode
+      ? Boolean(labelSuffix)
+      : isCreateMode
+        ? validRealLabel
+        : !labelChanged || validRealLabel) &&
     (!isCreateMode ||
       (Number.isInteger(quantity) &&
         quantity > 0 &&
@@ -176,8 +191,9 @@ function AssetFormModalContent({
           modelId,
           quantity,
           status: formValues.status,
+          labelSuffix,
           labelPrefix: normalizeText(labelPrefix),
-          labelStart: normalizeText(formValues.labelSuffix),
+          labelStart: labelSuffix,
           assetNumberStart: normalizeText(formValues.assetNumber),
           notes: normalizeText(formValues.notes),
         },
@@ -192,6 +208,7 @@ function AssetFormModalContent({
         modelId,
         itemId: asset.itemId,
         status: formValues.status,
+        labelSuffix: !isMockMode && labelChanged ? labelSuffix : undefined,
         labelNumber: buildLabelNumber(labelPrefix, formValues.labelSuffix),
         assetNumber: normalizeText(formValues.assetNumber),
         notes: normalizeText(formValues.notes),
@@ -259,7 +276,7 @@ function AssetFormModalContent({
                     id={statusId}
                     className={styles.select}
                     width="100%"
-                    options={STATUS_OPTIONS}
+                    options={isMockMode ? STATUS_OPTIONS : REAL_STATUS_OPTIONS}
                     value={formValues.status}
                     placeholder="상태 선택"
                     ariaLabel="기기 상태"
@@ -281,7 +298,7 @@ function AssetFormModalContent({
                     id={statusId}
                     className={styles.select}
                     width="100%"
-                    options={STATUS_OPTIONS}
+                    options={isMockMode ? STATUS_OPTIONS : REAL_STATUS_OPTIONS}
                     value={formValues.status}
                     placeholder="상태 선택"
                     ariaLabel="기기 상태"
@@ -296,7 +313,11 @@ function AssetFormModalContent({
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor={labelNumberId}>
-                {isCreateMode ? "라벨 시작 번호*" : "라벨 번호*"}
+                {isCreateMode
+                  ? "라벨 시작 번호*"
+                  : isMockMode
+                    ? "라벨 번호*"
+                    : "라벨 번호"}
               </label>
 
               <div className={styles.prefixedInput}>

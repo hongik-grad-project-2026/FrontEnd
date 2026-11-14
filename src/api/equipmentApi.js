@@ -79,6 +79,16 @@ function createEquipmentItemListContractError(message, data) {
   });
 }
 
+function createEquipmentItemMutationContractError(message, data) {
+  return new ApiError({
+    status: null,
+    code: "INVALID_EQUIPMENT_ITEM_RESPONSE",
+    message,
+    data,
+    errorType: "CONTRACT_ERROR",
+  });
+}
+
 function createEquipmentModelDetailContractError(message, data) {
   return new ApiError({
     status: null,
@@ -112,6 +122,15 @@ function normalizeRequestedModelId(modelId) {
   }
 
   return normalizedModelId;
+}
+
+function normalizeRequestedItemId(itemId) {
+  const normalizedItemId = Number(itemId);
+  if (!Number.isSafeInteger(normalizedItemId) || normalizedItemId <= 0) {
+    throw new Error("기기 ID를 확인할 수 없습니다.");
+  }
+
+  return normalizedItemId;
 }
 
 function normalizeRequiredInteger(value, fieldName, result, where = "기자재 목록") {
@@ -871,16 +890,85 @@ export async function getAdminEquipmentItemCounts(modelId, options) {
 }
 
 export async function createAdminEquipmentItems(values) {
-  assertMockMode();
-  return createMockAdminEquipmentItems(values);
+  if (isMockMode) return createMockAdminEquipmentItems(values);
+
+  const modelId = normalizeRequestedModelId(values.modelId);
+  const quantity = Number(values.quantity);
+  const labelStart = Number(values.labelStart);
+  const status = ITEM_STATUS_REQUEST[values.status];
+  if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 2147483647) {
+    throw new Error("등록할 기기 수량을 확인해 주세요.");
+  }
+  if (!Number.isInteger(labelStart) || labelStart <= 0 || labelStart > 2147483647 || !/^\d+$/.test(String(values.labelStart))) {
+    throw new Error("라벨 시작 번호는 숫자로 입력해 주세요.");
+  }
+  if (!status) {
+    throw new Error("기기 상태를 확인해 주세요.");
+  }
+
+  const result = await api.post("/admin/equipment-items", {
+    modelId,
+    quantity,
+    labelStart,
+    status,
+    ...(values.notes?.trim() ? { memo: values.notes.trim() } : {}),
+  });
+
+  if (
+    result?.modelId !== modelId ||
+    !Number.isInteger(result.createdItemCount) ||
+    result.createdItemCount !== quantity ||
+    typeof result.firstLabelCode !== "string" ||
+    !result.firstLabelCode ||
+    typeof result.lastLabelCode !== "string" ||
+    !result.lastLabelCode
+  ) {
+    throw createEquipmentItemMutationContractError(
+      "등록된 기기 수량과 라벨 정보를 확인할 수 없습니다.",
+      result,
+    );
+  }
+
+  return {
+    quantity: result.createdItemCount,
+    labelStart: result.firstLabelCode,
+    labelEnd: result.lastLabelCode,
+  };
 }
 
 export async function updateAdminEquipmentItem(values) {
-  assertMockMode();
-  return updateMockAdminEquipmentItem(values);
+  if (isMockMode) return updateMockAdminEquipmentItem(values);
+
+  const itemId = normalizeRequestedItemId(values.itemId);
+  const status = ITEM_STATUS_REQUEST[values.status];
+  if (!status) {
+    throw new Error("기기 상태를 확인해 주세요.");
+  }
+
+  const labelText = String(values.labelSuffix ?? "").trim();
+  if (labelText && (!/^\d+$/.test(labelText) || Number(labelText) < 1 || Number(labelText) > 2147483647)) {
+    throw new Error("라벨 번호는 숫자로 입력해 주세요.");
+  }
+
+  const result = await api.patch(`/admin/equipment-items/${itemId}`, {
+    status,
+    ...(labelText ? { labelNumber: Number(labelText) } : {}),
+    ...(values.notes !== undefined ? { memo: values.notes.trim() } : {}),
+  });
+
+  if (result?.itemId !== itemId) {
+    throw createEquipmentItemMutationContractError(
+      "수정된 기기 식별자를 확인할 수 없습니다.",
+      result,
+    );
+  }
+
+  return result;
 }
 
 export async function disposeAdminEquipmentItem(values) {
-  assertMockMode();
-  return disposeMockAdminEquipmentItem(values);
+  if (isMockMode) return disposeMockAdminEquipmentItem(values);
+
+  const itemId = normalizeRequestedItemId(values.itemId);
+  return api.patch(`/admin/equipment-items/${itemId}/dispose`);
 }

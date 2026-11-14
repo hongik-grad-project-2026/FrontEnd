@@ -1,5 +1,6 @@
 // 모델 등록 모달임.
 import { useId, useRef, useState } from "react";
+import { isMockMode } from "../../api/client";
 import Button from "../common/Button";
 import IconButton, { IconTextButton } from "../common/IconButton";
 import InputBar from "../common/Input";
@@ -117,7 +118,7 @@ function EquipmentCreateModal({
   const isRequiredFormComplete =
     Boolean(formValues.category) &&
     Boolean(formValues.status) &&
-    Boolean(formValues.rentalPolicies) &&
+    (!isMockMode || Boolean(formValues.rentalPolicies)) &&
     isValidDate(formValues.receivedDate) &&
     isValidDate(formValues.disposalDate) &&
     Boolean(formValues.name.trim()) &&
@@ -165,13 +166,15 @@ function EquipmentCreateModal({
         ...previousValues,
         category: nextCategory,
         labelPrefix: nextIsOtherCategory ? "" : previousValues.labelPrefix,
-        rentalPolicies: nextAllowsFlexiblePolicies
-          ? previousAllowsFlexiblePolicies
-            ? previousValues.rentalPolicies
-            : ""
-          : nextCategory
-            ? "always"
-            : "",
+        rentalPolicies: !isMockMode
+          ? ""
+          : nextAllowsFlexiblePolicies
+            ? previousAllowsFlexiblePolicies
+              ? previousValues.rentalPolicies
+              : ""
+            : nextCategory
+              ? "always"
+              : "",
       };
     });
   };
@@ -351,7 +354,7 @@ function EquipmentCreateModal({
 
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={rentalPolicyId}>
-                  대여정책*
+                  대여정책{isMockMode ? "*" : " (저장 미지원)"}
                 </label>
                 <Select
                   id={rentalPolicyId}
@@ -359,8 +362,8 @@ function EquipmentCreateModal({
                   width="100%"
                   options={RENTAL_POLICY_OPTIONS}
                   value={formValues.rentalPolicies}
-                  disabled={metadataInputsDisabled || !allowsFlexiblePolicies}
-                  placeholder="대여정책을 선택하세요"
+                  disabled={!isMockMode || metadataInputsDisabled || !allowsFlexiblePolicies}
+                  placeholder={isMockMode ? "대여정책을 선택하세요" : "서버 저장 미지원"}
                   ariaLabel="대여정책"
                   onChange={handleRentalPolicyChange}
                 />
