@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getAdminRentalDashboard, rentalKeys } from '../../api/rentalApi';
-import { isMockMode } from '../../api/client';
 import { fetchNotices, noticeKeys } from '../../api/noticeApi';
 import IconButton, { IconTextButton } from "../../components/common/IconButton";
 import styles from "./AdminDashboardPage.module.css";
@@ -85,12 +84,12 @@ function AdminDashboardPage() {
 
     const pad = (value) => String(value).padStart(2, "0");
     const formattedCurrentTime = `${currentTime.getFullYear()}년 ${pad(currentTime.getMonth() + 1)}월 ${pad(currentTime.getDate())}일, ${pad(currentTime.getHours())}:${pad(currentTime.getMinutes())}:${pad(currentTime.getSeconds())}`;
+    const today = `${currentTime.getFullYear()}.${pad(currentTime.getMonth() + 1)}.${pad(currentTime.getDate())}`;
 
 
     const { data, isLoading, isError, error, refetch } = useQuery({
-        queryKey: rentalKeys.adminDashboard(),
-        queryFn: ({ signal }) => getAdminRentalDashboard({ signal }),
-        enabled: isMockMode,
+        queryKey: [...rentalKeys.adminDashboard(), today],
+        queryFn: ({ signal }) => getAdminRentalDashboard({ signal, today }),
         staleTime: 1000 * 60 * 5, // 데이터를 5분 동안 Fresh 상태로 유지함.
     });
 
@@ -125,23 +124,20 @@ function AdminDashboardPage() {
             <section className={styles.section} >
                 <h3>대여 현황 </h3>
                 <div className={styles.contentArea} data-title='rentalStatusContent'>
-                    {!isMockMode ? <p>대여 API가 아직 제공되지 않았습니다.</p> : null}
-                    {isMockMode && isLoading ? <p>대여 현황을 불러오는 중입니다.</p> : null}
-                    {isMockMode && isError ? <p role="alert">{error?.message || "대여 현황을 불러오지 못했습니다."}</p> : null}
+                    {isLoading ? <p>대여 현황을 불러오는 중입니다.</p> : null}
+                    {isError ? <p role="alert">{error?.message || "대여 현황을 불러오지 못했습니다."}</p> : null}
                     <div className={styles.curtimeContainer}>
                         <IconButton
                             icon={'rotate'}
                             ariaLabel="현재 시간 새로고침"
                             onClick={() => {
                                 setCurrentTime(new Date());
-                                if (isMockMode) {
-                                    refetch();
-                                }
+                                refetch();
                             }}
                         />
                         <p>{formattedCurrentTime}</p>
                     </div>
-                    {isMockMode && !isLoading && !isError ? <div className={styles.BoxesContainer}>
+                    {!isLoading && !isError ? <div className={styles.BoxesContainer}>
                         <DashboardStatusCard title={'승인 대기'} count={rentalCounts.waitingApproval} onClick={() => navigate("/admin/approval")} color='yellow' />
                         <DashboardStatusCard title={'오늘 수령'} count={rentalCounts.todayPickup} onClick={() => navigate("/admin/status")} color='green' />
                         <DashboardStatusCard title={'오늘 반납'} count={rentalCounts.todayReturn} onClick={() => navigate("/admin/status")} color='green' />

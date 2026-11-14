@@ -53,13 +53,7 @@ function StudentEquipmentListPage() {
     toCategoryOption(category, { useMockKey: isMockMode }),
   );
   const hasCategories = categoryQuery.isSuccess && categoryOptions.length > 0;
-  const categories = [
-    {
-      ...ALL_CATEGORY_OPTION,
-      disabled: !hasCategories,
-    },
-    ...categoryOptions,
-  ];
+  const categories = [ALL_CATEGORY_OPTION, ...categoryOptions];
   const selectedCategoryId = categories.find(
     (category) => category.value === selectedCategory,
   )?.categoryId;
@@ -137,6 +131,7 @@ function StudentEquipmentListPage() {
   };
 
   const {
+    data,
     items,
     loadMoreRef,
     isLoading,
@@ -163,6 +158,14 @@ function StudentEquipmentListPage() {
     },
   });
 
+  const categoryCounts = data?.pages[0]?.categoryCounts ?? {};
+  const tabItems = categories.map((category) => ({
+    ...category,
+    disabled: category.value === ALL_CATEGORY_OPTION.value && !hasCategories,
+    count: categoryCounts[String(category.categoryId ?? "all")] ??
+      (categoryCounts.all !== undefined ? 0 : undefined),
+  }));
+
   const isEmptyEquipmentResult =
     hasCategories &&
     isSuccess &&
@@ -181,7 +184,7 @@ function StudentEquipmentListPage() {
       <div className={styles.equipmentListSection}>
         <div className={styles.toolsCon}>
           <Tabs
-            items={categories}
+            items={tabItems}
             value={selectedCategory}
             onChange={setSelectedCategory}
             ariaLabel="기자재 카테고리"

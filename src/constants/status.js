@@ -24,8 +24,8 @@ export const MEMBER_STATUS = Object.freeze({
 
 // '모델' 상태
 export const MODEL_STATUS = Object.freeze({
-    available: { id: 0, label: "대여 진행", color: "blue" },
-    unavailable: { id: 1, label: "대여 중지", color: "red" },
+    active: { id: 0, label: "대여 진행", color: "blue" },
+    paused: { id: 1, label: "대여 중지", color: "red" },
 });
 export const getModelStatus = (value) => MODEL_STATUS[value] ?? UNKNOWN_STATUS;
 

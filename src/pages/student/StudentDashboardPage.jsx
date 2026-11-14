@@ -210,7 +210,6 @@ function StudentDashboardPage() {
   const rentalQuery = useQuery({
     queryKey: studentRentalKeys.dashboard(),
     queryFn: ({ signal }) => getStudentRentalDashboard({ signal }),
-    enabled: isMockMode,
   });
   const rentalGroups = rentalQuery.data ?? {
     pendingApproval: [],
@@ -337,13 +336,10 @@ function StudentDashboardPage() {
 
       <section className={styles.section} >
         <h3>대여 현황</h3>
-        {!isMockMode ? (
-          <p className={styles.noticeState}>대여 API가 아직 제공되지 않았습니다.</p>
-        ) : null}
-        {isMockMode && rentalQuery.isPending ? (
+        {rentalQuery.isPending ? (
           <p className={styles.noticeState}>대여 현황을 불러오는 중입니다.</p>
         ) : null}
-        {isMockMode && rentalQuery.isError ? (
+        {rentalQuery.isError ? (
           <div className={styles.noticeState} role="alert">
             <p>{rentalQuery.error?.message || "대여 현황을 불러오지 못했습니다."}</p>
             <IconTextButton
@@ -354,10 +350,10 @@ function StudentDashboardPage() {
             />
           </div>
         ) : null}
-        {isMockMode && isEmptyRentalDashboard ? (
+        {isEmptyRentalDashboard ? (
           <p className={styles.noticeState}>대여 내역이 없습니다.</p>
         ) : null}
-        {isMockMode && rentalQuery.isSuccess && !isEmptyRentalDashboard ?
+        {rentalQuery.isSuccess && !isEmptyRentalDashboard ?
           <div className={styles.rentalsGrid}>
             <div
               className={`${styles.contentArea} ${styles.rentalStatusBox}`}

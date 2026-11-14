@@ -415,7 +415,7 @@ function createUnsupportedError(message) {
 
 export function getAdminMemberCapabilities() {
   return {
-    canFilterOtherDepartment: isMockMode,
+    canFilterOtherDepartment: true,
     canUpdateStatus: isMockMode,
   };
 }
@@ -570,19 +570,19 @@ export async function getAdminMembers({
   const resolvedStatus = status.trim().toUpperCase();
 
   if (affiliation === "other") {
-    if (!isMockMode) {
-      throw createUnsupportedError(
-        "현재 서버 API에서 타과생 전체 조회를 지원하지 않습니다.",
-      );
+    if (!currentDepartment.trim()) {
+      throw createUnsupportedError("관리자 소속 학과 정보를 확인할 수 없습니다.");
     }
 
-    return getMockMembersByOtherDepartment({
-      keyword,
-      status: resolvedStatus,
-      currentDepartment,
-      page,
-      size,
-    });
+    if (isMockMode) {
+      return getMockMembersByOtherDepartment({
+        keyword,
+        status: resolvedStatus,
+        currentDepartment,
+        page,
+        size,
+      });
+    }
   }
 
   const resolvedCollege = affiliation === "own" ? currentCollege : college;
@@ -603,6 +603,7 @@ export async function getAdminMembers({
     status: resolvedStatus,
     college: resolvedCollege,
     department: resolvedDepartment,
+    excludeDepartment: affiliation === "other" ? currentDepartment : "",
   };
 
   for (const [key, value] of Object.entries(optionalParams)) {

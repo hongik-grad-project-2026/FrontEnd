@@ -449,7 +449,15 @@ export async function queryMockEquipmentModels({
     })
     .map(toStudentModel);
 
-  return toPage(filteredModels, page, size);
+  const categoryCounts = studentEquipmentModels.reduce(
+    (counts, model) => ({
+      ...counts,
+      [String(model.categoryId)]: (counts[String(model.categoryId)] ?? 0) + 1,
+    }),
+    { all: studentEquipmentModels.length },
+  );
+
+  return toPage(filteredModels, page, size, { categoryCounts });
 }
 
 export async function queryMockWishlistedEquipmentModels({

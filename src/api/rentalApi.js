@@ -3,6 +3,7 @@ import {
   mapAdminApproval,
   mapAdminDetail,
   mapAdminHistory,
+  mapAdminSummary,
   mapAdminStatus,
   mapRentalPage,
   mapStudentDetail,
@@ -230,21 +231,42 @@ export async function cancelStudentRental(values) {
 }
 
 export async function getStudentRentalDashboard(options = {}) {
-  assertRentalMockMode();
-  const { content } = await queryMockStudentRentals({
-    page: 0,
-    size: 50,
-    status: "all",
-    signal: options.signal,
-  });
+  if (isMockMode) {
+    const { content } = await queryMockStudentRentals({
+      page: 0,
+      size: 50,
+      status: "all",
+      signal: options.signal,
+    });
 
-  return {
-    pendingApproval: content.filter((rental) => rental.status === "pendingApproval"),
-    readyForPickup: content.filter((rental) => rental.status === "readyForPickup"),
-    renting: content.filter(
-      (rental) => rental.status === "renting" || rental.status === "overdue",
-    ),
+    return {
+      pendingApproval: content.filter((rental) => rental.status === "pendingApproval"),
+      readyForPickup: content.filter((rental) => rental.status === "readyForPickup"),
+      renting: content.filter(
+        (rental) => rental.status === "renting" || rental.status === "overdue",
+      ),
+    };
+  }
+
+  const loadStatus = async (status) => {
+    const rentals = [];
+    let page = 0;
+    let hasNext;
+    do {
+      const result = await getStudentRentals({ status, page, size: 100, signal: options.signal });
+      rentals.push(...result.content);
+      hasNext = result.hasNext;
+      page += 1;
+    } while (hasNext);
+    return rentals;
   };
+
+  const [pendingApproval, readyForPickup, renting] = await Promise.all([
+    loadStatus("pendingApproval"),
+    loadStatus("readyForPickup"),
+    loadStatus("renting"),
+  ]);
+  return { pendingApproval, readyForPickup, renting };
 }
 
 export async function getAdminRentalApprovals(params = {}) {
@@ -416,8 +438,48 @@ export async function getAdminRentalHistoryCounts(options = {}) {
 }
 
 export async function getAdminRentalDashboard(options = {}) {
-  assertRentalMockMode();
-  return getMockAdminRentalDashboard(options);
+  if (isMockMode) return getMockAdminRentalDashboard(options);
+
+  const today = options.today ?? (() => {
+    const date = new Date();
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+  })();
+  const { signal } = options;
+  const [approvalPage, overduePage, firstActivePage] = await Promise.all([
+    getRentalPage("/admin/rentals", { page: 0, size: 1, statuses: ["PENDING_APPROVAL"], signal }, mapAdminSummary),
+    getRentalPage("/admin/rentals", { page: 0, size: 1, statuses: ["OVERDUE"], signal }, mapAdminSummary),
+    getRentalPage("/admin/rentals", {
+      page: 0,
+      size: 100,
+      statuses: ["READY_FOR_PICKUP", "RENTING", "OVERDUE"],
+      signal,
+    }, mapAdminSummary),
+  ]);
+
+  let todayPickup = 0;
+  let todayReturn = 0;
+  let activePage = firstActivePage;
+  while (true) {
+    for (const rental of activePage.content) {
+      if (rental.status === "readyForPickup" && rental.expectedPickupAt === today) todayPickup += 1;
+      if ((rental.status === "renting" || rental.status === "overdue") &&
+          rental.expectedReturnAt?.startsWith(today)) todayReturn += 1;
+    }
+    if (!activePage.hasNext) break;
+    activePage = await getRentalPage("/admin/rentals", {
+      page: activePage.page + 1,
+      size: 100,
+      statuses: ["READY_FOR_PICKUP", "RENTING", "OVERDUE"],
+      signal,
+    }, mapAdminSummary);
+  }
+
+  return {
+    waitingApproval: approvalPage.totalElements,
+    todayPickup,
+    todayReturn,
+    overdue: overduePage.totalElements,
+  };
 }
 
 export async function getMemberRentalHistory(memberId, params = {}) {
