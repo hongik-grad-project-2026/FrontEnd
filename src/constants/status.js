@@ -27,13 +27,18 @@ export const MODEL_STATUS = Object.freeze({
     available: { id: 0, label: "대여 진행", color: "blue" },
     unavailable: { id: 1, label: "대여 중지", color: "red" },
 });
-export const getModelStatus = (value) => MODEL_STATUS[value] ?? UNKNOWN_STATUS;
+const MODEL_STATUS_ALIASES = Object.freeze({
+    active: "available",
+    paused: "unavailable",
+});
+export const getModelStatus = (value) =>
+    MODEL_STATUS[MODEL_STATUS_ALIASES[value] ?? value] ?? UNKNOWN_STATUS;
 
 
 // '기기' 상태
 export const ITEM_STATUS = Object.freeze({
     available: { id: 0, label: "대여 가능", color: "blue" },
-    reserved: { id: 1, label: "예약됨", color: "yellow" },
+    reserved: { id: 1, label: "신청 됨", color: "yellow" },
     rented: { id: 2, label: "대여 중", color: "green" },
     broken: { id: 3, label: "고장", color: "red" },
 });
