@@ -498,6 +498,7 @@ function toMemberListItem(member) {
     membershipStatus: toMembershipStatus(member.status),
     phone: member.phoneNumber,
     email: member.email,
+    profileImageSrc: member.profileImageUrl || null,
     createdAt: member.createdAt ?? null,
   };
 }

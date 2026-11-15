@@ -36,13 +36,30 @@ const AFFILIATION_OPTIONS = [
 function MemberNameCell({ member }) {
   return (
     <span className={styles.memberCell}>
-      <span className={styles.avatar} aria-hidden="true">
-        <span className={styles.userIcon} />
-      </span>
+      <MemberAvatar key={member.profileImageSrc ?? "no-image"} member={member} />
 
       <span className={styles.memberName} title={member.name}>
         {member.name}
       </span>
+    </span>
+  );
+}
+
+function MemberAvatar({ member }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  return (
+    <span className={styles.avatar} aria-hidden="true">
+      {member.profileImageSrc && !imageFailed ? (
+        <img
+          className={styles.avatarImage}
+          src={member.profileImageSrc}
+          alt=""
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span className={styles.userIcon} />
+      )}
     </span>
   );
 }
