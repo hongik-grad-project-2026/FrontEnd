@@ -15,18 +15,20 @@ const MOCK_RANK_CARDS = [
     {
         title: "노트북",
         unit: "%",
+        maxValue: 100,
         items: [
-            { label: "맥북 프로 16인치", value: 85 },
-            { label: "LG 그램", value: 66 },
-            { label: "HP 노트북", value: 33 },
+            { label: "맥북 프로 16 M3", value: 85 },
+            { label: "LG 그램 15.6", value: 66 },
+            { label: "맥북 에어 13 M3 ", value: 33 },
         ],
     },
     {
         title: "태블릿",
         unit: "%",
+        maxValue: 100,
         items: [
             { label: "갤럭시탭 S8", value: 85 },
-            { label: "아이패드", value: 66 },
+            { label: "아이패드 11", value: 66 },
             { label: "갤럭시탭 A9", value: 33 },
         ],
     },
@@ -34,9 +36,9 @@ const MOCK_RANK_CARDS = [
         title: "장기 미대여",
         unit: "일",
         items: [
-            { label: "보조배터리", value: 99 },
-            { label: "독서대", value: 88 },
-            { label: "태블릿", value: 28 },
+            { label: "삼성전자 보조배터리", value: 99 },
+            { label: "모닝글로리 독서대", value: 88 },
+            { label: "갤럭시탭 S7", value: 28 },
         ],
     },
 ];

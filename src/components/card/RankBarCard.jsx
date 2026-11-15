@@ -4,13 +4,15 @@ function RankBarCard({
     title,
     items = [],
     unit = "",
+    maxValue: configuredMaxValue,
     wide = false,
     emptyMessage = "표시할 순위 데이터가 없습니다.",
 }) {
-    const maxValue = items.reduce((maximum, item) => {
+    const itemMaxValue = items.reduce((maximum, item) => {
         const value = Number(item.value);
         return Number.isFinite(value) ? Math.max(maximum, value) : maximum;
     }, 0);
+    const maxValue = configuredMaxValue ?? itemMaxValue;
 
     return (
         <article className={styles.card} data-wide={wide || undefined}>
