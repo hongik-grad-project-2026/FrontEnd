@@ -52,6 +52,7 @@ function AdminRentalStatusPage() {
   const queryClient = useQueryClient();
   const modalTriggerRef = useRef(null);
   const mutationGuardRef = useRef(false);
+  const uploadedPhotoOperationsRef = useRef(new Set());
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,15 +89,22 @@ function AdminRentalStatusPage() {
 
   const processMutation = useMutation({
     mutationFn: async (values) => {
-      if (!values.retryOnly) {
-        await (values.processType === "pickup" ? pickupRental(values) : returnRental(values));
+      const photoOperationKey = `${values.rentalId}:${values.processType}`;
+      let uploadResult = { failedFiles: [], firstError: null };
+
+      if (!isMockMode && !values.skipPhotoUpload && values.processPhoto.length > 0) {
+        uploadResult = await uploadPhotos(values);
+        if (uploadResult.failedFiles.length > 0) {
+          return { ...uploadResult, processCompleted: false };
+        }
+        uploadedPhotoOperationsRef.current.add(photoOperationKey);
       }
-      if (isMockMode || values.processPhoto.length === 0) {
-        return { failedFiles: [], firstError: null };
-      }
-      return uploadPhotos(values);
+
+      await (values.processType === "pickup" ? pickupRental(values) : returnRental(values));
+      uploadedPhotoOperationsRef.current.delete(photoOperationKey);
+      return { ...uploadResult, processCompleted: true };
     },
-    onSuccess: async ({ failedFiles, firstError }, variables) => {
+    onSuccess: async ({ failedFiles, firstError, processCompleted }, variables) => {
       const rentalId = variables.rentalId;
       if (failedFiles.length > 0) {
         setPendingPhotoUploads((current) => ({
@@ -105,9 +113,10 @@ function AdminRentalStatusPage() {
             rentalId,
             processType: variables.processType,
             files: failedFiles,
-            message: `${variables.processType === "pickup" ? "수령" : "반납"} 처리는 완료됐지만 사진 ${failedFiles.length}장을 업로드하지 못했습니다. ${firstError?.message || "다시 시도해 주세요."}`,
+            message: `사진 ${failedFiles.length}장을 업로드하지 못해 처리를 진행하지 않았습니다. ${firstError?.message || "다시 시도해 주세요."}`,
           },
         }));
+        return;
       } else {
         setPendingPhotoUploads((current) => {
           const next = { ...current };
@@ -115,10 +124,11 @@ function AdminRentalStatusPage() {
           return next;
         });
       }
+      if (!processCompleted) return;
+
       await refreshRentals();
-      if (failedFiles.length > 0) return;
       setDetailModalState((current) => current?.rental.rentalId === rentalId ? null : current);
-      setFeedbackType(variables.retryOnly ? "photo-success" : variables.processType === "pickup" ? "pickup-success" : "return-success");
+      setFeedbackType(variables.processType === "pickup" ? "pickup-success" : "return-success");
     },
     onSettled: () => { mutationGuardRef.current = false; },
   });
@@ -146,24 +156,29 @@ function AdminRentalStatusPage() {
   const handleComplete = (values) => {
     if (mutationGuardRef.current) return;
     const retry = pendingPhotoUploads[values.rental.rentalId];
+    const processType = retry?.processType ?? values.processType;
+    const photoOperationKey = `${values.rental.rentalId}:${processType}`;
+    const photosAlreadyUploaded = uploadedPhotoOperationsRef.current.has(photoOperationKey);
     mutationGuardRef.current = true;
     processMutation.mutate({
       rentalId: values.rental.rentalId,
-      processPhoto: retry?.files ?? values.processPhoto,
-      processType: retry?.processType ?? values.processType,
+      processPhoto: photosAlreadyUploaded ? [] : retry?.files ?? values.processPhoto,
+      processType,
       workerName: values.workerName,
-      retryOnly: Boolean(retry),
+      skipPhotoUpload: photosAlreadyUploaded,
     });
   };
 
   const handleRetryPhotoUpload = (retry) => {
     if (mutationGuardRef.current) return;
+    const photoOperationKey = `${retry.rentalId}:${retry.processType}`;
+    const photosAlreadyUploaded = uploadedPhotoOperationsRef.current.has(photoOperationKey);
     mutationGuardRef.current = true;
     processMutation.mutate({
       rentalId: retry.rentalId,
-      processPhoto: retry.files,
+      processPhoto: photosAlreadyUploaded ? [] : retry.files,
       processType: retry.processType,
-      retryOnly: true,
+      skipPhotoUpload: photosAlreadyUploaded,
     });
   };
 
@@ -224,7 +239,6 @@ function AdminRentalStatusPage() {
       {detailModalState ? <RentalDetailModal key={`${detailModalState.rental.rentalId}-${detailModalState.initialMode}`} isOpen initialMode={detailModalState.initialMode} rental={detailModalState.rental} workerName={user?.name ?? ""} isPending={processMutation.isPending} error={processMutation.error} uploadRetry={pendingPhotoUploads[detailModalState.rental.rentalId]} onClose={() => { if (!processMutation.isPending) setDetailModalState(null); }} onComplete={handleComplete} returnFocusRef={modalTriggerRef} /> : null}
       <ConfirmModal isOpen={feedbackType === "pickup-success"} icon="checkmark" title="수령 처리되었습니다." description="대여중 상태에서 확인 가능합니다." confirmText="확인" showCancel={false} onClose={() => setFeedbackType(null)} onConfirm={() => setFeedbackType(null)} returnFocusRef={modalTriggerRef} />
       <ConfirmModal isOpen={feedbackType === "return-success"} icon="checkmark" title="반납 처리되었습니다." description="대여기록 페이지에서 확인 가능합니다." confirmText="확인" showCancel={false} onClose={() => setFeedbackType(null)} onConfirm={() => setFeedbackType(null)} returnFocusRef={modalTriggerRef} />
-      <ConfirmModal isOpen={feedbackType === "photo-success"} icon="checkmark" title="사진 업로드 완료" description="업로드하지 못했던 사진이 저장되었습니다." confirmText="확인" showCancel={false} onClose={() => setFeedbackType(null)} onConfirm={() => setFeedbackType(null)} returnFocusRef={modalTriggerRef} />
     </div>
   );
 }
