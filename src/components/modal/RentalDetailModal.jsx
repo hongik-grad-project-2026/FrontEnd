@@ -12,7 +12,10 @@ import InputBar from "../common/Input";
 import StatusBadge from "../common/StatusBadge";
 import BaseModal from "./BaseModal";
 import styles from "./RentalDetailModal.module.css";
-import { isPickupPhotoRequired } from "../../utils/rentalRules";
+import {
+  isPickupPhotoRequired,
+  isReturnPhotoRequired,
+} from "../../utils/rentalRules";
 import { getRentalStatus } from "../../constants/status";
 
 const REJECT_REASON_LABELS = Object.freeze({
@@ -155,9 +158,11 @@ function RentalDetailModal({
   const processType = uploadRetry?.processType ?? (isWaiting ? "pickup" : "return");
   const processTitle = processType === "pickup" ? "수령" : "반납";
   const selectedPhotos = uploadRetry?.files ?? processPhoto;
-  // 반납 사진은 항상 필수이며, 수령 사진만 기자재 카테고리 규칙을 따름.
   const isProcessPhotoRequired =
-    !uploadRetry && (processType === "return" || isPickupPhotoRequired(rental.category));
+    !uploadRetry &&
+    (processType === "pickup"
+      ? isPickupPhotoRequired(rental.category)
+      : isReturnPhotoRequired(rental.category));
   const completeButtonText = uploadRetry ? "사진 업로드 재시도" : `${processTitle} 처리 완료`;
 
   const resetProcessPhoto = () => {

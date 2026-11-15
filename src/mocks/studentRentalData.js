@@ -2,6 +2,7 @@ import {
   getNextDayReturnDeadline,
   isFixedPickupCategory,
   isPickupPhotoRequired,
+  isReturnPhotoRequired,
 } from "../utils/rentalRules";
 import { RENTAL_STATUS } from "../constants/status";
 // 상태값은 학생 대여 화면 확인을 위한 mock 전용 계약임.
@@ -1295,7 +1296,7 @@ export async function returnMockRental({ rentalId, processPhoto, workerName }) {
     );
   }
 
-  if (processPhoto.length === 0) {
+  if (isReturnPhotoRequired(rental.category) && (!processPhoto || processPhoto.length === 0)) {
     throw createMockError("반납 사진을 선택해 주세요.", "PHOTO_REQUIRED");
   }
 

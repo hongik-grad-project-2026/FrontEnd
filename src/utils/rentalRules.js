@@ -1,5 +1,7 @@
 // 노트북과 태블릿은 수령 사진 필수, 그 외 카테고리는 선택 사항
 const PICKUP_PHOTO_REQUIRED_CATEGORIES = new Set(["노트북", "태블릿"]);
+// 보조배터리와 기타는 반납 사진 선택 사항
+const RETURN_PHOTO_OPTIONAL_CATEGORIES = new Set(["보조배터리", "기타"]);
 const FIXED_PICKUP_CATEGORIES = new Set(["보조배터리", "기타"]);
 
 export function isFixedPickupCategory(category) {
@@ -36,4 +38,8 @@ export function getNextDayReturnDeadline(pickupDate) {
 
 export function isPickupPhotoRequired(category) {
     return PICKUP_PHOTO_REQUIRED_CATEGORIES.has(category);
+}
+
+export function isReturnPhotoRequired(category) {
+    return !RETURN_PHOTO_OPTIONAL_CATEGORIES.has(category);
 }
