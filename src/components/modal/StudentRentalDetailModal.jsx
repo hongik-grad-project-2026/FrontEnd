@@ -12,6 +12,12 @@ import detailStyles from "./RentalDetailModal.module.css";
 import styles from "./StudentRentalModal.module.css";
 import { getRentalStatus } from "../../constants/status.js";
 
+const REJECT_REASON_LABELS = Object.freeze({
+  INSUFFICIENT_STOCK: "기기 재고 부족",
+  RENTAL_SUSPENDED: "대여 중지된 기기 (기기 고장 등)",
+  OTHER: "기타",
+});
+
 function joinClassNames(...classNames) {
   return classNames.filter(Boolean).join(" ");
 }
@@ -101,6 +107,11 @@ function StudentRentalDetailModal({
   const hasReturnPhoto = hasResourceUrl(rental?.returnPhotoUrl);
   const hasPledge = hasResourceUrl(rental?.pledgeUrl);
   const statusData = getRentalStatus(rental?.status);
+  const rejectReason =
+    rental?.rejectReasonType === "OTHER"
+      ? rental.rejectReasonDetail
+      : REJECT_REASON_LABELS[rental?.rejectReasonType] ??
+      rental?.rejectReasonDetail;
 
   return (
     <BaseModal
@@ -244,7 +255,7 @@ function StudentRentalDetailModal({
                         />
                         <ModalInfoCell
                           label="반려 사유"
-                          value={rental.rejectReasonDetail}
+                          value={rejectReason}
                         />
                       </>
                     ) : null}

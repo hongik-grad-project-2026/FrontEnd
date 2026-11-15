@@ -27,7 +27,12 @@ export const MODEL_STATUS = Object.freeze({
     active: { id: 0, label: "대여 진행", color: "blue" },
     paused: { id: 1, label: "대여 중지", color: "red" },
 });
-export const getModelStatus = (value) => MODEL_STATUS[value] ?? UNKNOWN_STATUS;
+const MODEL_STATUS_ALIASES = Object.freeze({
+    available: "active",
+    unavailable: "paused",
+});
+export const getModelStatus = (value) =>
+    MODEL_STATUS[MODEL_STATUS_ALIASES[value] ?? value] ?? UNKNOWN_STATUS;
 
 
 // '기기' 상태

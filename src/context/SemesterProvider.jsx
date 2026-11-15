@@ -15,6 +15,54 @@ const EMPTY_SEMESTER = {
 };
 const EMPTY_SCHEDULE = { previous: null, current: null, next: null };
 
+function formatLocalDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function getDateOnly(value) {
+    if (typeof value !== "string") {
+        return null;
+    }
+
+    const dateOnly = value.slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(dateOnly) ? dateOnly : null;
+}
+
+function isWithinDateRange(date, startDate, endDate) {
+    const start = getDateOnly(startDate);
+    const end = getDateOnly(endDate);
+
+    return Boolean(start && end && date >= start && date <= end);
+}
+
+function getRentalTypeForDate(semester, date) {
+    if (
+        isWithinDateRange(
+            date,
+            semester.preApplyStartDate,
+            semester.preApplyEndDate,
+        )
+    ) {
+        return "regular";
+    }
+
+    if (
+        isWithinDateRange(
+            date,
+            semester.onDemandStartDate,
+            semester.returnDeadline,
+        )
+    ) {
+        return "always";
+    }
+
+    return null;
+}
+
 export function SemesterProvider({ children }) {
     const { isAuthenticated } = useUser();
 
@@ -29,17 +77,19 @@ export function SemesterProvider({ children }) {
     });
     const schedule = semesterSchedule ?? EMPTY_SCHEDULE;
     const semester = schedule.current ?? EMPTY_SEMESTER;
-
+    const today = formatLocalDate(new Date());
+    const rentalType = getRentalTypeForDate(semester, today);
 
     const value = useMemo(() => ({
         semester,
         schedule,
+        rentalType,
         isLoading,
         error,
         isCustomSemester: Boolean(
             semester.startDate && (isMockMode ? semester.endDate : semester.returnDeadline),
         ),
-    }), [semester, schedule, isLoading, error]);
+    }), [semester, schedule, rentalType, isLoading, error]);
 
 
     return (

@@ -6,20 +6,51 @@ import Input from "../common/Input";
 import styles from "./RentalApplyModal.module.css";
 import { SemesterContext } from "../../context/SemesterContext";
 import { isMockMode } from "../../api/client";
+import {
+  getFixedPickupDate,
+  getNextDayReturnDeadline,
+  isFixedPickupCategory,
+} from "../../utils/rentalRules";
 
-function getNextDayDate(dateValue) {
-  if (!(dateValue instanceof Date) || Number.isNaN(dateValue.getTime())) {
+const RENTAL_TYPE_LABELS = {
+  regular: "정기",
+  always: "상시",
+};
+
+function toCalendarBoundary(value, endOfDay = false) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const dateOnly = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+    return undefined;
+  }
+
+  const [year, month, day] = dateOnly.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  if (endOfDay) {
+    date.setHours(23, 59, 59, 999);
+  }
+
+  return date;
+}
+
+function formatDateOnly(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
     return "";
   }
 
-  const date = new Date(dateValue);
-  date.setDate(date.getDate() + 1);
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}.${month}.${day}`;
+  return `${year}-${month}-${day}`;
 }
 
 function RentalApplyModal(props) {
@@ -43,37 +74,77 @@ function RentalApplyModalContent({
   onSubmit,
   returnFocusRef,
 }) {
-  const { semester } = useContext(SemesterContext);
+  const {
+    semester,
+    rentalType: scheduledRentalType,
+    isLoading: isSemesterLoading,
+    error: semesterError,
+  } = useContext(SemesterContext);
 
+  const hasFixedPickupDate = isFixedPickupCategory(equipment?.category);
+  const [fixedPickupDate] = useState(() =>
+    getFixedPickupDate(equipment?.category),
+  );
   const [form, setForm] = useState(() => ({
     rentalType: equipment?.rentalPolicies ?? "",
-    pickupDate: null,
-    returnDate: "",
+    pickupDate: fixedPickupDate,
     reason: "",
   }));
 
-  const isRegularRental = form.rentalType === "regular";
-  const isAlwaysRental = form.rentalType === "always";
-
-
+  const rentalType = isMockMode ? form.rentalType : scheduledRentalType;
+  const isRegularRental = rentalType === "regular";
+  const isAlwaysRental = rentalType === "always";
   const titleId = `${useId()}-title`;
   const pickupDateId = `${useId()}-pickup-date`;
   const reasonTextId = `${useId()}-reason-text`;
   const firstInputRef = useRef(null);
-  const regularReturnDate = (
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const fixedPickupMaxDate = fixedPickupDate
+    ? new Date(fixedPickupDate)
+    : undefined;
+  fixedPickupMaxDate?.setHours(23, 59, 59, 999);
+
+  const pickupMinDate = hasFixedPickupDate
+    ? fixedPickupDate ?? undefined
+    : isRegularRental
+      ? toCalendarBoundary(semester.pickupStartDate)
+      : isAlwaysRental
+        ? today
+        : undefined;
+  const pickupMaxDate = hasFixedPickupDate
+    ? fixedPickupMaxDate
+    : isRegularRental
+      ? toCalendarBoundary(semester.pickupDeadline, true)
+      : isAlwaysRental
+        ? toCalendarBoundary(
+          isMockMode ? semester.endDate : semester.returnDeadline,
+          true,
+        )
+        : undefined;
+
+  const returnDeadline = (
     isMockMode ? semester.endDate : semester.returnDeadline
   )?.slice(0, 10) ?? "";
-
-  const resolvedReturnDate = isRegularRental
-    ? regularReturnDate
-    : isAlwaysRental
-      ? getNextDayDate(form.pickupDate)
-      : form.returnDate;
+  const fixedReturnDate = formatDateOnly(
+    getNextDayReturnDeadline(fixedPickupDate),
+  );
+  const resolvedReturnDate = hasFixedPickupDate
+    ? fixedReturnDate
+    : returnDeadline;
+  const resolvedExpectedReturnAt = hasFixedPickupDate
+    ? `${fixedReturnDate}T20:00:00`
+    : isMockMode
+      ? `${returnDeadline}T20:00:00`
+      : semester.returnDeadline ?? "";
   const canSubmit =
     !isPending &&
     form.pickupDate instanceof Date &&
     !Number.isNaN(form.pickupDate.getTime()) &&
-    (!isMockMode || (Boolean(form.rentalType) && Boolean(resolvedReturnDate))) &&
+    (isMockMode
+      ? Boolean(form.rentalType) && Boolean(resolvedReturnDate)
+      : Boolean(rentalType) && Boolean(resolvedReturnDate)) &&
     Boolean(form.reason.trim());
 
   const updateField = (name, value) => {
@@ -89,7 +160,11 @@ function RentalApplyModalContent({
   const handleSubmit = (event) => {
     event.preventDefault();
     if (canSubmit) {
-      onSubmit?.({ ...form, returnDate: resolvedReturnDate });
+      onSubmit?.({
+        ...form,
+        returnDate: resolvedReturnDate,
+        expectedReturnAt: resolvedExpectedReturnAt,
+      });
     }
   };
 
@@ -127,13 +202,13 @@ function RentalApplyModalContent({
               <Input
                 width="100%"
                 value={
-                  !isMockMode
-                    ? "신청 시 서버에서 결정"
-                    : equipment.rentalPolicies === "regular"
-                    ? "정기"
-                    : equipment.rentalPolicies === "always"
-                      ? "상시"
-                      : equipment.rentalPolicies ?? ""
+                  isMockMode
+                    ? RENTAL_TYPE_LABELS[form.rentalType] ?? form.rentalType ?? ""
+                    : isSemesterLoading
+                      ? "학기 일정 확인 중"
+                      : semesterError
+                        ? "학기 일정 확인 실패"
+                        : RENTAL_TYPE_LABELS[rentalType] ?? "현재 신청 기간 아님"
                 }
                 ariaLabel="대여 유형"
                 disabled={true}
@@ -142,41 +217,38 @@ function RentalApplyModalContent({
 
             <div className={styles.field}>
               <label htmlFor={pickupDateId}>수령 희망일</label>
-              <label >
-                반납 예정일
-                {!isMockMode
-                  ? " (신청 후 확정)"
-                  : isRegularRental
-                  ? " (학기 반납 마감일)"
-                  : isAlwaysRental
-                    ? " (수령일 다음 날)"
-                    : ""}
+              <label>
+                반납 예정일 {hasFixedPickupDate ? "(다음 날)" : "(학기 반납 마감일)"}
               </label>
-              <Select
-                ref={firstInputRef}
-                id={pickupDateId}
-                name="pickupDate"
-                className={styles.select}
-                type="calendar"
-                width="100%"
-                value={form.pickupDate}
-                placeholder="날짜를 선택하세요."
-                ariaLabel="수령 희망일"
-                onChange={(date) => updateField("pickupDate", date)}
-                disabled={isPending}
-              />
+              {hasFixedPickupDate ?
+                <Input
+                  width="100%"
+                  value={formatDateOnly(form.pickupDate)}
+                  ariaLabel="수령 희망일"
+                  placeholder="수령 희망일 미설정"
+                  disabled={true}
+                />
+                :
+                <Select
+                  ref={firstInputRef}
+                  id={pickupDateId}
+                  name="pickupDate"
+                  type="calendar"
+                  width="100%"
+                  minDate={pickupMinDate}
+                  maxDate={pickupMaxDate}
+                  value={form.pickupDate}
+                  placeholder="날짜를 선택하세요."
+                  ariaLabel="수령 희망일"
+                  onChange={(date) => updateField("pickupDate", date)}
+                  disabled={isPending || hasFixedPickupDate}
+                />}
 
               <Input
                 width="100%"
-                value={isMockMode ? resolvedReturnDate : "신청 후 서버에서 확인"}
+                value={resolvedReturnDate}
                 ariaLabel="반납 예정일"
-                placeholder={
-                  !isMockMode
-                    ? undefined
-                    : isRegularRental && !regularReturnDate
-                    ? "학기 반납 마감일 미설정"
-                    : "수령 희망일을 선택하세요."
-                }
+                placeholder="학기 반납 마감일 미설정"
                 disabled={true}
               />
             </div>

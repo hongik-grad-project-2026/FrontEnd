@@ -222,7 +222,7 @@ export function mapAdminHistory(value) {
     os: null,
     requestedDate: datePart(rental.requestedAt),
     pickupDate: datePart(rental.actualPickupAt),
-    returnedDate: null,
+    returnedDate: datePart(rental.actualReturnAt),
   };
 }
 

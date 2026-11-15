@@ -199,12 +199,15 @@ export async function createStudentRental(values) {
 
   const modelId = requireRentalId(values.model?.modelId ?? values.modelId);
   const purpose = values.reason?.trim();
+  const expectedReturnAt = values.expectedReturnAt?.trim();
   if (!purpose) throw new Error("대여 사유를 입력해 주세요.");
+  if (!expectedReturnAt) throw new Error("반납 예정일을 확인해 주세요.");
 
   const result = await api.post("/rentals", {
     modelId,
     purpose,
     expectedPickupDate: formatPickupDate(values.pickupDate),
+    expectedReturnAt,
     ...(values.memo?.trim() && { memo: values.memo.trim() }),
   });
 
@@ -466,7 +469,7 @@ export async function getAdminRentalDashboard(options = {}) {
     for (const rental of activePage.content) {
       if (rental.status === "readyForPickup" && rental.expectedPickupAt === today) todayPickup += 1;
       if ((rental.status === "renting" || rental.status === "overdue") &&
-          rental.expectedReturnAt?.startsWith(today)) todayReturn += 1;
+        rental.expectedReturnAt?.startsWith(today)) todayReturn += 1;
     }
     if (!activePage.hasNext) break;
     activePage = await getRentalPage("/admin/rentals", {

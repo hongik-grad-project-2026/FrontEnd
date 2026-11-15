@@ -1,4 +1,8 @@
-import { isPickupPhotoRequired } from "../utils/rentalRules";
+import {
+  getNextDayReturnDeadline,
+  isFixedPickupCategory,
+  isPickupPhotoRequired,
+} from "../utils/rentalRules";
 import { RENTAL_STATUS } from "../constants/status";
 // 상태값은 학생 대여 화면 확인을 위한 mock 전용 계약임.
 // 실제 서버 상태값은 대여 API가 Swagger에 추가된 뒤 별도로 변환함.
@@ -1058,7 +1062,9 @@ export async function createMockStudentRental({
   await waitForMock();
 
   const expectedPickupAt = formatApplicationDate(pickupDate);
-  const expectedReturnAt = formatApplicationDate(returnDate);
+  const expectedReturnAt = isFixedPickupCategory(model?.category)
+    ? `${formatApplicationDate(getNextDayReturnDeadline(pickupDate))}. 20:00`
+    : formatApplicationDate(returnDate);
 
   if (
     !model?.modelId ||

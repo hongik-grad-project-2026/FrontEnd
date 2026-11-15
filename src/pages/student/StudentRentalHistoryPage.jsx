@@ -26,9 +26,26 @@ import layoutStyles from "../admin/AdminRentalStatusPage.module.css";
 import styles from "./StudentRentalHistoryPage.module.css";
 
 const LIST_SIZE = 50;
+const REJECT_REASON_LABELS = Object.freeze({
+  INSUFFICIENT_STOCK: "기기 재고 부족",
+  RENTAL_SUSPENDED: "대여 중지된 기기 (기기 고장 등)",
+  OTHER: "기타",
+});
 
 function shouldRetry(failureCount, error) {
   return error?.code !== "STUDENT_RENTAL_API_UNAVAILABLE" && failureCount < 1;
+}
+
+function getRejectionReason(rental) {
+  if (rental.rejectReasonType === "OTHER") {
+    return rental.rejectReasonDetail || "-";
+  }
+
+  return (
+    REJECT_REASON_LABELS[rental.rejectReasonType] ??
+    rental.rejectReasonDetail ??
+    "-"
+  );
 }
 
 function getCardFields(rental) {
@@ -56,7 +73,11 @@ function getCardFields(rental) {
       ...(rental.rejectedAt
         ? [{ id: "rejected-at", label: "반려일", value: rental.rejectedAt }]
         : []),
-      { id: "rejected-reason", label: "반려 사유", value: rental.rejectReasonDetail },
+      {
+        id: "rejected-reason",
+        label: "반려 사유",
+        value: getRejectionReason(rental),
+      },
     ];
   }
 
