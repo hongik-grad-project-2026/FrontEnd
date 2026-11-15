@@ -28,7 +28,14 @@
 }
 
 .contentArea[data-title="categoryStatusSection"] {
-    height: 300px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: var(--spacing-16);
+    height: auto;
+    overflow: visible;
+    background: transparent;
+    border: 0;
 }
 
 .sectionHead {
