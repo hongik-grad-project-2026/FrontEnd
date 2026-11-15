@@ -169,6 +169,7 @@ export function mapAdminSummary(value) {
     department: optionalText(rental.department),
     category: optionalText(rental.categoryName),
     equipmentName: optionalText(rental.modelName) ?? "모델명 미확인",
+    imageSrc: optionalText(rental.modelImageUrl),
     modelId: rental.modelId ?? null,
     assetNumber: optionalText(rental.labelCode),
     labelNumber: optionalText(rental.labelCode),
@@ -218,7 +219,6 @@ export function mapAdminHistory(value) {
   const rental = mapAdminSummary(value);
   return {
     ...rental,
-    imageSrc: null,
     os: null,
     requestedDate: datePart(rental.requestedAt),
     pickupDate: datePart(rental.actualPickupAt),

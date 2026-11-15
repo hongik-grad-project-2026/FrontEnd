@@ -192,7 +192,10 @@ function AdminRentalStatusPage() {
               const status = getRentalStatus(rental.status);
               return (
                 <RentalCard
-                  key={rental.rentalId} ariaLabel={rental.ariaLabel}
+                  key={rental.rentalId}
+                  imageSrc={rental.imageSrc}
+                  imageAlt={rental.equipmentName}
+                  ariaLabel={rental.ariaLabel}
                   badge={<StatusBadge text={status.label} color={status.color} size="lg" />}
                   actions={<>{primary ?
                     <Button kind={primary.kind} status="Default" size="Default" color={primary.color} text={primary.text} disabled={processMutation.isPending}
