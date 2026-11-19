@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isMockMode } from "../../api/client";
 import {
   approveRental,
   getAdminRentalApprovals,
@@ -13,6 +14,7 @@ import SearchBar from "../../components/common/SearchBar";
 import ConfirmModal from "../../components/modal/ConfirmModal";
 import RentalRejectModal from "../../components/modal/RentalRejectModal";
 import DataTable from "../../components/table/DataTable";
+import { useUser } from "../../context/UserContext";
 import styles from "./AdminRentalApprovalPage.module.css";
 
 const ROWS_PER_PAGE = 10;
@@ -40,6 +42,8 @@ function initializeRejectionReasonFrom() {
 }
 
 function AdminRentalApprovalPage() {
+  const { user } = useUser();
+  const canReviewRentals = isMockMode || user?.serverRole === "ASSISTANT";
   const queryClient = useQueryClient();
   const mutationGuardRef = useRef(false);
   const approvalButtonRef = useRef(null);
@@ -111,14 +115,14 @@ function AdminRentalApprovalPage() {
   });
 
   const handleConfirmApproval = () => {
-    if (mutationGuardRef.current || approvalTargetRequestIds.length === 0) return;
+    if (!canReviewRentals || mutationGuardRef.current || approvalTargetRequestIds.length === 0) return;
     mutationGuardRef.current = true;
     setActionError("");
     approvalMutation.mutate(approvalTargetRequestIds);
   };
 
   const handleConfirmReject = (request, reason) => {
-    if (mutationGuardRef.current) return;
+    if (!canReviewRentals || mutationGuardRef.current) return;
     mutationGuardRef.current = true;
     setActionError("");
     rejectMutation.mutate({ rentalId: request.rentalId, reason });
@@ -131,7 +135,7 @@ function AdminRentalApprovalPage() {
     { key: "rentalType", header: "유형", width: 96, getValue: (request) => request.rentalType },
     { key: "period", header: "대여 기간", width: 136, render: (request) => <CellStack><span>{request.startDate ?? "-"}</span><span>~{request.endDate ?? "-"}</span></CellStack> },
     { key: "requestedAt", header: "신청 일시", width: 136, render: (request) => <CellStack><span>{request.requestedDate ?? "-"}</span><span>{request.requestedTime ?? ""}</span></CellStack> },
-    { key: "reject", header: "반려", width: 64, render: (request) => <Button kind="border" size="small" color="Danger" status="Default" text="반려" disabled={approvalMutation.isPending || rejectMutation.isPending} onClick={(event) => { rejectButtonRef.current = event.currentTarget; setRejectionReason(initializeRejectionReasonFrom()); rejectMutation.reset(); setRejectTargetRequest(request); }} /> },
+    { key: "reject", header: "반려", width: 64, render: (request) => <Button kind="border" size="small" color="Danger" status="Default" text="반려" disabled={!canReviewRentals || approvalMutation.isPending || rejectMutation.isPending} onClick={(event) => { if (!canReviewRentals) return; rejectButtonRef.current = event.currentTarget; setRejectionReason(initializeRejectionReasonFrom()); rejectMutation.reset(); setRejectTargetRequest(request); }} /> },
   ];
 
   const pageData = approvalQuery.data;
@@ -151,11 +155,11 @@ function AdminRentalApprovalPage() {
               columns={columns}
               rows={pageData.content}
               totalCount={pageData.totalElements}
-              selectedRowIds={selectedRequestIds}
-              onSelectedRowIdsChange={setSelectedRequestIds}
+              selectedRowIds={canReviewRentals ? selectedRequestIds : []}
+              onSelectedRowIdsChange={canReviewRentals ? setSelectedRequestIds : undefined}
               getRowId={(request) => request.rentalId}
               emptyMessage="검색 조건에 해당하는 대여 신청이 없습니다."
-              bulkAction={<Button ref={approvalButtonRef} kind="fill" size="Default" color="Primary" status="Default" text="신청 승인" disabled={selectedRequestIds.length === 0 || approvalMutation.isPending || rejectMutation.isPending} onClick={() => { setActionError(""); setApprovalTargetRequestIds([...selectedRequestIds]); }} />}
+              bulkAction={<Button ref={approvalButtonRef} kind="fill" size="Default" color="Primary" status="Default" text="신청 승인" disabled={!canReviewRentals || selectedRequestIds.length === 0 || approvalMutation.isPending || rejectMutation.isPending} onClick={() => { if (!canReviewRentals) return; setActionError(""); setApprovalTargetRequestIds([...selectedRequestIds]); }} />}
               search={<SearchBar width={360} value={searchTerm} ariaLabel="대여 신청 검색어" placeholder="학생명, 학번 또는 기자재명으로 검색..." onChange={(event) => { setSearchTerm(event.target.value); setCurrentPage(1); setSelectedRequestIds([]); }} onSubmit={() => setCurrentPage(1)} />}
               pagination={<Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} ariaLabel="대여 신청 목록 페이지 이동" />}
             />
@@ -164,7 +168,7 @@ function AdminRentalApprovalPage() {
       </div>
 
       <ConfirmModal
-        isOpen={approvalTargetRequestIds.length > 0}
+        isOpen={canReviewRentals && approvalTargetRequestIds.length > 0}
         icon="help"
         title={
           <>
@@ -180,7 +184,7 @@ function AdminRentalApprovalPage() {
         cancelText="취소"
         confirmText={approvalMutation.isPending ? "처리 중" : "확인"}
         confirmColor="Primary"
-        actionsDisabled={approvalMutation.isPending}
+        actionsDisabled={!canReviewRentals || approvalMutation.isPending}
         closeOnEscape={!approvalMutation.isPending}
         closeOnOverlay={!approvalMutation.isPending}
         onClose={() => { if (!approvalMutation.isPending) setApprovalTargetRequestIds([]); }}
@@ -189,7 +193,7 @@ function AdminRentalApprovalPage() {
       />
 
       <RentalRejectModal
-        isOpen={Boolean(rejectTargetRequest)}
+        isOpen={canReviewRentals && Boolean(rejectTargetRequest)}
         request={rejectTargetRequest}
         rejectionReason={rejectionReason}
         onRejectionReasonChange={setRejectionReason}

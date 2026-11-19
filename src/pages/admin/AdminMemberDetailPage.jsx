@@ -23,6 +23,7 @@ import Tabs from "../../components/common/Tabs";
 import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
 import { MEMBER_STATUS, RENTAL_STATUS } from "../../constants/status";
+import { useUser } from "../../context/UserContext";
 
 import styles from "./AdminMemberDetailPage.module.css";
 
@@ -248,6 +249,8 @@ const RENTAL_COLUMNS = [
 ];
 
 function AdminMemberDetailPage() {
+  const { user } = useUser();
+  const canEditMember = isMockMode || user?.serverRole === "ASSISTANT";
   const panelId = useId();
   const { userId } = useParams();
   const queryClient = useQueryClient();
@@ -269,7 +272,10 @@ function AdminMemberDetailPage() {
   });
 
   const updateMemberMutation = useMutation({
-    mutationFn: (fields) => updateAdminMember(userId, fields),
+    mutationFn: (fields) => {
+      if (!canEditMember) throw new Error("회원 수정 권한이 없습니다.");
+      return updateAdminMember(userId, fields);
+    },
     onSuccess: (updatedMember) => {
       queryClient.setQueryData(
         ["admin", "members", "detail", userId],
@@ -289,7 +295,10 @@ function AdminMemberDetailPage() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: (status) => updateAdminMemberStatus(userId, status),
+    mutationFn: (status) => {
+      if (!canEditMember) throw new Error("회원 상태 변경 권한이 없습니다.");
+      return updateAdminMemberStatus(userId, status);
+    },
     onSuccess: (updatedMember) => {
       queryClient.setQueryData(
         ["admin", "members", "detail", userId],
@@ -430,6 +439,7 @@ function AdminMemberDetailPage() {
   };
 
   const handleOpenEditModal = () => {
+    if (!canEditMember) return;
     updateMemberMutation.reset();
     setIsEditModalOpen(true);
   };
@@ -441,6 +451,7 @@ function AdminMemberDetailPage() {
   };
 
   const handleOpenStatusModal = () => {
+    if (!canEditMember) return;
     updateStatusMutation.reset();
 
     if (member.membershipStatus === "active") {
@@ -458,6 +469,7 @@ function AdminMemberDetailPage() {
 
   const handleConfirmStatusChange = async () => {
     if (
+      !canEditMember ||
       !nextMemberStatus ||
       updateStatusMutation.isPending ||
       statusRequestRef.current
@@ -536,14 +548,16 @@ function AdminMemberDetailPage() {
                       ? null
                       : "상태 미확인")
                   }
-                  onEditMember={handleOpenEditModal}
-                  onEditPhone={handleOpenEditModal}
-                  onEditEmail={handleOpenEditModal}
+                  onEditMember={canEditMember ? handleOpenEditModal : undefined}
+                  onEditPhone={canEditMember ? handleOpenEditModal : undefined}
+                  onEditEmail={canEditMember ? handleOpenEditModal : undefined}
+                  editDisabledReason={!canEditMember ? "조교만 수정할 수 있습니다." : undefined}
                   statusActionLabel={statusActionLabel}
                   statusActionPending={updateStatusMutation.isPending}
                   onStatusAction={
-                    statusActionLabel ? handleOpenStatusModal : undefined
+                    canEditMember && statusActionLabel ? handleOpenStatusModal : undefined
                   }
+                  statusActionDisabledReason={!canEditMember ? "조교만 처리할 수 있습니다." : undefined}
                 />
               </section>
 
@@ -652,7 +666,7 @@ function AdminMemberDetailPage() {
         </div>
       </div>
 
-      {isEditModalOpen ? (
+      {canEditMember && isEditModalOpen ? (
         <MemberEditModal
           key={member.userId}
           isOpen
@@ -660,12 +674,14 @@ function AdminMemberDetailPage() {
           isPending={updateMemberMutation.isPending}
           error={updateMemberMutation.error}
           onClose={handleCloseEditModal}
-          onSubmit={(fields) => updateMemberMutation.mutate(fields)}
+          onSubmit={(fields) => {
+            if (canEditMember) updateMemberMutation.mutate(fields);
+          }}
         />
       ) : null}
 
       <ConfirmModal
-        isOpen={Boolean(nextMemberStatus)}
+        isOpen={canEditMember && Boolean(nextMemberStatus)}
         title={
           nextMemberStatus === "SUSPENDED"
             ? "블랙리스트로 등록할까요?"
