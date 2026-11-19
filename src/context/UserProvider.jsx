@@ -94,12 +94,29 @@ export function UserProvider({ children }) {
       password,
     );
 
-    // 응답 검증이 끝난 뒤에만 토큰과 사용자 상태를 저장함.
+    // 로그인 응답에는 학생 프로필 사진이 없으므로, 화면 진입 전에 내 정보를 조회함.
     setAccessToken(accessToken);
-    setUser(authenticatedUser);
+    let currentUser = authenticatedUser;
+
+    if (authenticatedUser.role === "student") {
+      try {
+        currentUser = await getCurrentUser();
+      } catch (error) {
+        if (error?.isUnauthorized || error?.name === "AuthContractError") {
+          clearAccessToken();
+          setUser(null);
+          setAuthStatus(AUTH_STATUS.UNAUTHENTICATED);
+          throw error;
+        }
+
+        // 일시적인 내 정보 조회 실패는 이미 성공한 로그인을 취소하지 않음.
+      }
+    }
+
+    setUser(currentUser);
     setAuthStatus(AUTH_STATUS.AUTHENTICATED);
 
-    return authenticatedUser;
+    return currentUser;
   }
 
   async function logout() {
