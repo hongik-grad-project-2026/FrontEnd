@@ -121,7 +121,7 @@ function AssetFormModalContent({
 
   const hasRequiredValues =
     Boolean(formValues.status) &&
-    (isMockMode
+    (isMockMode && labelPrefix
       ? Boolean(labelSuffix)
       : isCreateMode
         ? validRealLabel

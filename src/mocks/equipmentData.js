@@ -106,7 +106,8 @@ const MOCK_MODEL_DEFINITIONS = [
     status: "available",
     receivedDate: "2026.08.05",
     disposalDate: "2028.08.05",
-    labelPrefix: "TE",
+    labelPrefix: "",
+    initialLabelStart: 1,
     itemCount: 6,
     availableCount: 4,
   },
@@ -124,7 +125,8 @@ const MOCK_MODEL_DEFINITIONS = [
     status: "unavailable",
     receivedDate: "2026.08.06",
     disposalDate: "2028.08.06",
-    labelPrefix: "TF",
+    labelPrefix: "",
+    initialLabelStart: 7,
     itemCount: 3,
     availableCount: 0,
   },
@@ -178,7 +180,8 @@ const MOCK_MODEL_DEFINITIONS = [
     status: "available",
     receivedDate: "2026.08.09",
     disposalDate: "2028.08.09",
-    labelPrefix: "TI",
+    labelPrefix: "",
+    initialLabelStart: 10,
     itemCount: 2,
     availableCount: 2,
   },
@@ -196,7 +199,8 @@ const MOCK_MODEL_DEFINITIONS = [
     status: "unavailable",
     receivedDate: "2026.08.10",
     disposalDate: "2028.08.10",
-    labelPrefix: "TJ",
+    labelPrefix: "",
+    initialLabelStart: 12,
     itemCount: 2,
     availableCount: 0,
   },
@@ -214,7 +218,8 @@ const MOCK_MODEL_DEFINITIONS = [
     status: "available",
     receivedDate: "2026.08.11",
     disposalDate: "2028.08.11",
-    labelPrefix: "TK",
+    labelPrefix: "",
+    initialLabelStart: 14,
     itemCount: 2,
     availableCount: 1,
   },
@@ -232,7 +237,8 @@ const MOCK_MODEL_DEFINITIONS = [
     status: "unavailable",
     receivedDate: "2026.08.12",
     disposalDate: "2028.08.12",
-    labelPrefix: "TL",
+    labelPrefix: "",
+    initialLabelStart: 16,
     itemCount: 1,
     availableCount: 0,
   },
@@ -241,9 +247,15 @@ const MOCK_MODEL_DEFINITIONS = [
 let nextModelSequence = MOCK_MODEL_DEFINITIONS.length + 1;
 let nextItemSequence = 1;
 
-const mockAdminEquipmentModels = MOCK_MODEL_DEFINITIONS.map(
-  ({ availableCount, itemCount, ...model }) => ({ ...model }),
-);
+const mockAdminEquipmentModels = MOCK_MODEL_DEFINITIONS.map((definition) => {
+  const model = { ...definition };
+  delete model.availableCount;
+  delete model.itemCount;
+  delete model.initialLabelStart;
+  return model;
+});
+
+const disposedLabelCodes = new Set();
 
 const mockEquipmentItems = new Map(
   MOCK_MODEL_DEFINITIONS.map((definition) => [
@@ -255,13 +267,15 @@ const mockEquipmentItems = new Map(
           : MOCK_EQUIPMENT_ITEM_STATUSES[
           (index % (MOCK_EQUIPMENT_ITEM_STATUSES.length - 1)) + 1
           ];
-      const displayNumber = String(index + 1).padStart(3, "0");
+      const displayNumber = String((definition.initialLabelStart ?? 1) + index).padStart(3, "0");
 
       return {
         itemId: `${definition.modelId}-item-${displayNumber}`,
         modelId: definition.modelId,
         assetNumber: String(index + 1).padStart(7, "0"),
-        labelNumber: `${definition.labelPrefix}-${displayNumber}`,
+        labelNumber: definition.labelPrefix
+          ? `${definition.labelPrefix}-${displayNumber}`
+          : displayNumber,
         status,
         notes: MOCK_STATUS_NOTES[Math.floor(Math.random() * MOCK_STATUS_NOTES.length)],
       };
@@ -340,6 +354,18 @@ function getAdminModel(modelId) {
 function getItems(modelId) {
   getAdminModel(modelId);
   return mockEquipmentItems.get(String(modelId)) ?? [];
+}
+
+function isLabelCodeInUse(labelCode, excludedItemId = null) {
+  return (
+    disposedLabelCodes.has(labelCode) ||
+    Array.from(mockEquipmentItems.values()).some((items) =>
+      items.some(
+        (item) =>
+          item.itemId !== excludedItemId && item.labelNumber === labelCode,
+      ),
+    )
+  );
 }
 
 function getStockText(modelId) {
@@ -421,7 +447,7 @@ function assertDigitText(value, fieldName) {
 }
 
 function createSequentialNumber(startValue, offset) {
-  return String(Number(startValue) + offset).padStart(startValue.length, "0");
+  return String(Number(startValue) + offset).padStart(3, "0");
 }
 
 export async function queryMockEquipmentModels({
@@ -587,6 +613,7 @@ export async function disposeMockAdminEquipmentModel({ modelId }) {
   }
 
   mockAdminEquipmentModels.splice(mockAdminEquipmentModels.indexOf(model), 1);
+  items.forEach((item) => disposedLabelCodes.add(item.labelNumber));
   mockEquipmentItems.delete(String(modelId));
 
   return { modelId: model.modelId };
@@ -683,7 +710,9 @@ export async function createMockAdminEquipmentItems({
     return {
       itemId: `${modelId}-created-${nextItemSequence++}`,
       modelId,
-      labelNumber: `${resolvedLabelPrefix}-${labelSuffix}`,
+      labelNumber: resolvedLabelPrefix
+        ? `${resolvedLabelPrefix}-${labelSuffix}`
+        : labelSuffix,
       // assetNumber,
       status,
       notes: normalizeText(notes),
@@ -691,11 +720,7 @@ export async function createMockAdminEquipmentItems({
   });
 
   const duplicatedLabel = generatedItems.find((candidate) =>
-    items.some(
-      (item) =>
-        normalizeSearch(item.labelNumber) ===
-        normalizeSearch(candidate.labelNumber),
-    ),
+    isLabelCodeInUse(candidate.labelNumber),
   );
   // const duplicatedAssetNumber = generatedItems.find((candidate) =>
   //   items.some((item) => item.assetNumber === candidate.assetNumber),
@@ -743,20 +768,23 @@ export async function updateMockAdminEquipmentItem(values) {
   }
 
   assertItemStatus(values.status);
-  const labelNumber = normalizeText(values.labelNumber);
-  const assetNumber = assertDigitText(values.assetNumber, "비품 번호");
+  const model = getAdminModel(values.modelId);
+  const enteredLabel = normalizeText(values.labelNumber);
+  if (model.categoryKey === "others" && !/^\d+$/.test(enteredLabel)) {
+    throw createMockError("라벨 번호는 숫자로 입력해 주세요.", "INVALID_LABEL_NUMBER");
+  }
+  const labelNumber = model.categoryKey === "others"
+    ? String(Number(enteredLabel)).padStart(3, "0")
+    : enteredLabel;
+  const assetNumber = values.assetNumber
+    ? assertDigitText(values.assetNumber, "비품 번호")
+    : targetItem.assetNumber;
 
   if (!labelNumber) {
     throw createMockError("라벨 번호를 입력해 주세요.", "INVALID_LABEL_NUMBER");
   }
 
-  if (
-    items.some(
-      (item) =>
-        item.itemId !== values.itemId &&
-        normalizeSearch(item.labelNumber) === normalizeSearch(labelNumber),
-    )
-  ) {
+  if (isLabelCodeInUse(labelNumber, values.itemId)) {
     throw createMockError(
       `${labelNumber} 라벨 번호가 이미 존재합니다.`,
       "DUPLICATED_LABEL_NUMBER",
@@ -764,7 +792,7 @@ export async function updateMockAdminEquipmentItem(values) {
   }
 
   if (
-    items.some(
+    assetNumber && items.some(
       (item) =>
         item.itemId !== values.itemId && item.assetNumber === assetNumber,
     )
@@ -805,5 +833,6 @@ export async function disposeMockAdminEquipmentItem({ itemId, modelId }) {
   }
 
   const [disposedItem] = items.splice(targetIndex, 1);
+  disposedLabelCodes.add(disposedItem.labelNumber);
   return clone(disposedItem);
 }
