@@ -179,6 +179,7 @@ export function mapAdminSummary(value) {
     expectedPickupAt: formatDate(rental.expectedPickupDate),
     expectedReturnAt: formatDateTime(rental.expectedReturnAt),
     actualPickupAt: formatDateTime(rental.actualPickupAt),
+    actualReturnAt: formatDateTime(rental.actualReturnAt),
     requestedAt: formatDateTime(rental.createdAt),
   };
 }
