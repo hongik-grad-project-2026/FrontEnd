@@ -72,6 +72,8 @@ export const rentalKeys = {
   ],
   adminHistoryCounts: () => ["rentals", "admin", "history", "counts"],
   adminDashboard: () => ["rentals", "admin", "dashboard"],
+  adminDashboardModelUtilization: () => ["rentals", "admin", "dashboard", "model-utilization"],
+  adminDashboardLongTermIdle: () => ["rentals", "admin", "dashboard", "long-term-idle"],
   memberHistories: () => ["rentals", "admin", "member-history"],
   memberHistory: (memberId, params) => [
     "rentals",
@@ -486,6 +488,33 @@ export async function getAdminRentalDashboard(options = {}) {
     todayReturn,
     overdue: overduePage.totalElements,
   };
+}
+
+export async function getAdminModelUtilization(options = {}) {
+  const result = await api.get("/admin/dashboard/model-utilization", {
+    signal: options.signal,
+  });
+
+  if (
+    !Array.isArray(result?.categories) ||
+    result.categories.some((category) => !Array.isArray(category?.models))
+  ) {
+    throw new Error("모델별 가동률 응답을 확인할 수 없습니다.");
+  }
+
+  return result;
+}
+
+export async function getAdminLongTermIdle(options = {}) {
+  const result = await api.get("/admin/dashboard/long-term-idle", {
+    signal: options.signal,
+  });
+
+  if (!Array.isArray(result?.items)) {
+    throw new Error("장기 미대여 응답을 확인할 수 없습니다.");
+  }
+
+  return result;
 }
 
 export async function getMemberRentalHistory(memberId, params = {}) {

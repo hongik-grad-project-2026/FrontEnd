@@ -1,48 +1,19 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { getAdminRentalDashboard, rentalKeys } from '../../api/rentalApi';
-import { isMockMode } from "../../api/client";
+import {
+    getAdminLongTermIdle,
+    getAdminModelUtilization,
+    getAdminRentalDashboard,
+    rentalKeys,
+} from '../../api/rentalApi';
 import { fetchNotices, noticeKeys } from '../../api/noticeApi';
 import IconButton, { IconTextButton } from "../../components/common/IconButton";
 import styles from "./AdminDashboardPage.module.css";
 import PageHeader from "../../components/layout/PageHeader";
 import AccordionItem from "../../components/common/AccordionItem";
 import DashboardStatusCard from "../../components/card/DashboardStatusCard";
-import RankBarCard from "../../components/card/RankBarCard";
-
-const MOCK_RANK_CARDS = [
-    {
-        title: "노트북",
-        unit: "%",
-        maxValue: 100,
-        items: [
-            { label: "맥북 프로 16 M3", value: 85 },
-            { label: "LG 그램 15.6", value: 66 },
-            { label: "맥북 에어 13 M3 ", value: 33 },
-        ],
-    },
-    {
-        title: "태블릿",
-        unit: "%",
-        maxValue: 100,
-        items: [
-            { label: "갤럭시탭 S8", value: 85 },
-            { label: "아이패드 11", value: 66 },
-            { label: "갤럭시탭 A9", value: 33 },
-        ],
-    },
-    {
-        title: "장기 미대여",
-        unit: "일",
-        items: [
-            { label: "삼성전자 보조배터리", value: 99 },
-            { label: "모닝글로리 독서대", value: 88 },
-            { label: "갤럭시탭 S7", value: 28 },
-        ],
-    },
-];
-
+import ChartCard from "../../components/card/ChartCard";
 
 function NoticeArea() {
 
@@ -126,6 +97,16 @@ function AdminDashboardPage() {
         queryFn: ({ signal }) => getAdminRentalDashboard({ signal, today }),
         staleTime: 1000 * 60 * 5, // 데이터를 5분 동안 Fresh 상태로 유지함.
     });
+    const modelUtilizationQuery = useQuery({
+        queryKey: rentalKeys.adminDashboardModelUtilization(),
+        queryFn: ({ signal }) => getAdminModelUtilization({ signal }),
+        staleTime: 1000 * 60 * 5,
+    });
+    const longTermIdleQuery = useQuery({
+        queryKey: rentalKeys.adminDashboardLongTermIdle(),
+        queryFn: ({ signal }) => getAdminLongTermIdle({ signal }),
+        staleTime: 1000 * 60 * 5,
+    });
 
     const initialCounts = {
         waitingApproval: 0,
@@ -135,10 +116,45 @@ function AdminDashboardPage() {
     };
 
     const rentalCounts = data ?? initialCounts;
-    const rankCards = MOCK_RANK_CARDS.map((card) => ({
-        ...card,
-        items: isMockMode ? card.items : [],
-    }));
+    const chartError = modelUtilizationQuery.error ?? longTermIdleQuery.error;
+    const isChartLoading = modelUtilizationQuery.isLoading || longTermIdleQuery.isLoading;
+    const isChartFetching = modelUtilizationQuery.isFetching || longTermIdleQuery.isFetching;
+    const chartCards = [
+        ...(modelUtilizationQuery.data?.categories ?? []).map((category) => ({
+            key: `category-${category.categoryId}`,
+            title: `${category.categoryName} 카테고리 가동률`,
+            unit: "%",
+            maxValue: 100,
+            items: category.models.map((model) => ({
+                rank: model.rank,
+                modelId: model.modelId,
+                label: model.modelName,
+                rentedCount: model.rentedCount,
+                totalCount: model.totalCount,
+            })),
+        })),
+        ...(longTermIdleQuery.data ? [{
+            key: "long-term-idle",
+            title: "장기 미대여 모델",
+            unit: "일",
+            maxValue: Math.max(
+                0,
+                ...longTermIdleQuery.data.items.map((item) => item.idleDays)
+            ),
+            items: longTermIdleQuery.data.items.map((item) => ({
+                rank: item.rank,
+                itemId: item.itemId,
+                label: item.modelName,
+                value: item.idleDays,
+            })),
+        }] : []),
+    ];
+
+    const refetchCharts = () => {
+        modelUtilizationQuery.refetch();
+        longTermIdleQuery.refetch();
+    };
+
 
     return (
         <main className={styles.dashboardPage}>
@@ -186,10 +202,35 @@ function AdminDashboardPage() {
 
             <section className={styles.section}>
                 <h3>모델별 가동률 현황 </h3>
-                <div className={styles.contentArea} data-title='categoryStatusSection'>
-                    {rankCards.map((card) => (
-                        <RankBarCard key={card.title} {...card} />
-                    ))}
+                <div className={styles.contentArea}>
+                    {isChartLoading && !chartError ? (
+                        <p>차트 데이터를 불러오는 중입니다.</p>
+                    ) : null}
+                    {chartError ? (
+                        <div role="alert">
+                            <p>{chartError.message || "차트 데이터를 불러오지 못했습니다."}</p>
+                            <IconTextButton
+                                icon="rotate"
+                                text={isChartFetching ? "다시 시도 중" : "다시 시도"}
+                                disabled={isChartFetching}
+                                onClick={refetchCharts}
+                            />
+                        </div>
+                    ) : null}
+                    {!isChartLoading && !chartError ? chartCards.map((card) => (
+                        <ChartCard
+                            key={card.key}
+                            title={card.title}
+                            unit={card.unit}
+                            maxValue={card.maxValue}
+                            items={card.items}
+                            rankColors={card.title === '장기 미대여 모델' ? [
+                                { fill: "var(--color-neutral-30)", stroke: "var(--color-neutral-40)" },
+                                { fill: "var(--color-neutral-20)", stroke: "var(--color-neutral-40)" },
+                                { fill: "var(--color-neutral-10)", stroke: "var(--color-neutral-40)" },
+                            ] : undefined}
+                        />
+                    )) : null}
                 </div>
             </section>
         </main>
