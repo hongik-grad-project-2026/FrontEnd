@@ -697,7 +697,19 @@ export async function createMockAdminEquipmentItems({
   }
 
   const resolvedLabelPrefix = normalizeText(labelPrefix);
-  const resolvedLabelStart = assertDigitText(labelStart, "라벨 시작 번호");
+  const unprefixedItems = Array.from(mockEquipmentItems.values())
+    .flat()
+    .map((item) => item.labelNumber)
+    .concat([...disposedLabelCodes])
+    .filter((code) => /^\d+$/.test(code));
+  const nextUnprefixedNumber = Math.max(
+    0,
+    ...unprefixedItems.map(Number),
+  ) + 1;
+  const resolvedLabelStart =
+    resolvedLabelPrefix || labelStart != null
+      ? assertDigitText(labelStart, "라벨 시작 번호")
+      : String(nextUnprefixedNumber);
   // const resolvedAssetNumberStart = assertDigitText(
   //   assetNumberStart,
   //   "비품 번호 시작 번호",

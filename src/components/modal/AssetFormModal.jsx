@@ -113,6 +113,9 @@ function AssetFormModalContent({
   const notesId = `${generatedId}-notes`;
 
   const isCreateMode = mode === "create";
+  const normalizedLabelPrefix = normalizeText(labelPrefix);
+  const isAutomaticLabel = isCreateMode && !normalizedLabelPrefix;
+  const labelFieldName = normalizedLabelPrefix ? "라벨 번호" : "기기 번호";
 
   const quantity = Number(formValues.quantity);
   const labelSuffix = normalizeText(formValues.labelSuffix);
@@ -121,11 +124,12 @@ function AssetFormModalContent({
 
   const hasRequiredValues =
     Boolean(formValues.status) &&
-    (isMockMode && labelPrefix
-      ? Boolean(labelSuffix)
-      : isCreateMode
-        ? validRealLabel
-        : !labelChanged || validRealLabel) &&
+    (isAutomaticLabel ||
+      (isMockMode && normalizedLabelPrefix
+        ? Boolean(labelSuffix)
+        : isCreateMode
+          ? validRealLabel
+          : !labelChanged || validRealLabel)) &&
     (!isCreateMode ||
       (Number.isInteger(quantity) &&
         quantity > 0 &&
@@ -173,8 +177,8 @@ function AssetFormModalContent({
           quantity,
           status: formValues.status,
           labelSuffix,
-          labelPrefix: normalizeText(labelPrefix),
-          labelStart: labelSuffix,
+          labelPrefix: normalizedLabelPrefix,
+          ...(!isAutomaticLabel ? { labelStart: labelSuffix } : {}),
           assetNumberStart: normalizeText(formValues.assetNumber),
           notes: normalizeText(formValues.notes),
         },
@@ -292,33 +296,40 @@ function AssetFormModalContent({
               </div>
             )}
 
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor={labelNumberId}>
-                {isCreateMode
-                  ? "라벨 시작 번호*"
-                  : isMockMode
-                    ? "라벨 번호*"
-                    : "라벨 번호"}
-              </label>
-
-              <div className={styles.prefixedInput}>
-                {labelPrefix ? (
-                  <strong className={styles.prefix}>{labelPrefix}-</strong>
-                ) : null}
-
-                <InputBar
-                  id={labelNumberId}
-                  width="100%"
-                  height="md"
-                  inputMode="numeric"
-                  name="labelNumber"
-                  value={formValues.labelSuffix}
-                  placeholder={isCreateMode ? "예) 001" : "라벨 번호"}
-                  disabled={isPending}
-                  onChange={handleTextChange("labelSuffix")}
-                />
+            {isAutomaticLabel ? (
+              <div className={styles.field}>
+                <span className={styles.label}>기기 번호</span>
+                <p className={styles.autoLabelNotice}>
+                  등록하면 수량만큼 번호가 자동으로 부여됩니다.
+                </p>
               </div>
-            </div>
+            ) : (
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor={labelNumberId}>
+                  {isCreateMode
+                    ? "라벨 시작 번호*"
+                    : `${labelFieldName}${isMockMode ? "*" : ""}`}
+                </label>
+
+                <div className={styles.prefixedInput}>
+                  {normalizedLabelPrefix ? (
+                    <strong className={styles.prefix}>{normalizedLabelPrefix}-</strong>
+                  ) : null}
+
+                  <InputBar
+                    id={labelNumberId}
+                    width="100%"
+                    height="md"
+                    inputMode="numeric"
+                    name="labelNumber"
+                    value={formValues.labelSuffix}
+                    placeholder={isCreateMode ? "예) 001" : labelFieldName}
+                    disabled={isPending}
+                    onChange={handleTextChange("labelSuffix")}
+                  />
+                </div>
+              </div>
+            )}
 
 
             <div className={styles.field}>

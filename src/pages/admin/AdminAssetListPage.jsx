@@ -539,6 +539,7 @@ function AdminAssetListPage() {
       <AssetDisposeModal
         asset={selectedAsset}
         modelName={modelName}
+        labelPrefix={modelSummary?.labelPrefix}
         isOpen={activeModal === "dispose" && selectedAsset !== null}
         isPending={disposeMutation.isPending}
         onClose={handleCloseActiveModal}

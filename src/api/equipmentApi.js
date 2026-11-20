@@ -940,12 +940,21 @@ export async function createAdminEquipmentItems(values) {
 
   const modelId = normalizeRequestedModelId(values.modelId);
   const quantity = Number(values.quantity);
-  const labelStart = Number(values.labelStart);
+  const labelStartText = String(values.labelStart ?? "").trim();
+  const hasLabelStart = labelStartText !== "";
+  const labelStart = hasLabelStart ? Number(labelStartText) : undefined;
   const status = ITEM_STATUS_REQUEST[values.status];
   if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 2147483647) {
     throw new Error("등록할 기기 수량을 확인해 주세요.");
   }
-  if (!Number.isInteger(labelStart) || labelStart <= 0 || labelStart > 2147483647 || !/^\d+$/.test(String(values.labelStart))) {
+  if (
+    (values.labelPrefix?.trim() && !hasLabelStart) ||
+    (hasLabelStart &&
+      (!Number.isInteger(labelStart) ||
+        labelStart <= 0 ||
+        labelStart > 2147483647 ||
+        !/^\d+$/.test(labelStartText)))
+  ) {
     throw new Error("라벨 시작 번호는 숫자로 입력해 주세요.");
   }
   if (!status) {
@@ -955,7 +964,7 @@ export async function createAdminEquipmentItems(values) {
   const result = await api.post("/admin/equipment-items", {
     modelId,
     quantity,
-    labelStart,
+    ...(hasLabelStart ? { labelStart } : {}),
     status,
     ...(values.notes?.trim() ? { memo: values.notes.trim() } : {}),
   });

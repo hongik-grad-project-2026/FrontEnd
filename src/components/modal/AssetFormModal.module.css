@@ -109,6 +109,17 @@
   line-height: var(--text-head-4-line-height);
 }
 
+.autoLabelNotice {
+  width: 100%;
+  margin: 0;
+  padding: var(--spacing-12);
+  color: var(--color-neutral-70);
+  background-color: var(--color-neutral-10);
+  border: var(--border-width-default) solid var(--color-neutral-20);
+  border-radius: var(--radius-8);
+  line-height: 1.5;
+}
+
 /* 등록·수정 모달의 상태 Select를 정의함. */
 .select {
   width: 100%;

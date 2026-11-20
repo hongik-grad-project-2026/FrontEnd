@@ -11,6 +11,7 @@ function AssetDisposeModal({
   asset,
   isOpen = false,
   isPending = false,
+  labelPrefix = "",
   modelName,
   onClose,
   onConfirm,
@@ -82,7 +83,7 @@ function AssetDisposeModal({
 
               <dl className={styles.informationGrid}>
                 <div className={styles.informationItem}>
-                  <dt>라벨 번호</dt>
+                  <dt>{labelPrefix ? "라벨 번호" : "기기 번호"}</dt>
                   <dd>{asset.labelNumber || "-"}</dd>
                 </div>
 
