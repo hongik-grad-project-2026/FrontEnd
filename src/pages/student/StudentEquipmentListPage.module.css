@@ -3,6 +3,71 @@
     flex-direction: column;
     gap: var(--spacing-32);
     padding-bottom: var(--spacing-32);
+    position: relative;
+}
+
+.headerSection {
+    display: flex;
+    gap: var(--spacing-24);
+}
+
+.headerSection>:first-child {
+    width: min-content;
+    white-space: nowrap;
+}
+
+.semesterInfo {
+    flex: 1;
+    color: var(--color-neutral-70);
+    display: flex;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.semesterInfoBox {
+    border-radius: var(--spacing-8);
+    border: 1px solid var(--color-neutral-20);
+    padding: var(--spacing-12) var(--spacing-16);
+    width: 100%;
+}
+
+.semesterInfoTitle {
+    font-size: var(--text-head-4-size);
+    font-weight: var(--text-head-4-weight);
+    line-height: var(--text-head-4-line-height);
+    letter-spacing: var(--text-head-4-letter-spacing);
+    padding-bottom: var(--spacing-8);
+}
+
+.semesterInfoBox ul {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.semesterInfoBox li {
+    font-size: var(--text-body-3-size);
+    font-weight: var(--text-body-3-weight);
+    line-height: var(--text-body-3-line-height);
+    letter-spacing: var(--text-body-3-letter-spacing);
+}
+
+.today {
+    /* color: var(--color-neutral-90); */
+    color: var(--color-brand-primary);
+}
+
+.semesterInfoBox li span {
+    font-size: var(--text-head-5-size);
+    font-weight: var(--text-head-5-weight);
+    line-height: var(--text-head-5-line-height);
+    letter-spacing: var(--text-head-5-letter-spacing);
+}
+
+.infoLabel {
+    display: inline-block;
+    width: 84px;
+
 }
 
 .equipmentListSection {

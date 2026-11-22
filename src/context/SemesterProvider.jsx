@@ -79,17 +79,23 @@ export function SemesterProvider({ children }) {
     const semester = schedule.current ?? EMPTY_SEMESTER;
     const today = formatLocalDate(new Date());
     const rentalType = getRentalTypeForDate(semester, today);
+    const isPrePickupPeriod = isWithinDateRange(
+        today,
+        semester.pickupStartDate,
+        semester.pickupDeadline,
+    );
 
     const value = useMemo(() => ({
         semester,
         schedule,
         rentalType,
+        isPrePickupPeriod,
         isLoading,
         error,
         isCustomSemester: Boolean(
             semester.startDate && (isMockMode ? semester.endDate : semester.returnDeadline),
         ),
-    }), [semester, schedule, rentalType, isLoading, error]);
+    }), [semester, schedule, rentalType, isPrePickupPeriod, isLoading, error]);
 
 
     return (

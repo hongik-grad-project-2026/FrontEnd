@@ -148,6 +148,15 @@
     letter-spacing: var(--text-badge-medium-letter-spacing);
 }
 
+.rentalsCountZero {
+    color: var(--color-neutral-30);
+    font-size: var(--text-body-3-size);
+    font-weight: var(--text-body-3-weight);
+    line-height: var(--text-body-3-line-height);
+    letter-spacing: var(--text-body-3-letter-spacing);
+    flex-wrap: nowrap;
+}
+
 /* 찜 목록 영역을 정의함. */
 
 .wishListGrid {

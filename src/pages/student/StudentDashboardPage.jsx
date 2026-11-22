@@ -369,6 +369,7 @@ function StudentDashboardPage() {
                   <RentalsLi key={rental.rentalId} rental={rental} />
                 ))}
                 {rentalGroups.pendingApproval.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.pendingApproval.length - 2}건</span></li> : ''}
+                {rentalGroups.pendingApproval.length === 0 ? <li className={styles.rentalsCountZero}><span>승인 대기 품목이 없습니다.</span></li> : ''}
               </ul>
             </div>
             <div
@@ -385,6 +386,7 @@ function StudentDashboardPage() {
                   <RentalsLi key={rental.rentalId} rental={rental} />
                 ))}
                 {rentalGroups.readyForPickup.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.readyForPickup.length - 2}건</span></li> : ''}
+                {rentalGroups.readyForPickup.length === 0 ? <li className={styles.rentalsCountZero}><span>수령 대기 품목이 없습니다.</span></li> : ''}
               </ul>
 
             </div>
@@ -402,6 +404,7 @@ function StudentDashboardPage() {
                   <RentalsLi key={rental.rentalId} rental={rental} />
                 ))}
                 {rentalGroups.renting.length > 2 ? <li className={styles.rentalsCount}><span>+{rentalGroups.renting.length - 2}건</span></li> : ''}
+                {rentalGroups.renting.length === 0 ? <li className={styles.rentalsCountZero}><span>대여 중인 품목이 없습니다.</span></li> : ''}
               </ul>
 
             </div>

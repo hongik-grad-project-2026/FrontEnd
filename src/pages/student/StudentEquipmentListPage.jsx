@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useContext } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -25,12 +25,36 @@ import EquipmentCard from "../../components/card/EquipmentCard";
 import PageHeader from "../../components/layout/PageHeader";
 import RentalApplyModal from "../../components/modal/RentalApplyModal";
 import { useUser } from "../../context/UserContext";
+import { SemesterContext } from "../../context/SemesterContext";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import styles from "./StudentEquipmentListPage.module.css";
+
+function formatSemesterDate(value) {
+  if (!value) return "미정";
+
+  const [date, time] = value.split("T");
+  const [year, month, day] = date.split("-");
+
+  const dateText = `${year}년 ${month}월 ${day}일`;
+
+  // 시간이 없는 날짜는 날짜만 표시
+  if (!time) return dateText;
+
+  const [hour, minute] = time.split(":");
+  const timeText =
+    Number(minute) === 0
+      ? `${Number(hour)}시`
+      : `${Number(hour)}시 ${Number(minute)}분`;
+
+  return `${dateText} ${timeText}`;
+}
 
 function StudentEquipmentListPage() {
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const { semester, rentalType, isPrePickupPeriod } = useContext(SemesterContext);
+  console.log("----", semester);
+
   const [selectedCategory, setSelectedCategory] = useState(
     ALL_CATEGORY_OPTION.value,
   );
@@ -112,7 +136,7 @@ function StudentEquipmentListPage() {
 
   const handleOpenRental = (equipment, category, event) => {
     if (rentalSubmitGuardRef.current || equipment.stockRemaining === 0 ||
-        equipment.isRentalAvailable === false) {
+      equipment.isRentalAvailable === false) {
       return;
     }
 
@@ -180,7 +204,28 @@ function StudentEquipmentListPage() {
 
   return (
     <main className={styles.studentEquipmentListPage}>
-      <PageHeader />
+      <div className={styles.headerSection}>
+        <PageHeader />
+        <div className={styles.semesterInfo}>
+          <div className={styles.semesterInfoBox}>
+            <p className={styles.semesterInfoTitle}>{semester.year}학년도 {semester.term}학기 대여 일정</p>
+            <ul>
+              <li className={rentalType === "regular" ? styles.today : ""}><span className={styles.infoLabel}>• 사전 신청 기간 </span>{formatSemesterDate(semester.preApplyStartDate)} ~ {formatSemesterDate(semester.preApplyEndDate)}</li>
+              <li className={isPrePickupPeriod ? styles.today : ""}><span className={styles.infoLabel}>• 사전 수령 기간</span>{formatSemesterDate(semester.pickupStartDate)} ~ {formatSemesterDate(semester.pickupDeadline)}</li>
+              <li className={rentalType === "always" ? styles.today : ""}><span className={styles.infoLabel}>• 상시 대여 기간 </span>{formatSemesterDate(semester.onDemandStartDate)} ~ {formatSemesterDate(semester.returnDeadline)}</li>
+              <li><span className={styles.infoLabel}>• 반납 마감 일시 </span>{formatSemesterDate(semester.returnDeadline)}</li>
+            </ul>
+          </div>
+          <div className={styles.semesterInfoBox}>
+            <p className={styles.semesterInfoTitle}>기자재 대여 안내</p>
+            <ul>
+              <li>• <span>노트북, 태블릿</span> 카테고리에 한해 사전신청이 가능합니다.</li>
+              <li>• <span>보조배터리, 기타</span> 카테고리는 사전 신청 및 수령 기간에 대여가 제한됩니다.</li>
+              <li>• <span>보조배터리, 기타</span> 카테고리는 당일 대여만 가능하며, 다음날까지 반납해야 합니다.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
       <div className={styles.equipmentListSection}>
         <div className={styles.toolsCon}>
           <Tabs
@@ -256,31 +301,31 @@ function StudentEquipmentListPage() {
             ) : null}
 
             {items.map((equipment) => {
-                  const categoryLabel =
-                    categoryOptions.find(
-                      (category) =>
-                        String(category.categoryId) ===
-                        String(equipment.categoryId),
-                    )?.label ?? equipment.categoryName ?? "카테고리";
+              const categoryLabel =
+                categoryOptions.find(
+                  (category) =>
+                    String(category.categoryId) ===
+                    String(equipment.categoryId),
+                )?.label ?? equipment.categoryName ?? "카테고리";
 
-                  return (
-                    <EquipmentCard
-                    key={equipment.modelId}
-                    category={categoryLabel}
-                    {...equipment}
-                    isRentPending={rentalMutation.isPending}
-                    onRent={(event) =>
-                      handleOpenRental(equipment, categoryLabel, event)
-                    }
-                    isWishPending={
-                      pendingWishlistModelIds.has(equipment.modelId)
-                    }
-                    onWishChange={(nextIsWish) =>
-                      handleWishChange(equipment.modelId, nextIsWish)
-                    }
-                    />
-                  );
-                })}
+              return (
+                <EquipmentCard
+                  key={equipment.modelId}
+                  category={categoryLabel}
+                  {...equipment}
+                  isRentPending={rentalMutation.isPending}
+                  onRent={(event) =>
+                    handleOpenRental(equipment, categoryLabel, event)
+                  }
+                  isWishPending={
+                    pendingWishlistModelIds.has(equipment.modelId)
+                  }
+                  onWishChange={(nextIsWish) =>
+                    handleWishChange(equipment.modelId, nextIsWish)
+                  }
+                />
+              );
+            })}
 
             <div ref={loadMoreRef} aria-hidden="true" />
             {isFetchingNextPage ? (
@@ -306,7 +351,7 @@ function StudentEquipmentListPage() {
         onSubmit={handleSubmitRental}
         returnFocusRef={rentalTriggerRef}
       />
-    </main>
+    </main >
   );
 }
 
