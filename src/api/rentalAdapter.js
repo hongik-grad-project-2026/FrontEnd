@@ -66,6 +66,22 @@ function applicationType(value) {
   return "미확인";
 }
 
+// 반납 예정일이 없으면 수령 예정일 다음 날 20:00을 반납 기한으로 계산한다.
+function nextDayReturnDeadline(expectedPickupDate) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(expectedPickupDate ?? "");
+  if (!match) return null;
+
+  const date = new Date(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]) + 1,
+  );
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${date.getFullYear()}.${month}.${day}. 20:00:00`;
+}
+
 function screenStatus(value) {
   return SERVER_STATUS[value] ?? "unknown";
 }
@@ -128,7 +144,9 @@ export function mapStudentSummary(value) {
     rentalType: applicationType(rental.applicationType),
     requestedAt: formatDateTime(rental.createdAt),
     expectedPickupAt: formatDate(rental.expectedPickupDate),
-    expectedReturnAt: formatDateTime(rental.expectedReturnAt),
+    expectedReturnAt:
+      formatDateTime(rental.expectedReturnAt) ??
+      nextDayReturnDeadline(rental.expectedPickupDate),
     actualPickupAt: formatDateTime(rental.actualPickupAt),
     actualReturnAt: formatDateTime(rental.actualReturnAt),
     canceledAt: formatDateTime(rental.canceledAt),
@@ -177,7 +195,9 @@ export function mapAdminSummary(value) {
     status: screenStatus(rental.status),
     reason: optionalText(rental.purpose),
     expectedPickupAt: formatDate(rental.expectedPickupDate),
-    expectedReturnAt: formatDateTime(rental.expectedReturnAt),
+    expectedReturnAt:
+      formatDateTime(rental.expectedReturnAt) ??
+      nextDayReturnDeadline(rental.expectedPickupDate),
     actualPickupAt: formatDateTime(rental.actualPickupAt),
     actualReturnAt: formatDateTime(rental.actualReturnAt),
     requestedAt: formatDateTime(rental.createdAt),
@@ -193,6 +213,9 @@ export function mapAdminApproval(value) {
     endDate: datePart(rental.expectedReturnAt),
     requestedDate: datePart(rental.requestedAt),
     requestedTime: timePart(rental.requestedAt),
+    expectedReturnAt:
+      formatDateTime(rental.expectedReturnAt) ??
+      nextDayReturnDeadline(rental.expectedPickupDate),
   };
 }
 
@@ -253,7 +276,9 @@ export function mapAdminDetail(value, requestedId) {
     reason: optionalText(rental.purpose),
     requestedAt: formatDateTime(rental.createdAt),
     expectedPickupAt: formatDate(rental.expectedPickupDate),
-    expectedReturnAt: formatDateTime(rental.expectedReturnAt),
+    expectedReturnAt:
+      formatDateTime(rental.expectedReturnAt) ??
+      nextDayReturnDeadline(rental.expectedPickupDate),
     approvedAt: formatDateTime(rental.reviewedAt),
     rejectedAt: formatDateTime(rental.reviewedAt),
     actualPickupAt: formatDateTime(rental.actualPickupAt),
