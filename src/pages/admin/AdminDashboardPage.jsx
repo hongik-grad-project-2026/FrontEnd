@@ -8,6 +8,8 @@ import {
     rentalKeys,
 } from '../../api/rentalApi';
 import { fetchNotices, noticeKeys } from '../../api/noticeApi';
+import { isMockMode } from '../../api/client';
+import { useUser } from '../../context/UserContext';
 import IconButton, { IconTextButton } from "../../components/common/IconButton";
 import styles from "./AdminDashboardPage.module.css";
 import PageHeader from "../../components/layout/PageHeader";
@@ -86,6 +88,9 @@ function NoticeArea() {
 function AdminDashboardPage() {
     const [currentTime, setCurrentTime] = useState(() => new Date());
     const navigate = useNavigate();
+    const { user } = useUser();
+    const canViewCharts = user?.serverRole === "ASSISTANT" ||
+        (isMockMode && !user?.serverRole && user?.role === "admin");
 
     const pad = (value) => String(value).padStart(2, "0");
     const formattedCurrentTime = `${currentTime.getFullYear()}년 ${pad(currentTime.getMonth() + 1)}월 ${pad(currentTime.getDate())}일, ${pad(currentTime.getHours())}:${pad(currentTime.getMinutes())}:${pad(currentTime.getSeconds())}`;
@@ -100,11 +105,13 @@ function AdminDashboardPage() {
     const modelUtilizationQuery = useQuery({
         queryKey: rentalKeys.adminDashboardModelUtilization(),
         queryFn: ({ signal }) => getAdminModelUtilization({ signal }),
+        enabled: canViewCharts,
         staleTime: 1000 * 60 * 5,
     });
     const longTermIdleQuery = useQuery({
         queryKey: rentalKeys.adminDashboardLongTermIdle(),
         queryFn: ({ signal }) => getAdminLongTermIdle({ signal }),
+        enabled: canViewCharts,
         staleTime: 1000 * 60 * 5,
     });
 
@@ -120,14 +127,13 @@ function AdminDashboardPage() {
     const isChartLoading = modelUtilizationQuery.isLoading || longTermIdleQuery.isLoading;
     const isChartFetching = modelUtilizationQuery.isFetching || longTermIdleQuery.isFetching;
     const chartCards = [
-        ...(modelUtilizationQuery.data?.categories ?? []).map((category) => ({
-            key: `category-${category.categoryId}`,
+        ...(modelUtilizationQuery.data ?? []).map((category) => ({
+            key: `category-${category.categoryName}`,
             title: `${category.categoryName} 카테고리 가동률`,
             unit: "%",
             maxValue: 100,
-            items: category.models.map((model) => ({
-                rank: model.rank,
-                modelId: model.modelId,
+            items: category.models.map((model, index) => ({
+                rank: index + 1,
                 label: model.modelName,
                 rentedCount: model.rentedCount,
                 totalCount: model.totalCount,
@@ -139,11 +145,10 @@ function AdminDashboardPage() {
             unit: "일",
             maxValue: Math.max(
                 0,
-                ...longTermIdleQuery.data.items.map((item) => item.idleDays)
+                ...longTermIdleQuery.data.map((item) => item.idleDays)
             ),
-            items: longTermIdleQuery.data.items.map((item) => ({
-                rank: item.rank,
-                itemId: item.itemId,
+            items: longTermIdleQuery.data.map((item, index) => ({
+                rank: index + 1,
                 label: item.modelName,
                 value: item.idleDays,
             })),
@@ -200,7 +205,7 @@ function AdminDashboardPage() {
                 </div>
             </section>
 
-            <section className={styles.section}>
+            {canViewCharts ? <section className={styles.section}>
                 <h3>모델별 가동률 현황 </h3>
                 <div className={styles.contentArea}>
                     {isChartLoading && !chartError ? (
@@ -232,7 +237,7 @@ function AdminDashboardPage() {
                         />
                     )) : null}
                 </div>
-            </section>
+            </section> : null}
         </main>
     );
 }

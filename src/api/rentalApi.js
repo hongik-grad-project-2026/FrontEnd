@@ -496,8 +496,18 @@ export async function getAdminModelUtilization(options = {}) {
   });
 
   if (
-    !Array.isArray(result?.categories) ||
-    result.categories.some((category) => !Array.isArray(category?.models))
+    !Array.isArray(result) ||
+    result.some((category) =>
+      typeof category?.categoryName !== "string" ||
+      !Array.isArray(category.models) ||
+      category.models.some((model) =>
+        typeof model?.modelName !== "string" ||
+        !Number.isSafeInteger(model.rentedCount) ||
+        !Number.isSafeInteger(model.totalCount) ||
+        model.rentedCount < 0 ||
+        model.rentedCount > model.totalCount
+      )
+    )
   ) {
     throw new Error("모델별 가동률 응답을 확인할 수 없습니다.");
   }
@@ -510,11 +520,19 @@ export async function getAdminLongTermIdle(options = {}) {
     signal: options.signal,
   });
 
-  if (!Array.isArray(result?.items)) {
+  if (
+    !Array.isArray(result) ||
+    result.some((item) =>
+      typeof item?.modelName !== "string" ||
+      typeof item.categoryName !== "string" ||
+      !Number.isSafeInteger(item.idleDays) ||
+      item.idleDays < 0
+    )
+  ) {
     throw new Error("장기 미대여 응답을 확인할 수 없습니다.");
   }
 
-  return result;
+  return [...result].sort((a, b) => b.idleDays - a.idleDays).slice(0, 3);
 }
 
 export async function getMemberRentalHistory(memberId, params = {}) {

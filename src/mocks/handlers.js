@@ -120,29 +120,24 @@ export const handlers = [
             isSuccess: true,
             code: "200",
             message: "성공",
-            result: {
-                baseDate: "2026-11-19",
-                categories: [
-                    {
-                        categoryId: 1,
-                        categoryName: "노트북",
-                        models: [
-                            { rank: 1, modelId: 12, modelName: "맥북 프로 16인치 22년형", rentedCount: 90, totalCount: 100, utilizationRate: 90 },
-                            { rank: 2, modelId: 7, modelName: "맥북 에어 13인치 22년형", rentedCount: 67, totalCount: 100, utilizationRate: 67 },
-                            { rank: 3, modelId: 21, modelName: "맥북 에어 14인치 25년형", rentedCount: 38, totalCount: 100, utilizationRate: 38 },
-                        ],
-                    },
-                    {
-                        categoryId: 2,
-                        categoryName: "태블릿",
-                        models: [
-                            { rank: 1, modelId: 12, modelName: "아이패드 미니", rentedCount: 74, totalCount: 90, utilizationRate: 82 },
-                            { rank: 2, modelId: 7, modelName: "갤럭시탭 S6 FE", rentedCount: 47, totalCount: 75, utilizationRate: 63 },
-                            { rank: 3, modelId: 21, modelName: "갤럭시탭 S8", rentedCount: 8, totalCount: 80, utilizationRate: 10 },
-                        ],
-                    },
-                ],
-            },
+            result: [
+                {
+                    categoryName: "노트북",
+                    models: [
+                        { modelName: "맥북 프로 16인치 22년형", rentedCount: 90, totalCount: 100 },
+                        { modelName: "맥북 에어 13인치 22년형", rentedCount: 67, totalCount: 100 },
+                        { modelName: "맥북 에어 14인치 25년형", rentedCount: 38, totalCount: 100 },
+                    ],
+                },
+                {
+                    categoryName: "태블릿",
+                    models: [
+                        { modelName: "아이패드 미니", rentedCount: 74, totalCount: 90 },
+                        { modelName: "갤럭시탭 S6 FE", rentedCount: 47, totalCount: 75 },
+                        { modelName: "갤럭시탭 S8", rentedCount: 8, totalCount: 80 },
+                    ],
+                },
+            ],
         });
     }),
 
@@ -153,14 +148,11 @@ export const handlers = [
             isSuccess: true,
             code: "200",
             message: "성공",
-            result: {
-                baseDate: "2026-11-19",
-                items: [
-                    { rank: 1, itemId: 301, modelName: "삼성전자 보조배터리", assetNumber: "PB-003", idleDays: 99, lastReturnedAt: "2026-08-12" },
-                    { rank: 2, itemId: 288, modelName: "모닝글로리 독서대", assetNumber: "ETC-011", idleDays: 88, lastReturnedAt: "2026-08-23" },
-                    { rank: 3, itemId: 154, modelName: "갤럭시탭 S7", assetNumber: "TB-007", idleDays: 28, lastReturnedAt: null },
-                ],
-            },
+            result: [
+                { modelName: "삼성전자 보조배터리", categoryName: "보조배터리", idleDays: 99 },
+                { modelName: "모닝글로리 독서대", categoryName: "기타", idleDays: 88 },
+                { modelName: "갤럭시탭 S7", categoryName: "태블릿", idleDays: 28 },
+            ],
         });
     }),
 

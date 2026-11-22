@@ -128,7 +128,7 @@ export default function ChartCard({
                             const color = rankColors[index % rankColors.length];
                             return (
                                 <Cell
-                                    key={item.modelId ?? item.itemId ?? item.label}
+                                    key={item.modelId ?? item.itemId ?? `${index}-${item.label}`}
                                     fill={color.fill}
                                     stroke={color.stroke}
                                     strokeWidth={1}
