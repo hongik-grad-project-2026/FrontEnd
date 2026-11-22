@@ -51,14 +51,18 @@ function MemberInfoCard({
 }) {
   return (
     <article className={styles.card} aria-label={`${member.name} 기본 정보`}>
-      <div className={styles.profileWrap} aria-hidden="true">
-        <img
-          className={styles.profileImage}
-          src={member.profileImageSrc}
-          alt=""
-          width={107}
-          height={107}
-        />
+      <div className={member.profileImageSrc === null ? styles.profileWrap + ' ' + styles.profileNullWrap : styles.profileWrap} aria-hidden="true">
+        {member.profileImageSrc === null ?
+          '' :
+          <img
+            className={styles.profileImage}
+            src={member.profileImageSrc}
+            alt=""
+            width={107}
+            height={107}
+          />
+          // {/* } */
+        }
       </div>
 
       <div className={styles.content}>

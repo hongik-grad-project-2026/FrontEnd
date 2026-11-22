@@ -212,8 +212,8 @@
   height: 24px;
   flex: 0 0 24px;
   background-color: var(--color-neutral-30);
-  -webkit-mask-image: url("/icons/icon24/user.png");
-  mask-image: url("/icons/icon24/user.png");
+  -webkit-mask-image: url("/icons/icon24/profile.png");
+  mask-image: url("/icons/icon24/profile.png");
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;

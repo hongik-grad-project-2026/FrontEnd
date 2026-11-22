@@ -516,8 +516,7 @@ function toMemberDetail(member) {
     membershipStatus: toMembershipStatus(member.status),
     phone: member.phoneNumber,
     email: member.email,
-    profileImageSrc:
-      member.profileImageUrl || "/images/hongikLogo-circle.png",
+    profileImageSrc: member.profileImageUrl,
     createdAt: member.createdAt ?? null,
     updatedAt: member.updatedAt ?? null,
   };
