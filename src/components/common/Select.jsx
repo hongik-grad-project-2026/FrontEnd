@@ -15,6 +15,11 @@ function isValidDate(value) {
   return value instanceof Date && !Number.isNaN(value.getTime());
 }
 
+function isWeekend(date) {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
 function isSameDate(firstDate, secondDate) {
   if (!isValidDate(firstDate) || !isValidDate(secondDate)) {
     return false;
@@ -258,6 +263,10 @@ function Select({
                 selectRange={false}
                 showFixedNumberOfWeeks
                 value={selectedDate}
+                tileDisabled={(args) =>
+                  (args.view === "month" && isWeekend(args.date)) ||
+                  Boolean(calendarProps.tileDisabled?.(args))
+                }
                 formatDay={(_, date) => String(date.getDate())}
                 formatMonthYear={(_, date) => `${date.getMonth() + 1}월`}
                 formatShortWeekday={(_, date) => KOREAN_WEEKDAYS[date.getDay()]}
