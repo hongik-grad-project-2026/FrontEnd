@@ -66,7 +66,7 @@ function applicationType(value) {
   return "미확인";
 }
 
-// 반납 예정일이 없으면 수령 예정일 다음 날 20:00을 반납 기한으로 계산한다.
+// 반납 예정일이 없으면 수령 예정일 다음 영업일(주말 제외) 20:00을 반납 기한으로 계산한다.
 function nextDayReturnDeadline(expectedPickupDate) {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(expectedPickupDate ?? "");
   if (!match) return null;
@@ -76,6 +76,12 @@ function nextDayReturnDeadline(expectedPickupDate) {
     Number(match[2]) - 1,
     Number(match[3]) + 1,
   );
+
+  // 토요일(6)·일요일(0)이면 다음 평일로 미룬다. (금요일 수령 → 월요일 반납)
+  while (date.getDay() === 0 || date.getDay() === 6) {
+    date.setDate(date.getDate() + 1);
+  }
+
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
 

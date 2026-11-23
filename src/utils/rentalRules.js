@@ -21,6 +21,11 @@ export function getFixedPickupDate(category, now = new Date()) {
         pickupDate.setDate(pickupDate.getDate() + 1);
     }
 
+    // 토요일(6)·일요일(0)이면 다음 평일로 미룬다. (주말에는 수령 불가)
+    while (pickupDate.getDay() === 0 || pickupDate.getDay() === 6) {
+        pickupDate.setDate(pickupDate.getDate() + 1);
+    }
+
     return pickupDate;
 }
 
@@ -31,6 +36,12 @@ export function getNextDayReturnDeadline(pickupDate) {
 
     const returnDeadline = new Date(pickupDate);
     returnDeadline.setDate(returnDeadline.getDate() + 1);
+
+    // 토요일(6)·일요일(0)이면 다음 평일로 미룬다. (금요일 수령 → 월요일 반납)
+    while (returnDeadline.getDay() === 0 || returnDeadline.getDay() === 6) {
+        returnDeadline.setDate(returnDeadline.getDate() + 1);
+    }
+
     returnDeadline.setHours(20, 0, 0, 0);
 
     return returnDeadline;

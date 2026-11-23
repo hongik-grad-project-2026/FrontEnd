@@ -39,12 +39,9 @@
   /* border: 1px solid red; */
 }
 
-
 .infoSection,
 .field {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  /* border: 1px solid darkgray; */
   padding: 12px 20px;
   gap: var(--spacing-12);
 }
@@ -56,9 +53,13 @@
   gap: inherit;
 }
 
-
 .field {
   background-color: var(--color-white);
+  grid-template-columns: 1fr 1fr;
+}
+
+.infoSection {
+  grid-template-columns: 1fr;
 }
 
 .field label {
