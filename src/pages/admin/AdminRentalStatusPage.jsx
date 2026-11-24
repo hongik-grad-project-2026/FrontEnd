@@ -35,10 +35,10 @@ async function uploadPhotos({ rentalId, processType, processPhoto }) {
   const imageType = processType === "pickup" ? "PICKUP" : "RETURN";
   const failedFiles = [];
   let firstError = null;
-
-  for (const image of processPhoto) {
+  for (const [index, image] of processPhoto.entries()) {
+    const imageSide = index === 1 ? "BACK" : undefined;
     try {
-      await uploadAdminRentalImage({ rentalId, imageType, image });
+      await uploadAdminRentalImage({ rentalId, imageType, image, imageSide });
     } catch (error) {
       failedFiles.push(image);
       firstError ??= error;

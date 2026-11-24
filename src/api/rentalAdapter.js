@@ -179,7 +179,7 @@ export function mapStudentDetail(value, requestedId) {
     rejectedAt: rental.status === "REJECTED" ? formatDateTime(rental.reviewedAt) : null,
     checkoutPhotoUrl: optionalText(rental.pickupImageUrl),
     returnPhotoUrl: optionalText(rental.returnImageUrl),
-    pledgeUrl: null,
+    images: Array.isArray(rental.images) ? rental.images : [],  // 추가
   };
 }
 

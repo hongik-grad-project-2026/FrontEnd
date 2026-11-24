@@ -399,15 +399,19 @@ export async function getAdminRentalImages(rentalId, { imageType, signal } = {})
   return result.images;
 }
 
-export async function uploadAdminRentalImage({ rentalId, imageType, image }) {
+export async function uploadAdminRentalImage({ rentalId, imageType, image, imageSide }) {
   const requestedId = requireRentalId(rentalId);
   if (!["PICKUP", "RETURN"].includes(imageType) || !image) {
     throw new Error("업로드할 대여 사진을 확인해 주세요.");
   }
   const formData = new FormData();
   formData.append("image", image);
+
+  const imageSideQuery = new URLSearchParams({ imageType });
+  if (imageSide) imageSideQuery.set("imageSide", imageSide);
+
   const result = await api.post(
-    `/admin/rentals/${requestedId}/images?imageType=${imageType}`,
+    `/admin/rentals/${requestedId}/images?${imageSideQuery.toString()}`,
     formData,
   );
   if (result?.rentalId !== requestedId || result.imageType !== imageType ||

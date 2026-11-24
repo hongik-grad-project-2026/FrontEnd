@@ -80,6 +80,7 @@ function InfoSection({ children, title }) {
   );
 }
 
+
 function RentalDetailModal({
   initialMode = "detail",
   isOpen = false,
@@ -100,7 +101,6 @@ function RentalDetailModal({
   const [mode, setMode] = useState(initialMode);
   const [processPhoto, setProcessPhoto] = useState([]);
   const [fileError, setFileError] = useState("");
-  const [showPickupImages, setShowPickupImages] = useState(false);
   const titleId = `${generatedId}-title`;
   const modalTitle = readOnly ? "대여기록 상세" : "대여내역 상세";
   const processPhotoId = `${generatedId}-process-photo`;
@@ -113,7 +113,13 @@ function RentalDetailModal({
   const pickupImagesQuery = useQuery({
     queryKey: rentalKeys.adminImages(rentalSummary?.rentalId, "PICKUP"),
     queryFn: ({ signal }) => getAdminRentalImages(rentalSummary.rentalId, { imageType: "PICKUP", signal }),
-    enabled: !isMockMode && isOpen && showPickupImages && Boolean(rentalSummary?.rentalId),
+    enabled: !isMockMode && isOpen && Boolean(rentalSummary?.rentalId),
+  });
+  const returnImagesQuery = useQuery({
+    queryKey: rentalKeys.adminImages(rentalSummary?.rentalId, "RETURN"),
+    queryFn: ({ signal }) => getAdminRentalImages(rentalSummary.rentalId, { imageType: "RETURN", signal }),
+    // 반납 사진은 반납 완료 건에서만 보여주므로 그 외에는 요청하지 않는다.
+    enabled: !isMockMode && isOpen && Boolean(rentalSummary?.rentalId) && rentalSummary?.status === "returned",
   });
   const rental = isMockMode ? rentalSummary : detailQuery.data;
 
@@ -142,9 +148,9 @@ function RentalDetailModal({
     );
   }
 
-
   const isWaiting = rental.status === "readyForPickup";
   const isOverdue = rental.status === "overdue";
+  const isRenting = rental.status === "renting" || isOverdue
   const isCanceled = rental.status === "canceled";
   const isRejected = rental.status === "rejected";
   const isNoShow = rental.status === "noShow";
@@ -340,24 +346,46 @@ function RentalDetailModal({
             </dl>
           </InfoSection>
 
-          {showPickupImages && !isProcessing ? (
-            <InfoSection title="대여 시 사진">
-              {pickupImagesQuery.isPending ? <p>사진을 불러오는 중입니다.</p> : null}
-              {pickupImagesQuery.isError ? (
-                <p role="alert">사진을 불러오지 못했습니다. <button type="button" onClick={() => pickupImagesQuery.refetch()} disabled={pickupImagesQuery.isFetching}>다시 시도</button></p>
-              ) : null}
-              {pickupImagesQuery.isSuccess && pickupImagesQuery.data.length === 0 ? <p>등록된 수령 사진이 없습니다.</p> : null}
-              {pickupImagesQuery.isSuccess && pickupImagesQuery.data.length > 0 ? (
-                <div className={styles.photoGallery}>
-                  {pickupImagesQuery.data.map((image, index) => (
-                    <a key={image.imageId ?? index} href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`수령 사진 ${index + 1} 새 탭에서 보기`}>
-                      <img src={image.imageUrl} alt={`수령 사진 ${index + 1}`} />
-                    </a>
-                  ))}
-                </div>
-              ) : null}
-            </InfoSection>
-          ) : null}
+          {
+            !isProcessing && (isRenting || isReturned) ? (
+              <div className={styles.photoSections}>
+                <InfoSection title="수령 사진">
+                  {pickupImagesQuery.isPending ? <p>사진을 불러오는 중입니다.</p> : null}
+                  {pickupImagesQuery.isError ? (
+                    <p role="alert" className={styles.subMessage}>사진을 불러오지 못했습니다.
+                      <button type="button" onClick={() => pickupImagesQuery.refetch()} disabled={pickupImagesQuery.isFetching}>다시 시도</button>
+                    </p>
+                  ) : null}
+                  {pickupImagesQuery.isSuccess && pickupImagesQuery.data.length === 0 ? <p className={styles.subMessage}>등록된 수령 사진이 없습니다.</p> : null}
+                  {pickupImagesQuery.isSuccess && pickupImagesQuery.data.length > 0 ? (
+                    <div className={styles.photoGallery}>
+                      {pickupImagesQuery.data.map((image, index) => (
+                        <a key={image.imageId ?? index} href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`수령 사진 ${index + 1} 새 탭에서 보기`}>
+                          <img src={image.imageUrl} alt={`수령 사진 ${index + 1}`} />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                </InfoSection>
+
+                {isReturned ? <InfoSection title="반납 사진">
+                  {returnImagesQuery.isPending ? <p className={styles.subMessage}>사진을 불러오는 중입니다.</p> : null}
+                  {returnImagesQuery.isError ? (
+                    <p role="alert" className={styles.subMessage}>사진을 불러오지 못했습니다. <button type="button" onClick={() => returnImagesQuery.refetch()} disabled={returnImagesQuery.isFetching}>다시 시도</button></p>
+                  ) : null}
+                  {returnImagesQuery.isSuccess && returnImagesQuery.data.length === 0 ? <p className={styles.subMessage}>등록된 반납 사진이 없습니다.</p> : null}
+                  {returnImagesQuery.isSuccess && returnImagesQuery.data.length > 0 ? (
+                    <div className={styles.photoGallery}>
+                      {returnImagesQuery.data.map((image, index) => (
+                        <a key={image.imageId ?? index} href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`반납 사진 ${index + 1} 새 탭에서 보기`}>
+                          <img src={image.imageUrl} alt={`반납 사진 ${index + 1}`} />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                </InfoSection> : ''}
+              </div>
+            ) : null}
 
           {isProcessing ? (
             <section className={styles.processSection}>
@@ -464,12 +492,9 @@ function RentalDetailModal({
               onClick={handleComplete}
             />
           </footer>
-        ) : (!isCanceled && !isNoShow && !isRejected) ? (
+        ) : (!isCanceled && !isNoShow && !isRejected && !isReturned) ? (
           <footer
-            className={joinClassNames(
-              styles.actions,
-              isOverdue ? styles.threeActions : "",
-            )}
+            className={styles.actions}
           >
             {isWaiting ? (
               <Button
@@ -485,18 +510,6 @@ function RentalDetailModal({
               />
             ) : (
               <>
-                <Button
-                  className={styles.actionButton}
-                  kind="border"
-                  size="Default"
-                  color="Neutral"
-                  status="Default"
-                  text="대여 시 사진 보기"
-                  type="button"
-                  disabled={isMockMode}
-                  title={isMockMode ? "mock 사진 조회는 제공되지 않습니다." : undefined}
-                  onClick={() => setShowPickupImages((current) => !current)}
-                />
 
                 {isOverdue ? (
                   <Button
@@ -507,8 +520,8 @@ function RentalDetailModal({
                     status="Default"
                     text="학생 상세 페이지"
                     type="button"
-                    aria-disabled="true"
-                    title="회원 상세 경로가 연결되지 않았습니다."
+                    disabled={!rental.userId}
+                    onClick={() => window.open(`/admin/members/${rental.userId}`, "_blank", "noopener,noreferrer")}
                   />
                 ) : null}
                 {!isReturned ?

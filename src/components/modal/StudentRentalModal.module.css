@@ -83,3 +83,20 @@
   font-weight: var(--text-label-weight);
   line-height: var(--text-label-line-height);
 }
+
+.actions {
+  display: flex;
+  width: 100%;
+  min-height: 60px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--color-white);
+  border-top: var(--spacing-4) solid var(--color-neutral-10);
+}
+
+
+.actionButton[data-size="Default"] {
+  width: 208px;
+}
