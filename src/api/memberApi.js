@@ -693,12 +693,115 @@ export async function updateAdminMemberStatus(userId, status) {
   return toMemberDetail(toMockMemberContract(member));
 }
 
-// 회원별 블랙리스트 기록을 임시 조회함.
+const BLACKLIST_REASON_LABELS = {
+  NO_SHOW: "노쇼",
+  OVERDUE: "연체",
+  MANUAL: "수동 등록",
+};
+
+function requirePositiveId(value, label) {
+  const id = Number(value);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw new Error(`${label}를 확인할 수 없습니다.`);
+  }
+  return id;
+}
+
+function requireBlacklistReason(value, label) {
+  const reason = typeof value === "string" ? value.trim() : "";
+  if (!reason || reason.length > 500) {
+    throw new Error(`${label}는 1~500자로 입력해 주세요.`);
+  }
+  return reason;
+}
+
+export async function registerAdminMemberBlacklist({ memberId, semesterId, reasonDetail }) {
+  const userId = requirePositiveId(memberId, "학생 ID");
+  const targetSemesterId = requirePositiveId(semesterId, "학기 ID");
+  const reason = requireBlacklistReason(reasonDetail, "등록 사유");
+  return api.post(`/admin/users/${userId}/blacklists`, {
+    semesterId: targetSemesterId,
+    reasonDetail: reason,
+  });
+}
+
+export async function releaseAdminMemberBlacklist({ blacklistId, releaseReason }) {
+  const id = requirePositiveId(blacklistId, "블랙리스트 기록 ID");
+  const reason = requireBlacklistReason(releaseReason, "해제 사유");
+  return api.patch(`/admin/blacklists/${id}/release`, { releaseReason: reason });
+}
+
+function formatBlacklistDate(value) {
+  const match = typeof value === "string"
+    ? /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+    : null;
+  return match ? `${match[1]}.${match[2]}.${match[3]}` : null;
+}
+
+function toBlacklistHistoryRecord(record, number) {
+  const reasonType = BLACKLIST_REASON_LABELS[record.reasonType] ?? record.reasonType ?? "-";
+  const reasonDetail = record.reasonDetail?.trim();
+
+  return {
+    id: record.blacklistId,
+    number,
+    semesterName: record.semesterName ?? null,
+    createdAt: formatBlacklistDate(record.createdAt),
+    releasedAt: formatBlacklistDate(record.releasedAt),
+    active: record.active,
+    reason: reasonDetail ? `${reasonType} · ${reasonDetail}` : reasonType,
+  };
+}
+
+// 회원별 블랙리스트 기록을 조회함. mock 모드의 화면 확인용 데이터는 유지함.
 export async function getAdminMemberBlacklistHistory({
   memberId,
   page = 0,
   size = 5,
+  signal,
 } = {}) {
+  if (!isMockMode) {
+    const userId = String(memberId ?? "").trim();
+    if (!/^[1-9]\d*$/.test(userId)) {
+      throw new Error("학생 ID를 확인할 수 없습니다.");
+    }
+
+    const params = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+    });
+    const result = await api.get(
+      `/admin/users/${encodeURIComponent(userId)}/blacklists?${params.toString()}`,
+      { signal },
+    );
+
+    if (!result || !Array.isArray(result.blacklists) ||
+        !Number.isSafeInteger(result.page) ||
+        !Number.isSafeInteger(result.size) ||
+        !Number.isSafeInteger(result.totalElements) ||
+        !Number.isSafeInteger(result.totalPages) ||
+        result.blacklists.some((record) =>
+          !Number.isSafeInteger(record?.blacklistId) ||
+          typeof record.active !== "boolean"
+        )) {
+      throw new Error("블랙리스트 이력 응답을 확인할 수 없습니다.");
+    }
+
+    return {
+      content: result.blacklists.map((record, index) =>
+        toBlacklistHistoryRecord(
+          record,
+          result.totalElements - (result.page * result.size + index),
+        ),
+      ),
+      page: result.page,
+      size: result.size,
+      totalElements: result.totalElements,
+      totalPages: result.totalPages,
+      hasNext: result.hasNext,
+    };
+  }
+
   requireMockOnlyFeature();
   requireMember(memberId);
 
