@@ -31,10 +31,14 @@ function normalizeNoticeSummary(notice) {
     authorId: notice.authorId ?? null,
     authorName: notice.authorName ?? "",
     createdAt: notice.createdAt ?? null,
-    // Swagger 목록 응답에 없는 값을 실제 데이터처럼 생성하지 않음.
+    // 목록 응답에 없는 상세 본문은 임의로 만들지 않음.
     summary: "",
-    hasAttachment: null,
-    viewCount: null,
+    hasAttachment: typeof notice.hasAttachment === "boolean"
+      ? notice.hasAttachment
+      : null,
+    viewCount: Number.isSafeInteger(notice.viewCount) && notice.viewCount >= 0
+      ? notice.viewCount
+      : null,
   };
 }
 
