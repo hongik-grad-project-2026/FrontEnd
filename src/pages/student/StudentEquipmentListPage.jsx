@@ -18,6 +18,7 @@ import {
   rentalKeys,
   studentRentalKeys,
 } from "../../api/rentalApi";
+import SnackRouletteModal from "../../events/snack/SnackRouletteModal";
 import Button from "../../components/common/Button";
 import SearchBar from "../../components/common/SearchBar";
 import Tabs from "../../components/common/Tabs";
@@ -28,7 +29,7 @@ import { useUser } from "../../context/UserContext";
 import { SemesterContext } from "../../context/SemesterContext";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import styles from "./StudentEquipmentListPage.module.css";
-
+import { MOCK_SNACK_ROULETTE } from "../../events/snack/snackEvent.js";
 function formatSemesterDate(value) {
   if (!value) return "미정";
 
@@ -350,6 +351,14 @@ function StudentEquipmentListPage() {
         }}
         onSubmit={handleSubmitRental}
         returnFocusRef={rentalTriggerRef}
+      />
+
+      <SnackRouletteModal
+        isOpen={true}          // 모달 열림 여부
+        prizes={MOCK_SNACK_ROULETTE?.prizes}           // 룰렛에 그릴 칸 목록 (최대 6개)
+        resultId={MOCK_SNACK_ROULETTE?.resultId}       // 당첨된 칸의 id (prizes 중 하나)
+        // onClose={() => setSnackResult(null)}   // 확인/ESC로 닫을 때
+        returnFocusRef={rentalTriggerRef}      // (선택) 닫힌 뒤 포커스를 돌려줄 버튼
       />
     </main >
   );

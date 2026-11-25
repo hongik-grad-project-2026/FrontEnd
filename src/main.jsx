@@ -17,6 +17,8 @@ import {
 } from "./routes/RoutesConfig.jsx";
 import { UserProvider } from "./context/UserProvider.jsx";
 import { SemesterProvider } from "./context/SemesterProvider.jsx";
+// 간식 이벤트 미리보기(개발 모드 전용). 전시 후 삭제함.
+import SnackRoulettePreviewPage from "./events/snack/SnackRoulettePreviewPage.jsx";
 
 async function enableMocking() {
   const mockMode = import.meta.env.VITE_USE_MOCK;
@@ -52,6 +54,11 @@ const router = createBrowserRouter([
 
   // 학생 모드 라우트를 등록함.
   studentRoutes,
+
+  // 간식 룰렛 모달 미리보기(개발 모드에서만 등록함).
+  ...(import.meta.env.DEV
+    ? [{ path: "/dev/snack-roulette", element: <SnackRoulettePreviewPage /> }]
+    : []),
 
   // 일치하는 경로가 없는 경우 마지막에 처리함.
   notFoundRoute,
