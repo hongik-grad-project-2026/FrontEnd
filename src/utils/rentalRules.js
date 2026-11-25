@@ -1,8 +1,8 @@
 // 노트북과 태블릿은 수령 사진 필수, 그 외 카테고리는 선택 사항
 const PICKUP_PHOTO_REQUIRED_CATEGORIES = new Set(["노트북", "태블릿"]);
 // 보조배터리와 기타는 반납 사진 선택 사항
-const RETURN_PHOTO_OPTIONAL_CATEGORIES = new Set(["보조배터리", "기타"]);
-const FIXED_PICKUP_CATEGORIES = new Set(["보조배터리", "기타"]);
+const RETURN_PHOTO_OPTIONAL_CATEGORIES = new Set(["보조배터리", "기타", "간식", "랜덤 간식 경품"]);
+const FIXED_PICKUP_CATEGORIES = new Set(["보조배터리", "기타", "간식", "랜덤 간식 경품"]);
 
 
 // 토요일(6)·일요일(0)이면 true를 반환함.

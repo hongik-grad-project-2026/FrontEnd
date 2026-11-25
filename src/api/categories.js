@@ -19,6 +19,8 @@ export const MOCK_EQUIPMENT_CATEGORIES = Object.freeze([
   { key: "tablet", value: "tablet", label: "태블릿", categoryId: 2 },
   { key: "power-bank", value: "power-bank", label: "보조배터리", categoryId: 3 },
   { key: "others", value: "others", label: "기타", categoryId: 4 },
+  { key: "snack", value: "snack", label: "간식", categoryId: 5 },
+  { key: "random-snack-prize", value: "random-snack-prize", label: "랜덤 간식 경품", categoryId: 6 },
 ]);
 
 function normalizeCategory(category) {
