@@ -743,6 +743,7 @@ function toBlacklistHistoryRecord(record, number) {
 
   return {
     id: record.blacklistId,
+    semesterId: record.semesterId,
     number,
     semesterName: record.semesterName ?? null,
     createdAt: formatBlacklistDate(record.createdAt),
@@ -818,4 +819,27 @@ export async function getAdminMemberBlacklistHistory({
         recordPage.totalElements - (recordPage.page * recordPage.size + index),
     })),
   };
+}
+
+export async function getAdminMemberCurrentBlacklistStatus({ memberId, semesterId, signal }) {
+  const currentSemesterId = requirePositiveId(semesterId, "현재 학기 ID");
+
+  for (let page = 0; ; page += 1) {
+    const history = await getAdminMemberBlacklistHistory({
+      memberId,
+      page,
+      size: 100,
+      signal,
+    });
+
+    if (history.content.some((record) =>
+      record.semesterId === currentSemesterId && record.active
+    )) {
+      return true;
+    }
+
+    if (page + 1 >= history.totalPages) {
+      return false;
+    }
+  }
 }

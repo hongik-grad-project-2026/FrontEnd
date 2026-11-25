@@ -78,7 +78,7 @@
 
 .label {
   font-family: var(--font-family-base);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: var(--font-weight-black);
   text-anchor: middle;
   dominant-baseline: central;

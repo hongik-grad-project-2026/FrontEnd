@@ -30,6 +30,11 @@ import { SemesterContext } from "../../context/SemesterContext";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import styles from "./StudentEquipmentListPage.module.css";
 import { MOCK_SNACK_ROULETTE } from "../../events/snack/snackEvent.js";
+
+function isRandomSnackModel(model) {
+  return model?.category?.trim() === "간식" && model?.modelName?.trim() === "랜덤";
+}
+
 function formatSemesterDate(value) {
   if (!value) return "미정";
 
@@ -66,6 +71,7 @@ function StudentEquipmentListPage() {
   const rentalTriggerRef = useRef(null);
   const rentalSubmitGuardRef = useRef(false);
   const [rentalTarget, setRentalTarget] = useState(null);
+  const [snackResult, setSnackResult] = useState(null);
 
   const categoryQuery = useQuery({
     queryKey: categoryKeys.list(),
@@ -107,7 +113,12 @@ function StudentEquipmentListPage() {
 
   const rentalMutation = useMutation({
     mutationFn: createStudentRental,
-    onSuccess: async () => {
+    onSuccess: async (result, variables) => {
+      const isRandomSnack = isRandomSnackModel(variables.model);
+      if (isRandomSnack) {
+        setRentalTarget(null);
+        setSnackResult(result);
+      }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: rentalKeys.all }),
         queryClient.invalidateQueries({ queryKey: studentRentalKeys.all }),
@@ -115,7 +126,9 @@ function StudentEquipmentListPage() {
         queryClient.invalidateQueries({ queryKey: equipmentKeys.adminModelLists() }),
         queryClient.invalidateQueries({ queryKey: ["admin", "members"] }),
       ]);
-      setRentalTarget(null);
+      if (!isRandomSnack) {
+        setRentalTarget(null);
+      }
     },
     onSettled: () => {
       rentalSubmitGuardRef.current = false;
@@ -354,11 +367,13 @@ function StudentEquipmentListPage() {
       />
 
       <SnackRouletteModal
-        isOpen={true}          // 모달 열림 여부
-        prizes={MOCK_SNACK_ROULETTE?.prizes}           // 룰렛에 그릴 칸 목록 (최대 6개)
-        resultId={MOCK_SNACK_ROULETTE?.resultId}       // 당첨된 칸의 id (prizes 중 하나)
-        // onClose={() => setSnackResult(null)}   // 확인/ESC로 닫을 때
-        returnFocusRef={rentalTriggerRef}      // (선택) 닫힌 뒤 포커스를 돌려줄 버튼
+        isOpen={Boolean(snackResult)}
+        prizes={MOCK_SNACK_ROULETTE.prizes}
+        resultId={MOCK_SNACK_ROULETTE.resultId}
+        outcome={snackResult}
+        autoStart
+        onClose={() => setSnackResult(null)}
+        returnFocusRef={rentalTriggerRef}
       />
     </main >
   );
