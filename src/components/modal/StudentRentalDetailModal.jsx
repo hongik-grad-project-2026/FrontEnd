@@ -1,4 +1,4 @@
-import { useId, useRef } from "react";
+import { useId, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getStudentRentalDetail,
@@ -8,9 +8,11 @@ import Button from "../common/Button";
 import { InputIconButton } from "../common/IconButton";
 import StatusBadge from "../common/StatusBadge";
 import BaseModal from "./BaseModal";
+import UsageGuideModal from "../../components/modal/UsageGuideModal"
 import detailStyles from "./RentalDetailModal.module.css";
 import styles from "./StudentRentalModal.module.css";
 import { getRentalStatus } from "../../constants/status.js";
+import { GUIDE_CONTENT } from "../../constants/usageGuideContent";
 
 const REJECT_REASON_LABELS = Object.freeze({
   INSUFFICIENT_STOCK: "기기 재고 부족",
@@ -24,18 +26,6 @@ function joinClassNames(...classNames) {
 
 function resolveValue(value) {
   return value === undefined || value === null || value === "" ? "-" : value;
-}
-
-function hasResourceUrl(resourceUrl) {
-  return typeof resourceUrl === "string" && resourceUrl.trim() !== "";
-}
-
-function openResourceInNewTab(resourceUrl) {
-  if (!hasResourceUrl(resourceUrl)) {
-    return;
-  }
-
-  window.open(resourceUrl, "_blank", "noopener,noreferrer");
 }
 
 function ModalInfoCell({ className, danger = false, label, value }) {
@@ -103,15 +93,13 @@ function StudentRentalDetailModal({
     isPickupPending || isRenting || isOverdue || isReturned;
   const showRentalInfo = showApprovedInfo || isCanceled || isNoShow || isRejected;
   const showMediaActions = isRenting || isOverdue || isReturned;
-  const hasCheckoutPhoto = hasResourceUrl(rental?.checkoutPhotoUrl);
-  const hasReturnPhoto = hasResourceUrl(rental?.returnPhotoUrl);
-  const hasPledge = hasResourceUrl(rental?.pledgeUrl);
   const statusData = getRentalStatus(rental?.status);
   const rejectReason =
     rental?.rejectReasonType === "OTHER"
       ? rental.rejectReasonDetail
       : REJECT_REASON_LABELS[rental?.rejectReasonType] ??
       rental?.rejectReasonDetail;
+  const [isUsageGuideModalOpen, setIsUsageGuideModalOpen] = useState(false);
 
   return (
     <BaseModal
@@ -268,7 +256,55 @@ function StudentRentalDetailModal({
                   </dl>
                 </InfoSection>
               ) : null}
+
+              {
+                (isRenting || isOverdue || isReturned) ? (
+                  <div className={detailStyles.photoSections}>
+                    <InfoSection title="수령 사진">
+                      {detailQuery.isPending ? <p>사진을 불러오는 중입니다.</p> : null}
+                      {detailQuery.isError ? (
+                        <p role="alert" className={detailStyles.subMessage}>사진을 불러오지 못했습니다.
+                          <button type="button" onClick={() => detailQuery.refetch()} disabled={detailQuery.isFetching}>다시 시도</button>
+                        </p>
+                      ) : null}
+                      {detailQuery.isSuccess && rental.images.length === 0 ? <p className={detailStyles.subMessage}>등록된 수령 사진이 없습니다.</p> : null}
+                      {detailQuery.isSuccess && rental.images.length > 0 ? (
+                        <div className={detailStyles.photoGallery}>
+                          {rental.images.map((image, index) => {
+                            if (image.imageType !== "PICKUP") return null;
+                            return (
+                              <a key={image.imageId ?? index} href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`수령 사진 ${index + 1} 새 탭에서 보기`}>
+                                <img src={image.imageUrl} alt={`수령 사진 ${index + 1}`} />
+                              </a>
+                            )
+                          })}
+                        </div>
+                      ) : null}
+                    </InfoSection>
+
+                    {isReturned ? <InfoSection title="반납 사진">
+                      {detailQuery.isPending ? <p className={detailStyles.subMessage}>사진을 불러오는 중입니다.</p> : null}
+                      {detailQuery.isError ? (
+                        <p role="alert" className={detailStyles.subMessage}>사진을 불러오지 못했습니다. <button type="button" onClick={() => detailQuery.refetch()} disabled={detailQuery.isFetching}>다시 시도</button></p>
+                      ) : null}
+                      {detailQuery.isSuccess && rental.images.length === 0 ? <p className={detailStyles.subMessage}>등록된 반납 사진이 없습니다.</p> : null}
+                      {detailQuery.isSuccess && rental.images.length > 0 ? (
+                        <div className={detailStyles.photoGallery}>
+                          {rental.images.map((image, index) => {
+                            if (image.imageType !== "RETURN") return null;
+                            return (
+                              <a key={image.imageId ?? index} href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`반납 사진 ${index + 1} 새 탭에서 보기`}>
+                                <img src={image.imageUrl} alt={`반납 사진 ${index + 1}`} />
+                              </a>
+                            )
+                          })}
+                        </div>
+                      ) : null}
+                    </InfoSection> : ''}
+                  </div>
+                ) : null}
             </div>
+
 
             {isApprovalPending ? (
               <footer className={detailStyles.actions}>
@@ -289,68 +325,35 @@ function StudentRentalDetailModal({
 
             {showMediaActions ? (
               <footer
-                className={joinClassNames(
-                  detailStyles.actions,
-                  isReturned ? detailStyles.threeActions : "",
-                )}
-              >
-                <Button
-                  className={detailStyles.actionButton}
-                  kind="border"
-                  size="Default"
-                  color="Neutral"
-                  status="Default"
-                  text="대여 시 사진 보기"
-                  type="button"
-                  disabled={!hasCheckoutPhoto}
-                  onClick={() =>
-                    openResourceInNewTab(rental.checkoutPhotoUrl)
-                  }
-                  title={
-                    hasCheckoutPhoto
-                      ? undefined
-                      : "대여 시 사진 자료가 없습니다."
-                  }
-                />
+                className={styles.actions}              >
 
-                {isReturned ? (
-                  <Button
-                    className={detailStyles.actionButton}
-                    kind="border"
-                    size="Default"
-                    color="Neutral"
-                    status="Default"
-                    text="반납 시 사진 보기"
-                    type="button"
-                    disabled={!hasReturnPhoto}
-                    onClick={() =>
-                      openResourceInNewTab(rental.returnPhotoUrl)
-                    }
-                    title={
-                      hasReturnPhoto
-                        ? undefined
-                        : "반납 시 사진 자료가 없습니다."
-                    }
-                  />
-                ) : null}
 
                 <Button
-                  className={detailStyles.actionButton}
+                  className={styles.actionButton}
                   kind="border"
                   size="Default"
                   color="Neutral"
                   status="Default"
                   text="서약서 내용 보기"
                   type="button"
-                  disabled={!hasPledge}
-                  onClick={() => openResourceInNewTab(rental.pledgeUrl)}
-                  title={hasPledge ? undefined : "서약서 자료가 없습니다."}
+                  // disabled={!hasPledge}
+                  onClick={() => setIsUsageGuideModalOpen(true)}
+
+                // title={hasPledge ? undefined : "서약서 자료가 없습니다."}
                 />
               </footer>
             ) : null}
           </>
         ) : null}
       </div>
+
+      <UsageGuideModal
+        isOpen={isUsageGuideModalOpen}
+        id="pledge"
+        title={GUIDE_CONTENT["pledge"]?.label}
+        content={GUIDE_CONTENT["pledge"]?.content}
+        onClose={() => setIsUsageGuideModalOpen(false)}
+      />
     </BaseModal>
   );
 }

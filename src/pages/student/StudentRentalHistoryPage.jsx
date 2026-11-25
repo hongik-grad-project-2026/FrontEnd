@@ -234,7 +234,6 @@ function StudentRentalHistoryPage() {
   });
 
   const rentals = listQuery.data?.content ?? [];
-  console.log("-----", rentals);
   const isUnsupported =
     listQuery.error?.code === "STUDENT_RENTAL_API_UNAVAILABLE" ||
     countsQuery.error?.code === "STUDENT_RENTAL_API_UNAVAILABLE";

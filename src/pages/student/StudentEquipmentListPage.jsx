@@ -53,7 +53,6 @@ function StudentEquipmentListPage() {
   const queryClient = useQueryClient();
   const { user } = useUser();
   const { semester, rentalType, isPrePickupPeriod } = useContext(SemesterContext);
-  console.log("----", semester);
 
   const [selectedCategory, setSelectedCategory] = useState(
     ALL_CATEGORY_OPTION.value,
@@ -220,6 +219,7 @@ function StudentEquipmentListPage() {
             <p className={styles.semesterInfoTitle}>기자재 대여 안내</p>
             <ul>
               <li>• <span>노트북, 태블릿</span> 카테고리에 한해 사전신청이 가능합니다.</li>
+              <li>• <span>노트북, 태블릿</span> 카테고리는 상시 대여 시 3일 내에 수령해야 합니다.</li>
               <li>• <span>보조배터리, 기타</span> 카테고리는 사전 신청 및 수령 기간에 대여가 제한됩니다.</li>
               <li>• <span>보조배터리, 기타</span> 카테고리는 당일 대여만 가능하며, 다음날까지 반납해야 합니다.</li>
             </ul>

@@ -10,6 +10,8 @@ import {
   getFixedPickupDate,
   getNextDayReturnDeadline,
   isFixedPickupCategory,
+  getAlwaysRentalFirstAvailableDate,
+  getAlwaysRentalLastAvailableDate
 } from "../../utils/rentalRules";
 
 const RENTAL_TYPE_LABELS = {
@@ -98,8 +100,9 @@ function RentalApplyModalContent({
   const pickupDateId = `${useId()}-pickup-date`;
   const reasonTextId = `${useId()}-reason-text`;
   const firstInputRef = useRef(null);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const firstAvailableDate = getAlwaysRentalFirstAvailableDate();
+
+
 
   const fixedPickupMaxDate = fixedPickupDate
     ? new Date(fixedPickupDate)
@@ -110,19 +113,13 @@ function RentalApplyModalContent({
     ? fixedPickupDate ?? undefined
     : isRegularRental
       ? toCalendarBoundary(semester.pickupStartDate)
-      : isAlwaysRental
-        ? today
-        : undefined;
+      : firstAvailableDate
+
   const pickupMaxDate = hasFixedPickupDate
     ? fixedPickupMaxDate
     : isRegularRental
       ? toCalendarBoundary(semester.pickupDeadline, true)
-      : isAlwaysRental
-        ? toCalendarBoundary(
-          isMockMode ? semester.endDate : semester.returnDeadline,
-          true,
-        )
-        : undefined;
+      : getAlwaysRentalLastAvailableDate();
 
   const returnDeadline = (
     isMockMode ? semester.endDate : semester.returnDeadline

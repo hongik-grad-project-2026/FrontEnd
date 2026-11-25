@@ -78,8 +78,23 @@
   letter-spacing: var(--text-head-4-letter-spacing);
 }
 
+.photoSections {
+  display: flex;
+  gap: 4px;
+  justify-content: space-around;
+}
+
+.subMessage {
+  color: var(--color-neutral-50);
+  font-size: var(--text-body-3-size);
+  font-weight: var(--text-body-3-weight);
+  line-height: var(--text-body-3-line-height);
+  letter-spacing: var(--text-body-3-letter-spacing);
+}
+
 .infoSection {
   display: flex;
+  width: 100%;
   flex-direction: column;
   gap: var(--spacing-12);
   padding: var(--spacing-12) var(--spacing-20);
@@ -237,7 +252,7 @@
 .photoGallery {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-12);
+  gap: var(--spacing-4);
 }
 
 .photoGallery a {
@@ -249,10 +264,14 @@
   border-radius: var(--radius-8);
 }
 
+.photoGallery a:hover {
+  border-color: var(--color-neutral-50);
+}
+
 .photoGallery img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .actions {
@@ -269,15 +288,6 @@
 
 .actions .actionButton[data-size="Default"] {
   width: 208px;
-}
-
-.threeActions {
-  justify-content: stretch;
-}
-
-.threeActions .actionButton[data-size="Default"] {
-  min-width: 0;
-  flex: 1;
 }
 
 .errorMessage {
