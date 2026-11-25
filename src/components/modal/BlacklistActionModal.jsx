@@ -4,15 +4,15 @@ import Button from "../common/Button";
 import BaseModal from "./BaseModal";
 import styles from "./BlacklistActionModal.module.css";
 
-function BlacklistActionModal({ action, memberName, semesters, isPending, error, onClose, onSubmit }) {
+function BlacklistActionModal({ action, memberName, semester, isPending, error, onClose, onSubmit }) {
   const generatedId = useId();
   const submitRef = useRef(false);
-  const [semesterId, setSemesterId] = useState("");
   const [reason, setReason] = useState("");
   const isRegister = action.type === "register";
+  const semesterId = semester?.semesterId;
   const title = isRegister ? "블랙리스트 등록" : "블랙리스트 해제";
   const canSubmit = !isPending && reason.trim().length > 0 && reason.trim().length <= 500 &&
-    (!isRegister || semesterId !== "");
+    (!isRegister || (Number.isSafeInteger(semesterId) && semesterId > 0));
   const titleId = `${generatedId}-title`;
   const errorId = `${generatedId}-error`;
 
@@ -20,7 +20,7 @@ function BlacklistActionModal({ action, memberName, semesters, isPending, error,
     event.preventDefault();
     if (!canSubmit || submitRef.current) return;
     submitRef.current = true;
-    Promise.resolve(onSubmit({ semesterId: Number(semesterId), reason: reason.trim() }))
+    Promise.resolve(onSubmit({ semesterId, reason: reason.trim() }))
       .catch(() => {})
       .finally(() => { submitRef.current = false; });
   };
@@ -39,27 +39,16 @@ function BlacklistActionModal({ action, memberName, semesters, isPending, error,
         <header className={styles.header}><h2 id={titleId}>{title}</h2></header>
         <div className={styles.content}>
           <p>{isRegister
-            ? `${memberName} 학생에게 적용할 학기와 등록 사유를 입력해 주세요.`
+            ? `${memberName} 학생의 현재 학기 등록 사유를 입력해 주세요.`
             : `${action.record.semesterName ?? "해당 학기"}의 블랙리스트 기록을 해제합니다.`}
           </p>
           {isRegister ? (
-            <label className={styles.field} htmlFor={`${generatedId}-semester`}>
+            <div className={styles.field}>
               <span>적용 학기</span>
-              <select
-                id={`${generatedId}-semester`}
-                value={semesterId}
-                onChange={(event) => setSemesterId(event.target.value)}
-                disabled={isPending}
-                required
-              >
-                <option value="">학기를 선택해 주세요</option>
-                {semesters.map((semester) => (
-                  <option key={semester.semesterId} value={semester.semesterId}>
-                    {semester.year}년 {semester.term}학기
-                  </option>
-                ))}
-              </select>
-            </label>
+              <span className={styles.semesterValue}>
+                {semester.year}년 {semester.term}학기
+              </span>
+            </div>
           ) : null}
           <label className={styles.field} htmlFor={`${generatedId}-reason`}>
             <span>{isRegister ? "등록 사유" : "해제 사유"}</span>

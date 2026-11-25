@@ -5,14 +5,13 @@ import { useParams } from "react-router-dom";
 import {
   getAdminMemberBlacklistHistory,
   getAdminMemberDetail,
-  getAdminMemberRentalHistory,
   registerAdminMemberBlacklist,
   releaseAdminMemberBlacklist,
   updateAdminMember,
   updateAdminMemberStatus,
 } from "../../api/memberApi";
 import { isMockMode } from "../../api/client";
-import { getMemberRentalCount, rentalKeys } from "../../api/rentalApi";
+import { getAdminMemberRentalHistory, getMemberRentalCount, rentalKeys } from "../../api/rentalApi";
 
 import MemberInfoCard from "../../components/card/MemberInfoCard";
 import MemberEditModal from "../../components/modal/MemberEditModal";
@@ -47,10 +46,13 @@ const MEMBER_STATUS_LABEL = {
 const RENTAL_BADGE_STATUS = {
   approvalPending: RENTAL_STATUS.pendingApproval,
   pickupPending: RENTAL_STATUS.readyForPickup,
+  renting: RENTAL_STATUS.renting,
   rented: RENTAL_STATUS.renting,
   overdue: RENTAL_STATUS.overdue,
   returned: RENTAL_STATUS.returned,
+  rejected: RENTAL_STATUS.rejected,
   canceled: RENTAL_STATUS.canceled,
+  noShow: RENTAL_STATUS.noShow,
 };
 
 function TextValue({ value, className = "" }) {
@@ -232,7 +234,7 @@ const API_BLACKLIST_COLUMNS = [
   {
     key: "reason",
     header: "블랙리스트 사유",
-    width: 612,
+    width: 540,
     render: (record) => <TextValue value={record.reason} />,
   },
 ];
@@ -406,12 +408,12 @@ function AdminMemberDetailPage() {
       size: RENTAL_PAGE_SIZE,
       keyword: rentalKeyword,
     }),
-    queryFn: () =>
-      getAdminMemberRentalHistory({
-        memberId: userId,
+    queryFn: ({ signal }) =>
+      getAdminMemberRentalHistory(userId, {
         page: rentalPage - 1,
         size: RENTAL_PAGE_SIZE,
         keyword: rentalKeyword,
+        signal,
       }),
     enabled:
       Boolean(userId) &&
@@ -424,7 +426,7 @@ function AdminMemberDetailPage() {
   const rentalCountQuery = useQuery({
     queryKey: rentalKeys.memberCount(userId),
     queryFn: ({ signal }) => getMemberRentalCount(userId, { signal }),
-    enabled: Boolean(userId) && Boolean(memberQuery.data) && isMockMode,
+    enabled: Boolean(userId) && Boolean(memberQuery.data),
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -479,8 +481,8 @@ function AdminMemberDetailPage() {
   ];
 
   const blacklistRows = blacklistQuery.data?.content ?? [];
-  const semesters = [schedule?.previous, schedule?.current, schedule?.next]
-    .filter((semester) => Number.isSafeInteger(semester?.semesterId) && semester.semesterId > 0);
+  const currentSemester = schedule?.current;
+  const hasCurrentSemester = Number.isSafeInteger(currentSemester?.semesterId) && currentSemester.semesterId > 0;
   const blacklistTotalPages = Math.max(1, blacklistQuery.data?.totalPages ?? 0);
   const resolvedBlacklistPage = blacklistQuery.data
     ? blacklistQuery.data.page + 1
@@ -562,7 +564,8 @@ function AdminMemberDetailPage() {
     {
       key: "release",
       header: "해제",
-      width: 90,
+      width: 120,
+      align: "center",
       render: (record) => record.active ? (
         <button
           type="button"
@@ -636,7 +639,7 @@ function AdminMemberDetailPage() {
                   statusActionPending={isMockMode ? updateStatusMutation.isPending : blacklistMutation.isPending}
                   onStatusAction={isMockMode
                     ? statusActionLabel ? handleOpenStatusModal : undefined
-                    : canManageBlacklist && semesters.length > 0
+                    : canManageBlacklist && hasCurrentSemester
                       ? () => { blacklistMutation.reset(); setBlacklistAction({ type: "register" }); }
                       : undefined}
                   statusActionDisabledReason={isMockMode ? undefined
@@ -709,9 +712,7 @@ function AdminMemberDetailPage() {
                   className={`${styles.state} ${styles.stateError}`}
                   role="alert"
                 >
-                  {rentalQuery.error?.code === "API_NOT_SUPPORTED"
-                    ? "회원별 대여 기록 API가 아직 제공되지 않았습니다."
-                    : "대여 내역을 불러오지 못했습니다."}
+                  대여 내역을 불러오지 못했습니다.
                 </p>
               ) : (
                 <>
@@ -727,7 +728,7 @@ function AdminMemberDetailPage() {
                     ariaLabel={`${member.name} 대여 내역`}
                     columns={RENTAL_COLUMNS}
                     rows={rentalRows}
-                    getRowId={(rental) => rental.id}
+                    getRowId={(rental) => rental.rentalId}
                     minWidth={1120}
                     emptyMessage={
                       rentalKeyword.trim()
@@ -770,7 +771,7 @@ function AdminMemberDetailPage() {
           key={`${blacklistAction.type}-${blacklistAction.record?.id ?? "new"}`}
           action={blacklistAction}
           memberName={member.name}
-          semesters={semesters}
+          semester={currentSemester}
           isPending={blacklistMutation.isPending}
           error={blacklistMutation.error}
           onClose={() => { if (!blacklistMutation.isPending) setBlacklistAction(null); }}

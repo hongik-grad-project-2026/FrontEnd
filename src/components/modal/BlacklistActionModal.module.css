@@ -15,7 +15,7 @@
 .content { display: flex; flex-direction: column; gap: var(--spacing-20); padding: var(--spacing-24); background: var(--color-neutral-10); }
 .content p { margin: 0; }
 .field { display: flex; flex-direction: column; gap: var(--spacing-8); font-weight: 600; }
-.field select, .field textarea { width: 100%; padding: var(--spacing-12); border: var(--border-width-default) solid var(--color-neutral-30); border-radius: var(--radius-8); background: var(--color-white); color: var(--color-neutral-90); font: inherit; font-weight: 400; }
+.semesterValue, .field textarea { width: 100%; padding: var(--spacing-12); border: var(--border-width-default) solid var(--color-neutral-30); border-radius: var(--radius-8); background: var(--color-white); color: var(--color-neutral-90); font: inherit; font-weight: 400; }
 .field textarea { resize: vertical; }
 .field small { align-self: flex-end; color: var(--color-neutral-60); font-weight: 400; }
 .error { color: var(--color-danger-text); }

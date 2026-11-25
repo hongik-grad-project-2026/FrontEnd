@@ -1,5 +1,4 @@
 import { api, isMockMode } from "./client";
-import { getMemberRentalHistory } from "./rentalApi";
 
 // 화면 확인용 임시 데이터임.
 // 실제 서버 응답 구조가 아니다.
@@ -749,7 +748,9 @@ function toBlacklistHistoryRecord(record, number) {
     createdAt: formatBlacklistDate(record.createdAt),
     releasedAt: formatBlacklistDate(record.releasedAt),
     active: record.active,
-    reason: reasonDetail ? `${reasonType} · ${reasonDetail}` : reasonType,
+    reason: record.reasonType === "MANUAL"
+      ? reasonDetail || "-"
+      : reasonDetail ? `${reasonType} · ${reasonDetail}` : reasonType,
   };
 }
 
@@ -817,21 +818,4 @@ export async function getAdminMemberBlacklistHistory({
         recordPage.totalElements - (recordPage.page * recordPage.size + index),
     })),
   };
-}
-
-// 회원별 대여 내역을 임시 조회함.
-// keyword 검색 필드는 화면 확인용 임시 규칙임.
-export async function getAdminMemberRentalHistory({
-  memberId,
-  page = 0,
-  size = 10,
-  keyword = "",
-} = {}) {
-  requireMockOnlyFeature();
-  requireMember(memberId);
-  return getMemberRentalHistory(memberId, {
-    page,
-    size: resolveSize(size, 10),
-    keyword,
-  });
 }
