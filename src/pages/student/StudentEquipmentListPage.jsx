@@ -354,7 +354,7 @@ function StudentEquipmentListPage() {
       />
 
       <SnackRouletteModal
-        isOpen={true}          // 모달 열림 여부
+        // isOpen={true}          // 모달 열림 여부
         prizes={MOCK_SNACK_ROULETTE?.prizes}           // 룰렛에 그릴 칸 목록 (최대 6개)
         resultId={MOCK_SNACK_ROULETTE?.resultId}       // 당첨된 칸의 id (prizes 중 하나)
         // onClose={() => setSnackResult(null)}   // 확인/ESC로 닫을 때
