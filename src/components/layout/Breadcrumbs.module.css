@@ -2,10 +2,10 @@
     background-color: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    /* 사파리(Safari) 브라우저 지원 */
+    /* Safari 브라우저를 지원함. */
 
     transform: translateX(-32px);
-    /* 왼쪽으로 32px : 부모컴포넌트에 padding32px 때문에 오른쪽으로 밀려서 밀린만큼 왼쪽으로 조정 */
+    /* 부모 컴포넌트의 32px padding으로 밀린 위치를 왼쪽으로 조정함. */
 
     position: fixed;
     top: 0;

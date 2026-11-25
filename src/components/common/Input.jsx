@@ -5,7 +5,7 @@ function joinClassNames(...classNames) {
 }
 
 function InputBar({
-  status = 'default', // default | disabled
+  status = 'default', // 허용 상태는 default 또는 disabled임.
   width = 220,
   height = "md",
   placeholder = "placeholder",
@@ -23,7 +23,7 @@ function InputBar({
     }[height] ?? styles.size40;
 
   return (
-    <div className={styles.inputContainer}>
+    <div className={styles.inputContainer} style={{ width: resolvedWidth }}>
       <div
         className={joinClassNames(
           styles.inputBar,
@@ -31,7 +31,7 @@ function InputBar({
           (rightElement === null || rightElement === undefined) &&
           styles.noRightElement,
         )}
-        style={{ width: resolvedWidth }}
+        style={{ width: "100%" }}
       >
         <input
           className={styles.input}

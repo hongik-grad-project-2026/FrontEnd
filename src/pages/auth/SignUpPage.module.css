@@ -1,0 +1,184 @@
+.signupPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.innerPage {
+    width: 100%;
+    /* border: 1px solid red; */
+}
+
+.controlWithHelper {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.helperText,
+.submitError {
+    color: var(--color-status-danger);
+    font-size: var(--text-label-size);
+    font-weight: var(--text-label-weight);
+    line-height: var(--text-label-line-height);
+    letter-spacing: var(--text-label-letter-spacing);
+}
+
+.submitError {
+    margin-top: var(--spacing-8);
+    text-align: center;
+}
+
+
+.buttonCon {
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-24) 0 var(--spacing-12) 0;
+    align-items: center;
+    gap: var(--spacing-12);
+}
+
+
+
+
+.returnToLogin {
+
+    color: var(--color-brand-primary);
+    font-size: var(--text-body-3-size);
+    font-weight: var(--text-body-3-weight);
+    line-height: var(--text-body-3-line-height);
+    letter-spacing: var(--text-body-3-letter-spacing);
+    border: var(--border-width-default) solid var(--color-white);
+    width: min-content;
+    white-space: nowrap;
+    cursor: pointer;
+    margin: 18px 0 28px 0;
+}
+
+.returnToLogin:hover {
+    border-bottom: var(--border-width-default) solid var(--color-brand-primary);
+}
+
+
+.termsAgreement {
+    display: flex;
+    align-items: start;
+    flex-direction: column;
+    width: 100%;
+    padding: var(--spacing-12) 0;
+    gap: var(--spacing-4);
+}
+
+.checkBox {
+    /* border: 1px solid darkcyan; */
+    width: 18px;
+}
+
+.checkBoxLabel {
+    color: var(--color-neutral-90);
+    font-size: var(--text-head-4-size);
+    font-weight: var(--text-head-4-weight);
+    line-height: var(--text-head-4-line-height);
+    letter-spacing: var(--text-head-4-letter-spacing);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-4);
+}
+
+.labelText {
+    cursor: pointer;
+    border: var(--border-width-default) solid var(--color-white);
+}
+
+
+.checkBoxLabel:hover .labelText {
+    border-bottom: var(--border-width-default) solid var(--color-neutral-60);
+}
+
+.termsText {
+    background-color: var(--color-neutral-10);
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    border-radius: var(--radius-8);
+    overflow-y: auto;
+    padding: var(--spacing-4);
+    height: 72px;
+    color: var(--color-neutral-60);
+    font-size: var(--text-body-3-size);
+    font-weight: var(--text-body-3-weight);
+    line-height: var(--text-body-3-line-height);
+    letter-spacing: var(--text-body-3-letter-spacing);
+}
+
+.canGoButton {
+    width: 220px !important;
+
+}
+
+.buttonCon {
+    /* border: 1px solid red; */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.submitButton {
+    flex: 1;
+}
+
+
+
+/* 가입 완료 페이지 영역을 정의함. */
+
+
+
+.pageHeader {
+    /* border: 1px solid red; */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-12);
+    color: var(--color-brand-primary);
+    font-size: var(--text-head-1-size);
+    font-weight: var(--text-head-1-weight);
+    line-height: var(--text-head-1-line-height);
+    letter-spacing: var(--text-head-1-letter-spacing);
+    padding-bottom: var(--spacing-16);
+}
+
+.pageHeader img {
+    width: 60px;
+    height: 60px;
+}
+
+.dataTable {
+    border-radius: var(--radius-8);
+    overflow: hidden;
+    border: var(--border-width-default) solid var(--color-neutral-20);
+
+}
+
+.dataRow {
+    border-bottom: var(--border-width-default) solid var(--color-neutral-20);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+    padding: var(--spacing-12) var(--spacing-16);
+    font-size: var(--text-head-5-size);
+    font-weight: var(--text-head-5-weight);
+    line-height: var(--text-head-5-line-height);
+    letter-spacing: var(--text-head-5-letter-spacing);
+}
+
+.dataRow:last-child {
+    border-bottom: none;
+
+}
+
+.dataTitle {
+    color: var(--color-neutral-60);
+}
+
+.dataValue {
+    color: var(--color-neutral-90);
+}

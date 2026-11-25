@@ -3,7 +3,7 @@
 :root {
   color-scheme: light;
 
-  /* Font */
+  /* 글꼴 토큰을 정의함. */
   --font-family-base:
     "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto,
     "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR",
@@ -17,13 +17,13 @@
   --letter-spacing-normal: 0;
   --letter-spacing-tight: -0.02em;
 
-  /* Typography: Title */
+  /* 제목 타이포그래피를 정의함. */
   --text-title-1-size: 34px;
   --text-title-1-weight: var(--font-weight-black);
   --text-title-1-line-height: 1.4;
   --text-title-1-letter-spacing: var(--letter-spacing-tight);
 
-  /* Typography: Heading */
+  /* 헤딩 타이포그래피를 정의함. */
   --text-head-1-size: 28px;
   --text-head-1-weight: var(--font-weight-bold);
   --text-head-1-line-height: 1.1;
@@ -49,13 +49,13 @@
   --text-head-5-line-height: 1;
   --text-head-5-letter-spacing: var(--letter-spacing-normal);
 
-  /* Typography: Sidebar */
+  /* 사이드바 타이포그래피를 정의함. */
   --text-sidebar-title-size: 18px;
   --text-sidebar-title-weight: var(--font-weight-bold);
   --text-sidebar-title-line-height: 1;
   --text-sidebar-title-letter-spacing: var(--letter-spacing-normal);
 
-  /* Typography: Body */
+  /* 본문 타이포그래피를 정의함. */
   --text-body-1-size: 16px;
   --text-body-1-weight: var(--font-weight-medium);
   --text-body-1-line-height: 1.4;
@@ -71,13 +71,13 @@
   --text-body-3-line-height: 1.4;
   --text-body-3-letter-spacing: var(--letter-spacing-normal);
 
-  /* Typography: Tab */
+  /* 탭 타이포그래피를 정의함. */
   --text-tab-size: 14px;
   --text-tab-weight: var(--font-weight-semibold);
   --text-tab-line-height: 1;
   --text-tab-letter-spacing: var(--letter-spacing-normal);
 
-  /* Typography: Button */
+  /* 버튼 타이포그래피를 정의함. */
   --text-button-1-size: 12px;
   --text-button-1-weight: var(--font-weight-semibold);
   --text-button-1-line-height: 1;
@@ -88,7 +88,7 @@
   --text-button-2-line-height: 1;
   --text-button-2-letter-spacing: var(--letter-spacing-normal);
 
-  /* Typography: Badge */
+  /* 배지 타이포그래피를 정의함. */
   --text-badge-small-size: 10px;
   --text-badge-small-weight: var(--font-weight-semibold);
   --text-badge-small-line-height: 1;
@@ -99,33 +99,33 @@
   --text-badge-medium-line-height: 1;
   --text-badge-medium-letter-spacing: var(--letter-spacing-normal);
 
-  /* Typography: Label */
+  /* 라벨 타이포그래피를 정의함. */
   --text-label-size: 10px;
   --text-label-weight: var(--font-weight-medium);
   --text-label-line-height: 1.1;
   --text-label-letter-spacing: var(--letter-spacing-normal);
 
-  /* Brand colors */
+  /* 브랜드 색상 토큰을 정의함. */
   --color-brand-primary-dark: #083b99;
   --color-brand-primary: #0f62fe;
   --color-brand-secondary: #cae4ff;
 
-  /* Success colors */
+  /* 성공 상태 색상 토큰을 정의함. */
   --color-status-success-dark: #007a34;
   --color-status-success: #2ac96d;
   --color-status-success-light: #e9f9ef;
 
-  /* Warning colors */
+  /* 경고 상태 색상 토큰을 정의함. */
   --color-status-warning-dark: #745b00;
   --color-status-warning: #ffc803;
   --color-status-warning-light: #fff9e6;
 
-  /* Danger colors */
+  /* 위험 상태 색상 토큰을 정의함. */
   --color-status-danger-dark: #a72200;
   --color-status-danger: #f97351;
   --color-status-danger-light: #fff0ed;
 
-  /* Neutral colors */
+  /* 중립 색상 토큰을 정의함. */
   --color-white: #ffffff;
   --color-neutral-10: #f2f4f8;
   --color-neutral-20: #dde1e6;
@@ -138,7 +138,7 @@
   --color-neutral-90: #21272a;
   --color-neutral-100: #121619;
 
-  /* Semantic text colors */
+  /* 의미 기반 텍스트 색상 토큰을 정의함. */
   --color-text-primary: var(--color-neutral-100);
   --color-text-secondary: var(--color-neutral-60);
   --color-text-tertiary: var(--color-neutral-50);
@@ -146,30 +146,30 @@
   --color-text-inverse: var(--color-white);
   --color-text-link: var(--color-brand-primary);
 
-  /* Figma에는 등록 x , 그러나 반복 사용된 별도 색상 */
+  /* Figma에 등록되지 않았으나 반복 사용되는 별도 색상임. */
   --color-text-strong: #000000;
   --color-border-rental-card: #dbdbdb;
   --color-background-auth: #f5f7fa;
   --color-background-signup-section: #f9fafb;
 
-  /* Semantic background and surface colors */
+  /* 의미 기반 배경과 표면 색상 토큰을 정의함. */
   --color-background-page: var(--color-white);
   --color-background-subtle: var(--color-neutral-10);
   --color-surface: var(--color-white);
   --color-surface-disabled: var(--color-neutral-10);
 
-  /* Semantic border colors */
+  /* 의미 기반 테두리 색상 토큰을 정의함. */
   --color-border-default: var(--color-neutral-20);
   --color-border-strong: var(--color-neutral-30);
   --color-border-disabled: var(--color-neutral-20);
 
-  /* Semantic action colors */
+  /* 의미 기반 동작 색상 토큰을 정의함. */
   --color-action-primary: var(--color-brand-primary);
   --color-action-primary-hover: var(--color-brand-primary-dark);
   --color-action-secondary: var(--color-brand-secondary);
   --color-focus: var(--color-brand-primary);
 
-  /* Semantic feedback colors */
+  /* 의미 기반 피드백 색상 토큰을 정의함. */
   --color-success-text: var(--color-status-success-dark);
   --color-success-fill: var(--color-status-success);
   --color-success-background: var(--color-status-success-light);
@@ -182,7 +182,7 @@
   --color-danger-fill: var(--color-status-danger);
   --color-danger-background: var(--color-status-danger-light);
 
-  /* Spacing */
+  /* 간격 토큰을 정의함. */
   --spacing-2: 2px;
   --spacing-4: 4px;
   --spacing-6: 6px;
@@ -196,7 +196,7 @@
   --spacing-48: 48px;
   --spacing-64: 64px;
 
-  /* Radius */
+  /* 모서리 반경 토큰을 정의함. */
   --radius-2: 2px;
   --radius-4: 4px;
   --radius-8: 8px;
@@ -204,29 +204,29 @@
   --radius-12: 12px;
   --radius-full: 999px;
 
-  /* Border */
+  /* 테두리 토큰을 정의함. */
   --border-width-thin: 0.5px;
   --border-width-default: 1px;
   --border-width-active: 2px;
 
-  /* Shadow */
+  /* 그림자 토큰을 정의함. */
   --shadow-default: 0 1px 2px 1px rgb(0 0 0 / 20%);
 
-  /* src 속성에 /icons/icon24/ 가 포함된 모든 img 태그에 일괄 적용 */
+  /* src 속성에 /icons/icon24/가 포함된 모든 img 태그에 일괄 적용함. */
   img[src*="/icons/icon24/"] {
     width: 24px;
     height: 24px;
     object-fit: contain;
   }
 
-  /* src 속성에 /icons/icon16/ 가 포함된 모든 img 태그에 일괄 적용 */
+  /* src 속성에 /icons/icon16/이 포함된 모든 img 태그에 일괄 적용함. */
   img[src*="/icons/icon16/"] {
     width: 16px;
     height: 16px;
     object-fit: contain;
   }
 
-  /* src 속성에 /icons/icon60/ 가 포함된 모든 img 태그에 일괄 적용 */
+  /* src 속성에 /icons/icon60/이 포함된 모든 img 태그에 일괄 적용함. */
   img[src*="/icons/icon60/"] {
     width: 60px;
     height: 60px;
@@ -234,7 +234,7 @@
   }
 }
 
-/* CSS reset */
+/* CSS 기본값을 초기화함. */
 *,
 *::before,
 *::after {
@@ -245,7 +245,8 @@ html {
   min-height: 100%;
   font-family: var(--font-family-base);
   -webkit-text-size-adjust: 100%;
-  scrollbar-gutter: stable;
+  /* scrollbar-gutter: stable; */
+  scrollbar-gutter: auto;
 }
 
 body {

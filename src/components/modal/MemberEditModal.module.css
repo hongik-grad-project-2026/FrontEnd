@@ -1,0 +1,109 @@
+.modal[role="dialog"] {
+  width: 650px;
+  max-width: calc(100vw - var(--spacing-32));
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--color-neutral-90);
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-neutral-30);
+  border-radius: var(--radius-12);
+}
+
+.form {
+  display: flex;
+  width: 100%;
+  max-height: calc(100dvh - var(--spacing-48));
+  min-height: 0;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  height: 48px;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-20);
+}
+
+.title {
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-2-size);
+  font-weight: var(--text-head-2-weight);
+  line-height: var(--text-head-2-line-height);
+  letter-spacing: var(--text-head-2-letter-spacing);
+}
+
+.content {
+  min-height: 0;
+  padding: var(--spacing-12) var(--spacing-20);
+  overflow-y: auto;
+  background-color: var(--color-neutral-10);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-4);
+}
+
+.field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-20);
+  background-color: var(--color-white);
+}
+
+.field:last-child {
+  grid-column: 1 / -1;
+}
+
+.label {
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-4-size);
+  font-weight: var(--text-head-4-weight);
+  line-height: var(--text-head-4-line-height);
+}
+
+.error {
+  margin-top: var(--spacing-12);
+  color: var(--color-danger-text);
+  font-size: var(--text-body-2-size);
+  line-height: var(--text-body-2-line-height);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-20);
+  background-color: var(--color-white);
+  border-top: var(--spacing-4) solid var(--color-neutral-10);
+}
+
+.actions .actionButton[data-size="Default"] {
+  width: 220px;
+}
+
+@media (max-width: 560px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .field:last-child {
+    grid-column: auto;
+  }
+
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actions .actionButton[data-size="Default"] {
+    width: 100%;
+  }
+}

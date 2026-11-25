@@ -1,0 +1,193 @@
+.modal[role="dialog"] {
+  width: 650px;
+  max-width: calc(100vw - var(--spacing-32));
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--color-neutral-90);
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-neutral-30);
+  border-radius: var(--radius-12);
+}
+
+.form {
+  display: flex;
+  width: 100%;
+  max-height: calc(100dvh - var(--spacing-48));
+  min-height: 0;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  height: 48px;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-20);
+  background-color: var(--color-white);
+}
+
+.title {
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-2-size);
+  font-weight: var(--text-head-2-weight);
+  line-height: var(--text-head-2-line-height);
+  letter-spacing: var(--text-head-2-letter-spacing);
+}
+
+.content {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--color-neutral-10);
+}
+
+.modelInformation {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-20);
+}
+
+.modelLabel {
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-4-size);
+  font-weight: var(--text-head-4-weight);
+  line-height: var(--text-head-4-line-height);
+}
+
+.modelName {
+  overflow: hidden;
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-3-size);
+  font-weight: var(--text-head-3-weight);
+  line-height: var(--text-head-3-line-height);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.pairRow,
+.editStatusRow {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--spacing-4);
+}
+
+.pairRow {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* 수정 모달의 상태 영역이 한 행 전체를 사용함. */
+.editStatusRow {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.field {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-20);
+  background-color: var(--color-white);
+}
+
+.label {
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-4-size);
+  font-weight: var(--text-head-4-weight);
+  line-height: var(--text-head-4-line-height);
+}
+
+.autoLabelNotice {
+  width: 100%;
+  margin: 0;
+  padding: var(--spacing-12);
+  color: var(--color-neutral-70);
+  background-color: var(--color-neutral-10);
+  border: var(--border-width-default) solid var(--color-neutral-20);
+  border-radius: var(--radius-8);
+  line-height: 1.5;
+}
+
+/* 등록·수정 모달의 상태 Select를 정의함. */
+.select {
+  width: 100%;
+}
+
+/* 내부 배경에 가려지지 않도록 trigger에 테두리를 표시함. */
+.select > button {
+  border-radius: var(--radius-8);
+  box-shadow: inset 0 0 0 var(--border-width-default) var(--color-neutral-20);
+}
+
+/* Select가 열린 상태에서 테두리를 강조함. */
+.select[data-open="true"] > button {
+  box-shadow: inset 0 0 0 var(--border-width-default) var(--color-neutral-40);
+}
+
+.field > div {
+  width: 100%;
+}
+
+.prefixedInput {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.prefix {
+  flex: 0 0 auto;
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-4-size);
+  font-weight: var(--text-head-4-weight);
+  line-height: var(--text-head-4-line-height);
+}
+
+.prefixedInput > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-20);
+  background-color: var(--color-white);
+  border-top: var(--spacing-4) solid var(--color-neutral-10);
+}
+
+.actions .actionButton[data-size="Default"] {
+  width: 220px;
+}
+
+@media (max-width: 560px) {
+  .pairRow,
+  .editStatusRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actions .actionButton[data-size="Default"] {
+    width: 100%;
+  }
+}

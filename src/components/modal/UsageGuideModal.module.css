@@ -1,0 +1,104 @@
+.base[role="dialog"] {
+    width: 100%;
+    height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.modalContent {
+    width: 650px;
+    max-height: calc(100vh - var(--spacing-48));
+    max-height: calc(100dvh - var(--spacing-48));
+    min-height: 0;
+    max-width: calc(100vw - var(--spacing-32));
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-neutral-90);
+    background-color: var(--color-white);
+    border: var(--border-width-default) solid var(--color-neutral-30);
+    border-radius: var(--radius-12);
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    border-bottom: var(--border-width-default) solid var(--color-neutral-10);
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--spacing-20);
+    background-color: var(--color-white);
+    color: var(--color-neutral-90);
+    font-size: var(--text-head-2-size);
+    font-weight: var(--text-head-2-weight);
+    line-height: var(--text-head-2-line-height);
+    letter-spacing: var(--text-head-2-letter-spacing);
+}
+
+.closeButton {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background-color: var(--color-neutral-10);
+    display: flex;
+    flex-direction: column;
+}
+
+.contentSection {
+    /* border: 1px solid red; */
+    background-color: var(--color-white);
+    margin-top: var(--spacing-4);
+    padding: 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.contentSectionTitle {
+    color: var(--color-neutral-90);
+    font-size: var(--text-head-3-size);
+    font-weight: var(--text-head-3-weight);
+    line-height: var(--text-head-3-line-height);
+    letter-spacing: var(--text-head-3-letter-spacing);
+}
+
+.contentSectionText {
+    color: var(--color-neutral-90);
+    white-space: pre-line;
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    line-height: var(--text-body-2-line-height);
+    letter-spacing: var(--text-body-2-letter-spacing);
+}
+
+.contentSectionText a {
+    color: var(--color-brand-primary);
+    text-decoration: underline;
+}
+
+.additionalContainer {
+    display: flex;
+    justify-content: center;
+    background-color: var(--color-white);
+    padding: var(--spacing-12);
+    margin-top: 4px;
+}
+
+@media (max-width: 480px) {
+    .modalContent {
+        max-height: calc(100vh - var(--spacing-16));
+        max-height: calc(100dvh - var(--spacing-16));
+    }
+}

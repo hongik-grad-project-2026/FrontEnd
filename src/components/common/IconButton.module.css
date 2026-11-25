@@ -41,11 +41,11 @@
   flex: 0 0 auto;
   width: auto;
   gap: var(--spacing-4);
-  font-size: var(--text-body-2-size);
-  font-weight: var(--text-body-2-weight);
-  line-height: var(--text-body-2-line-height);
-  letter-spacing: var(--text-body-2-letter-spacing);
-  color: var(--color-neutral-90);
+  font-size: var(--text-button-1-size);
+  font-weight: var(--text-button-1-weight);
+  line-height: var(--text-button-1-line-height);
+  letter-spacing: var(--text-button-1-letter-spacing);
+  color: var(--color-neutral-50);
 }
 
 .IconTextButton.nonBorder {
@@ -54,8 +54,9 @@
 
 .IconTextButton.border {
   background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-neutral-20);
   height: 32px;
-  border-radius: var(--radius-4);
+  border-radius: var(--radius-8);
   padding: 0 var(--spacing-8);
 }
 
@@ -83,4 +84,59 @@
 
 .inputIconButton:not(:disabled):active {
   background-color: var(--color-neutral-20);
+}
+
+
+.wishIconButton {
+  border: var(--border-width-default) solid var(--color-neutral-20);
+  background-color: var(--color-white);
+  border-radius: var(--radius-8);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wishIconImg {
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+
+.wishIconButton[aria-pressed="false"] .wishIconImg {
+  opacity: calc(5/9);
+  background-image: url('/icons/icon24/bookmark-plus.png');
+}
+
+.wishIconButton:hover {
+  background-color: var(--color-neutral-20);
+}
+
+.wishIconButton:active {
+  background-color: var(--color-neutral-30);
+  border-color: var(--color-neutral-30);
+}
+
+.wishIconButton[aria-pressed="false"]:hover .wishIconImg {
+  background-image: url('/icons/icon24/bookmark-plus--primary.png');
+  opacity: 1;
+}
+
+.wishIconButton[aria-pressed="false"]:active .wishIconImg {
+  background-image: url('/icons/icon24/bookmark-plus--primary.png');
+}
+
+.wishIconButton[aria-pressed="true"] .wishIconImg {
+  opacity: 1;
+  background-image: url('/icons/icon24/bookmark--primary.png');
+}
+
+
+.wishIconButton[aria-pressed="true"]:hover .wishIconImg {
+  background-image: url('/icons/icon24/bookmark-minus--primary.png');
+  opacity: calc(5/9);
 }

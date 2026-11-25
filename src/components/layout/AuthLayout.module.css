@@ -1,0 +1,122 @@
+.authLayout {
+    /* border: 1px solid red; */
+    background-color: var(--color-neutral-10);
+    width: 100%;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contentSection {
+    background-color: var(--color-white);
+    border-radius: var(--radius-12);
+    width: 488px;
+    padding: 16px 44px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+.passwordResetContent {
+    width: 480px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+}
+
+.bgLogo {
+    position: absolute;
+    /* border: 1px solid red; */
+    width: 100%;
+    z-index: 0;
+    opacity: 0.2;
+    text-align: center;
+    top: calc(10% - 50px);
+    /* top: calc(10%); */
+    color: var(--color-neutral-100);
+    font-size: var(--text-title-1-size);
+    font-weight: var(--text-title-1-weight);
+    line-height: var(--text-title-1-line-height);
+    letter-spacing: var(--text-title-1-letter-spacing);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.bgLogo img {
+    width: 146px;
+}
+
+.contentSection>* {
+    width: 100%;
+}
+
+.logoArea {
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--color-neutral-100);
+    font-size: var(--text-title-1-size);
+    font-weight: var(--text-title-1-weight);
+    line-height: var(--text-title-1-line-height);
+    letter-spacing: var(--text-title-1-letter-spacing);
+}
+
+.logoArea img {
+    height: 18px;
+}
+
+.header {
+    color: var(--color-neutral-100);
+    font-size: var(--text-head-1-size);
+    font-weight: var(--text-head-1-weight);
+    line-height: var(--text-head-1-line-height);
+    letter-spacing: var(--text-head-1-letter-spacing);
+    text-align: center;
+    padding: var(--spacing-24) 0;
+}
+
+
+/* 입력 레이아웃 영역을 정의함. */
+.inputSection {
+    /* border: 1px solid red; */
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-12) 0;
+    gap: var(--spacing-12) 0;
+    width: 100%;
+}
+
+
+.sectionTitle {
+    /* border: 1px solid darkkhaki; */
+    width: min-content;
+    white-space: nowrap;
+    color: var(--color-neutral-90);
+    font-size: var(--text-head-4-size);
+    font-weight: var(--text-head-4-weight);
+    line-height: var(--text-head-4-line-height);
+    letter-spacing: var(--text-head-4-letter-spacing);
+}
+
+@media (max-width: 560px) {
+    .passwordResetLayout {
+        align-items: flex-start;
+        padding: 112px var(--spacing-16) var(--spacing-32);
+    }
+
+    .passwordResetContent {
+        width: 100%;
+        padding-right: var(--spacing-24);
+        padding-left: var(--spacing-24);
+    }
+
+    .passwordResetLayout .bgLogo {
+        top: 24px;
+    }
+}

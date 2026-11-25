@@ -1,0 +1,102 @@
+.modalState {
+  display: flex;
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  padding: var(--spacing-24);
+  color: var(--color-neutral-60);
+  background-color: var(--color-white);
+  text-align: center;
+}
+
+.cancelModal[role="dialog"] {
+  max-height: calc(100vh - var(--spacing-32));
+  max-height: calc(100dvh - var(--spacing-32));
+}
+
+.modalLayout {
+  max-height: calc(100vh - var(--spacing-32));
+  max-height: calc(100dvh - var(--spacing-32));
+}
+
+.modalContent {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cancelSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding: var(--spacing-20);
+  background-color: var(--color-white);
+}
+
+.warningText {
+  color: var(--color-status-danger);
+  font-size: var(--text-head-3-size);
+  font-weight: var(--text-head-3-weight);
+  line-height: var(--text-head-3-line-height);
+}
+
+.reasonGroup {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.reasonGroup legend {
+  margin-bottom: var(--spacing-8);
+  color: var(--color-neutral-90);
+  font-size: var(--text-head-3-size);
+  font-weight: var(--text-head-3-weight);
+  line-height: var(--text-head-3-line-height);
+}
+
+.reasonOption {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  color: var(--color-neutral-90);
+  cursor: pointer;
+}
+
+.reasonOption input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-brand-primary);
+}
+
+.reasonGroup:disabled .reasonOption {
+  color: var(--color-neutral-40);
+  cursor: default;
+}
+
+.errorMessage {
+  color: var(--color-status-danger);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line-height);
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  min-height: 60px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--color-white);
+  border-top: var(--spacing-4) solid var(--color-neutral-10);
+}
+
+
+.actionButton[data-size="Default"] {
+  width: 208px;
+}

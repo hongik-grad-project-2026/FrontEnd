@@ -16,6 +16,10 @@
   letter-spacing: var(--text-title-1-letter-spacing);
 }
 
+.approvalCount {
+  color: var(--color-brand-primary);
+}
+
 .applicantCell {
   display: flex;
   min-width: 0;
@@ -101,12 +105,6 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
-}
-
-.contentViewport:focus-visible {
-  outline: var(--border-width-active) solid var(--color-focus);
-  outline-offset: calc(-1 * var(--border-width-active));
 }
 
 .content {

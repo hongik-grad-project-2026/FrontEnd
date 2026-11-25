@@ -1,4 +1,4 @@
-/* BaseModal의 기본 너비보다 우선하도록 dialog 속성을 함께 지정. */
+/* BaseModal의 기본 너비보다 우선하도록 dialog 속성을 함께 지정함. */
 .modal[role="dialog"] {
   display: flex;
   width: 403px;
@@ -39,7 +39,7 @@
   mask-size: contain;
 }
 
-/* 기존 PNG의 투명 윤곽을 재사용하고 표시 색상만 적용. */
+/* 기존 PNG의 투명 윤곽을 재사용하고 표시 색상만 적용함. */
 .icon[data-icon="help"] {
   color: var(--color-brand-secondary);
   -webkit-mask-image: url("/icons/icon60/help--n20.png");
@@ -109,7 +109,7 @@
   gap: var(--spacing-12);
 }
 
-/* Button의 기본 160px 너비와 고정 flex 값을 이 Modal 안에서만 조정 */
+/* Button의 기본 160px 너비와 고정 flex 값을 이 Modal 내부에서만 조정함. */
 .actions .action[data-size="Default"] {
   width: auto;
   min-width: 0;

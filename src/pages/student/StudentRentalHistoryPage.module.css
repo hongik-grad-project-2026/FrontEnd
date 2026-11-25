@@ -1,0 +1,40 @@
+.statePanel {
+  display: flex;
+  width: 100%;
+  min-height: 180px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  padding: var(--spacing-24);
+  color: var(--color-neutral-60);
+  background-color: var(--color-white);
+  border: var(--border-width-default) solid var(--color-neutral-20);
+  border-radius: var(--radius-8);
+  text-align: center;
+}
+
+.inlineError {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  color: var(--color-status-danger);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  line-height: var(--text-label-line-height);
+}
+
+.inlineError button {
+  color: var(--color-brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inlineError button:disabled {
+  color: var(--color-neutral-40);
+}
+
+.searchHighlight {
+  color: var(--color-brand-primary);
+  background: transparent;
+}

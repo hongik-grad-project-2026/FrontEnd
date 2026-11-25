@@ -13,6 +13,7 @@ function hasContent(content) {
 }
 
 function ConfirmModal({
+  actionsDisabled = false,
   cancelText = "취소",
   closeOnEscape = true,
   closeOnOverlay = true,
@@ -101,6 +102,7 @@ function ConfirmModal({
             text={cancelText}
             type="button"
             showLeftIcon={false}
+            disabled={actionsDisabled}
             onClick={handleCancel}
           />
         ) : null}
@@ -115,6 +117,7 @@ function ConfirmModal({
           text={confirmText}
           type="button"
           showLeftIcon={false}
+          disabled={actionsDisabled}
           onClick={onConfirm}
         />
       </div>

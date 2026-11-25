@@ -1,0 +1,206 @@
+h3 {
+    font-size: var(--text-head-2-size);
+    font-weight: var(--text-head-2-weight);
+    line-height: var(--text-head-2-line-height);
+    letter-spacing: var(--text-head-2-letter-spacing);
+}
+
+.studentMyPage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-32);
+    height: 100%;
+}
+
+.contentSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+}
+
+.contentContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--spacing-16);
+    background-color: var(--color-white);
+    border-radius: var(--radius-8);
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    padding: var(--spacing-24);
+    width: 100%;
+}
+
+.rentalCountState {
+    color: var(--color-neutral-60);
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    line-height: var(--text-body-2-line-height);
+}
+
+.profileCard {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: flex-start;
+    gap: var(--spacing-24);
+    padding: var(--spacing-24);
+    background-color: var(--color-white);
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    border-radius: var(--radius-8);
+}
+
+.myInfoState {
+    display: flex;
+    width: 100%;
+    min-height: 220px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: var(--spacing-16);
+    padding: var(--spacing-24);
+    color: var(--color-neutral-60);
+    background-color: var(--color-white);
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    border-radius: var(--radius-8);
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    line-height: var(--text-body-2-line-height);
+}
+
+.profileArea {
+    display: flex;
+    width: 180px;
+    flex: 0 0 180px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--spacing-8);
+}
+
+.profileImgArea {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    border: var(--border-width-default) solid var(--color-neutral-20);
+    border-radius: var(--radius-full);
+    background-color: var(--color-neutral-10);
+    margin-bottom: var(--spacing-8);
+    overflow: hidden;
+}
+
+.profileImgArea::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/icons/icon24/profile.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.profileImage {
+    position: relative;
+    z-index: 1;
+    background-color: var(--color-white);
+    align-self: center;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+.hiddenFileInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.profileContent {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--spacing-24);
+}
+
+.readOnlyGrid,
+.editForm {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-16) var(--spacing-24);
+}
+
+.readOnlyField,
+.editField {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.fieldLabel {
+    color: var(--color-neutral-60);
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    line-height: var(--text-body-2-line-height);
+    letter-spacing: var(--text-body-2-letter-spacing);
+}
+
+.fieldValue {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-neutral-100);
+    font-size: var(--text-head-4-size);
+    font-weight: var(--text-head-4-weight);
+    line-height: var(--text-head-4-line-height);
+    letter-spacing: var(--text-head-4-letter-spacing);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.editActions,
+.errorMessage {
+    grid-column: 1 / -1;
+}
+
+.editActions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.errorMessage {
+    color: var(--color-status-danger);
+    font-size: var(--text-label-size);
+    font-weight: var(--text-label-weight);
+    line-height: var(--text-label-line-height);
+    letter-spacing: var(--text-label-letter-spacing);
+}
+
+.infoButton {
+    width: 100% !important;
+}
+
+@media (max-width: 900px) {
+    .profileCard {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .profileArea {
+        width: 100%;
+        flex-basis: auto;
+    }
+}
+
+@media (max-width: 640px) {
+
+    .readOnlyGrid,
+    .editForm,
+    .contentContainer {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

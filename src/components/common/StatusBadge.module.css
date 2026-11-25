@@ -12,14 +12,6 @@
   box-shadow: var(--shadow-default);
 }
 
-.badge[status^="대여-"] span {
-  padding-bottom: 1px;
-}
-
-.badge:not([status="회원-블랙"]):not([status="대여-연체"]) span {
-  mix-blend-mode: plus-darker;
-}
-
 .height24 {
   height: var(--spacing-24);
   padding: 0 var(--spacing-12);
@@ -28,4 +20,81 @@
 .height20 {
   height: var(--spacing-20);
   padding: 0 var(--spacing-8);
+}
+
+/* 기본 fill 스타일 */
+
+.light {
+  background-color: var(--color-white);
+  color: var(--color-neutral-60);
+}
+
+.gray {
+  background-color: var(--color-neutral-20);
+  color: var(--color-neutral-70);
+}
+
+.black {
+  background-color: var(--color-neutral-100);
+  color: var(--color-white);
+}
+
+.red {
+  background-color: var(--color-status-danger);
+  color: var(--color-white);
+}
+
+.blue {
+  background-color: var(--color-brand-secondary);
+  color: var(--color-brand-primary);
+}
+
+.yellow {
+  background-color: var(--color-status-warning);
+  color: var(--color-status-warning-dark);
+}
+
+.green {
+  background-color: var(--color-status-success);
+  color: var(--color-white);
+}
+
+
+/* border 스타일 */
+
+.border {
+  border-width: var(--border-width-default);
+  border-style: solid;
+}
+
+.green.border {
+  background-color: var(--color-status-success-light);
+  color: var(--color-status-success-dark);
+  border-color: var(--color-status-success);
+}
+
+.red.border {
+  background-color: var(--color-status-danger-light);
+  color: var(--color-status-danger-dark);
+  border-color: var(--color-status-danger);
+}
+
+.blue.border {
+  background-color: var(--color-brand-secondary);
+  color: var(--color-brand-primary-dark);
+  border-color: var(--color-brand-primary);
+}
+
+.yellow.border {
+  background-color: var(--color-status-warning-light);
+  color: var(--color-status-warning-dark);
+  border-color: var(--color-status-warning);
+}
+
+.light.border {
+  border-color: var(--color-neutral-60);
+}
+
+.gray.border {
+  border-color: var(--color-neutral-60);
 }

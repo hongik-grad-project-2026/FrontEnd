@@ -15,6 +15,11 @@ function isValidDate(value) {
   return value instanceof Date && !Number.isNaN(value.getTime());
 }
 
+function isWeekend(date) {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
 function isSameDate(firstDate, secondDate) {
   if (!isValidDate(firstDate) || !isValidDate(secondDate)) {
     return false;
@@ -233,64 +238,71 @@ function Select({
         data-open={resolvedIsOpen}
         aria-hidden={resolvedIsOpen ? undefined : true}
       >
-        {isCalendar ? (
-          <div
-            id={popupId}
-            className={joinClassNames(
-              styles.popupContent,
-              styles.calendarPanel,
-            )}
-            role="dialog"
-            aria-label={ariaLabel ? `${ariaLabel} 달력` : "날짜 선택 달력"}
-          >
-            <Calendar
-              {...calendarProps}
-              className={styles.calendar}
-              calendarType="gregory"
-              locale={calendarLocale}
-              minDate={minDate}
-              maxDate={maxDate}
-              minDetail="month"
-              maxDetail="month"
-              next2Label={null}
-              prev2Label={null}
-              selectRange={false}
-              showFixedNumberOfWeeks
-              value={selectedDate}
-              formatDay={(_, date) => String(date.getDate())}
-              formatMonthYear={(_, date) => `${date.getMonth() + 1}월`}
-              formatShortWeekday={(_, date) => KOREAN_WEEKDAYS[date.getDay()]}
-              onChange={handleCalendarChange}
-            />
-          </div>
-        ) : (
-          <div
-            id={popupId}
-            className={joinClassNames(styles.popupContent, styles.optionList)}
-            role="group"
-            aria-label={ariaLabel ? `${ariaLabel} 옵션` : "선택 옵션"}
-          >
-            {options.map((option) => {
-              const isSelected = option.value === selectedValue;
+        <div className={styles.popupContent}>
+          {isCalendar ? (
+            <div
+              id={popupId}
+              className={joinClassNames(
+                // styles.popupContent,
+                styles.calendarPanel,
+              )}
+              role="dialog"
+              aria-label={ariaLabel ? `${ariaLabel} 달력` : "날짜 선택 달력"}
+            >
+              <Calendar
+                {...calendarProps}
+                className={styles.calendar}
+                calendarType="gregory"
+                locale={calendarLocale}
+                minDate={minDate}
+                maxDate={maxDate}
+                minDetail="month"
+                maxDetail="month"
+                next2Label={null}
+                prev2Label={null}
+                selectRange={false}
+                showFixedNumberOfWeeks
+                value={selectedDate}
+                tileDisabled={(args) =>
+                  (args.view === "month" && isWeekend(args.date)) ||
+                  Boolean(calendarProps.tileDisabled?.(args))
+                }
+                formatDay={(_, date) => String(date.getDate())}
+                formatMonthYear={(_, date) => `${date.getMonth() + 1}월`}
+                formatShortWeekday={(_, date) => KOREAN_WEEKDAYS[date.getDay()]}
+                onChange={handleCalendarChange}
+              />
+            </div>
+          ) : (
+            <div
+              id={popupId}
+              // className={joinClassNames(styles.popupContent, styles.optionList)}
+              className={styles.optionList}
+              role="group"
+              aria-label={ariaLabel ? `${ariaLabel} 옵션` : "선택 옵션"}
+            >
+              {options.map((option) => {
+                const isSelected = option.value === selectedValue;
 
-              return (
-                <Button
-                  key={`${typeof option.value}:${String(option.value)}`}
-                  className={styles.option}
-                  color="Neutral"
-                  kind="border"
-                  size="Xsmall"
-                  status={isSelected ? "Active" : "Default"}
-                  text={option.label}
-                  type="button"
-                  aria-pressed={isSelected}
-                  data-selected={isSelected}
-                  onClick={() => handleOptionSelect(option)}
-                />
-              );
-            })}
-          </div>
-        )}
+                return (
+                  <Button
+                    key={`${typeof option.value}:${String(option.value)}`}
+                    className={styles.option}
+                    color="Neutral"
+                    kind="border"
+                    size="Xsmall"
+                    status={isSelected ? "Active" : "Default"}
+                    text={option.label}
+                    type="button"
+                    aria-pressed={isSelected}
+                    data-selected={isSelected}
+                    onClick={() => handleOptionSelect(option)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

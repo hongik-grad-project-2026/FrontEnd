@@ -1,0 +1,140 @@
+.modal {
+    width: 650px;
+    max-width: calc(100vw - var(--spacing-32));
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    color: var(--color-neutral-90);
+    background-color: var(--color-neutral-10);
+    border: var(--border-width-default) solid var(--color-neutral-30);
+    border-radius: var(--radius-12);
+
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+    color: var(--color-neutral-90);
+}
+
+.header {
+    display: flex;
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-white);
+}
+
+.header h2 {
+    font-size: var(--text-head-2-size);
+    font-weight: var(--text-head-2-weight);
+    line-height: var(--text-head-2-line-height);
+    letter-spacing: var(--text-head-2-letter-spacing);
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-20);
+    padding: var(--spacing-20);
+}
+
+.content:first-of-type {
+    background-color: var(--color-white);
+}
+
+.contentTitle {
+    grid-column: 1 / -1;
+    font-size: var(--text-head-3-size);
+    font-weight: var(--text-head-3-weight);
+    line-height: var(--text-head-3-line-height);
+    letter-spacing: var(--text-head-3-letter-spacing);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-6);
+}
+
+
+.contentTitle>span {
+    color: var(--color-neutral-60);
+    font-size: var(--text-body-2-size);
+    font-weight: var(--text-body-2-weight);
+    line-height: var(--text-body-2-line-height);
+    letter-spacing: var(--text-body-2-letter-spacing);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-4);
+}
+
+.label {
+    font-size: var(--text-head-4-size);
+    font-weight: var(--text-head-4-weight);
+    line-height: var(--text-head-4-line-height);
+    letter-spacing: var(--text-head-4-letter-spacing);
+}
+
+.noticeText {
+    color: var(--color-neutral-60);
+    font-size: var(--text-body-3-size);
+    font-weight: var(--text-body-3-weight);
+    line-height: var(--text-body-3-line-height);
+    letter-spacing: var(--text-body-3-letter-spacing);
+}
+
+.alertText {
+    grid-column: 1 / -1;
+    color: var(--color-status-danger);
+    font-size: var(--text-head-5-size);
+    font-weight: var(--text-head-5-weight);
+    line-height: var(--text-head-5-line-height);
+    letter-spacing: var(--text-head-5-letter-spacing);
+}
+
+.content ol {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-8);
+}
+
+.content ol li {
+    display: flex;
+    /* justify-content: space-between; */
+    gap: var(--spacing-8);
+    align-items: center;
+}
+
+.content ol li span:nth-of-type(1),
+.content ol li span:nth-of-type(2) {
+    font-size: var(--text-head-4-size);
+    font-weight: var(--text-head-4-weight);
+    line-height: var(--text-head-4-line-height);
+    letter-spacing: var(--text-head-4-letter-spacing);
+}
+
+.periodBox {
+    text-align: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: var(--border-width-default) solid var(--color-neutral-20);
+
+}
+
+.buttonWrapper {
+    background-color: var(--color-white);
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-12);
+    padding: 12px 20px;
+}
+
+.buttonWrapper button.submitButton,
+.buttonWrapper button.cancelButton {
+    width: 220px;
+}

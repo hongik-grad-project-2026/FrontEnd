@@ -1,4 +1,4 @@
-/* Toggle */
+/* Toggle 영역을 정의함. */
 
 .togglePanel {
     width: 36px;
@@ -40,16 +40,16 @@
 
 
 
-.toggleButton[data-active="false"]:hover .toggleCircle {
+.toggleButton[data-active="false"]:not(:disabled):hover .toggleCircle {
     left: 20px;
 }
 
-.toggleButton[data-active="true"]:hover .toggleCircle {
+.toggleButton[data-active="true"]:not(:disabled):hover .toggleCircle {
     left: 4px;
 }
 
 
-/* toggleButton */
+/* toggleButton 영역을 정의함. */
 
 .toggleButton {
     border: var(--border-width-default) solid var(--color-neutral-20);
@@ -95,7 +95,7 @@
     opacity: 1;
 }
 
-.toggleButton[data-active="true"]:hover .pinIcon {
+.toggleButton[data-active="true"]:not(:disabled):hover .pinIcon {
     opacity: calc(3/9);
 }
 
@@ -104,6 +104,11 @@
     opacity: calc(3/9);
 }
 
-.toggleButton[data-active="false"]:hover .pinIcon {
+.toggleButton[data-active="false"]:not(:disabled):hover .pinIcon {
     opacity: 1;
+}
+
+.toggleButton:disabled {
+    cursor: not-allowed;
+    opacity: calc(5/9);
 }

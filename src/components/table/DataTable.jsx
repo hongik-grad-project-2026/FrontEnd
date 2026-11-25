@@ -1,4 +1,4 @@
-//AdminRentalApprovalPage 해당 표
+// AdminRentalApprovalPage에서 사용하는 표 컴포넌트임.
 import Checkbox from "../common/Checkbox";
 import styles from "./DataTable.module.css";
 
@@ -32,7 +32,16 @@ function getCellClassName(baseClassName, column) {
     .join(" ");
 }
 
+function isInteractiveTarget(target) {
+  return Boolean(
+    target?.closest?.(
+      "a, button, input, select, textarea, [role='button'], [role='link']",
+    ),
+  );
+}
+
 function DataTable({
+  allowHeaderOverflow = false,
   ariaLabel = "데이터 표",
   bulkAction,
   className = "",
@@ -50,6 +59,7 @@ function DataTable({
   onRowClick,
 }) {
   const selectable = typeof onSelectedRowIdsChange === "function";
+  const clickable = typeof onRowClick === "function";
 
   const selectedRowIdSet = new Set(selectedRowIds);
 
@@ -102,12 +112,36 @@ function DataTable({
     );
   };
 
+  const handleRowClick = (event, row) => {
+    if (isInteractiveTarget(event.target)) {
+      return;
+    }
+
+    onRowClick?.(row);
+  };
+
+  const handleRowKeyDown = (event, row) => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    onRowClick?.(row);
+  };
+
   const showToolbar = selectable || bulkAction || search;
 
   const tableColumnCount = columns.length + (selectable ? 1 : 0);
 
   return (
-    <section className={rootClassName}>
+    <section
+      className={rootClassName}
+      data-header-overflow={allowHeaderOverflow || undefined}
+    >
       {showToolbar ? (
         <div className={styles.toolbar}>
           <div className={styles.toolbarStart}>
@@ -191,7 +225,7 @@ function DataTable({
               {rows.length > 0 ? (
                 rows.map((row, rowIndex) => {
                   const rowId = getRowId(row, rowIndex);
-
+                  const rowLabel = getRowLabel(row, rowIndex);
                   const isSelected = selectedRowIdSet.has(rowId);
 
                   return (
@@ -199,13 +233,27 @@ function DataTable({
                       key={rowId}
                       className={styles.bodyRow}
                       data-selected={isSelected}
-                      onClick={() => onRowClick(row)}
+                      data-clickable={clickable || undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                      aria-label={
+                        clickable ? `${rowLabel} 상세 보기` : undefined
+                      }
+                      onClick={
+                        clickable
+                          ? (event) => handleRowClick(event, row)
+                          : undefined
+                      }
+                      onKeyDown={
+                        clickable
+                          ? (event) => handleRowKeyDown(event, row)
+                          : undefined
+                      }
                     >
                       {selectable ? (
                         <td className={styles.selectionCell}>
                           <Checkbox
                             checked={isSelected}
-                            ariaLabel={`${getRowLabel(row, rowIndex)} 선택`}
+                            ariaLabel={`${rowLabel} 선택`}
                             onChange={(event) =>
                               updateRow(rowId, event.target.checked)
                             }

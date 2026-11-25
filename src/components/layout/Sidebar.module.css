@@ -1,4 +1,4 @@
-/*  ----- Sidebar ----- */
+/* Sidebar 영역을 정의함. */
 
 .sidebar {
     position: sticky;
@@ -27,8 +27,24 @@
     letter-spacing: var(--text-sidebar-title-letter-spacing);
 }
 
-.logoArea>img {
+.logoLink {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.logoLink>img {
     width: 80px;
+}
+
+.logoLink:focus-visible {
+    outline: var(--border-width-active) solid var(--color-focus);
+    outline-offset: var(--spacing-4);
+    border-radius: var(--radius-4);
 }
 
 .navCon {
@@ -38,7 +54,7 @@
 
 
 
-/* ----- NavSubtitle ----- */
+/* NavSubtitle 영역을 정의함. */
 .navSubtitle {
     color: var(--color-neutral-40);
     padding: 16px 12px 2px 12px;
@@ -55,7 +71,7 @@
 }
 
 
-/* ----- NavItem ----- */
+/* NavItem 영역을 정의함. */
 
 .navItem {
     background-color: var(--color-white);
@@ -106,7 +122,7 @@
 
 
 
-/* ----- AccountPanel ----- */
+/* AccountPanel 영역을 정의함. */
 
 .accountPanel {
     /* background-color: forestgreen; */
@@ -155,11 +171,43 @@
 }
 
 .profileimgCon {
-    background-color: white;
     width: 32px;
     height: 32px;
     border-radius: 999px;
+    position: relative;
+    overflow: hidden;
 }
+
+.profileimgCon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.accountPanel[data-userrole='admin'] .profileimgCon {
+    background-color: var(--color-white);
+}
+
+
+.accountPanel[data-userrole='student'] .profileimgCon::before {
+    content: "";
+    background-color: var(--color-neutral-20);
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    inset: 0;
+    background-image: url("/icons/icon24/profile.png");
+    background-size: 24px;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: calc(5/9);
+}
+
+.accountPanel[data-userrole='student'] .profileimgCon[data-profile-image='true']::before {
+    display: none;
+}
+
+
 
 .profiletextCon {
     display: flex;

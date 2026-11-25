@@ -9,21 +9,14 @@
   color: var(--color-neutral-90);
 }
 
-/* 포커스 테두리 공간을 확보하면서 제목과 콘텐츠의 시작선을 맞춥니다. */
 .contentViewport {
   width: calc(100% + var(--spacing-8));
   min-width: 0;
   margin: calc(-1 * var(--spacing-4));
   padding: var(--spacing-4);
-  overflow-x: auto;
 }
 
-.contentViewport:focus-visible {
-  outline: var(--border-width-active) solid var(--color-focus);
-  outline-offset: var(--spacing-2);
-}
-
-/* 좁은 화면에서도 탭·검색·표·하단의 배치를 함께 유지합니다. */
+/* 좁은 화면에서도 탭·검색·표·하단 배치를 함께 유지함. */
 .content {
   display: flex;
   width: 100%;
@@ -37,6 +30,21 @@
   width: 100%;
   min-width: 0;
   align-items: center;
+}
+
+.categoryState,
+.modelState {
+  min-height: 48px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  color: var(--color-neutral-60);
+}
+
+.modelState p {
+  margin: 0;
 }
 
 .categoryTabs {
@@ -57,6 +65,10 @@
 .dataTable {
   overflow: hidden;
   border-radius: var(--radius-8);
+}
+
+.dataTable tbody tr {
+  cursor: pointer;
 }
 
 .imageCell {
@@ -90,6 +102,13 @@
   mask-position: center;
   -webkit-mask-size: contain;
   mask-size: contain;
+}
+
+.modelImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .cellStack {
@@ -145,18 +164,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+.unknownStatus {
+  color: var(--color-neutral-60);
+  white-space: nowrap;
+}
+
 .actionButtons {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-4);
 }
 
-/* 셀의 overflow 안에서도 아이콘 버튼의 포커스를 확인할 수 있음 */
+/* 셀의 overflow 내부에서도 아이콘 버튼의 포커스를 확인할 수 있음. */
 .actionButton:focus-visible {
   outline-offset: calc(-1 * var(--border-width-active));
 }
 
-/* 좌우 영역의 너비를 같게 두어 페이지네이션을 표 전체 중앙에 배치 */
+/* 좌우 영역의 너비를 동일하게 설정해 페이지네이션을 표 중앙에 배치함. */
 .footer {
   display: grid;
   width: 100%;
@@ -172,10 +196,12 @@
   justify-self: center;
 }
 
-.registerButton {
+.btnsWrapper {
   grid-column: 3;
   grid-row: 1;
   justify-self: end;
+  display: flex;
+  gap: var(--spacing-12);
 }
 
 .visuallyHidden {

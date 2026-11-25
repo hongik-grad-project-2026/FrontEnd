@@ -1,16 +1,17 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { IconTextButton } from "../common/IconButton";
 import styles from "./Sidebar.module.css";
 
 
-// ----- NavItem ----- //
+// NavItem 영역을 정의함.
 
 function NavItem({
   itemName = "itemName",
   navLink = "/",
   icon = "dashboard",
   end = false,
+  forceActive = false,
 }) {
   return (
     <li>
@@ -18,7 +19,7 @@ function NavItem({
         end={end}
         to={navLink}
         className={({ isActive }) =>
-          `${styles.navItem} ${isActive ? styles["navItem-active"] : ""}`
+          `${styles.navItem} ${isActive || forceActive ? styles["navItem-active"] : ""}`
         }
       >
         <span
@@ -29,13 +30,13 @@ function NavItem({
           }}
         />
 
-        <span className={styles.itemName}>{itemName}</span>
+        <span>{itemName}</span>
       </NavLink>
     </li>
   );
 }
 
-// ----- NavSubtitle ----- //
+// NavSubtitle 영역을 정의함.
 
 function NavSubtitle({ titleName = "titleName", children }) {
   return (
@@ -47,27 +48,33 @@ function NavSubtitle({ titleName = "titleName", children }) {
   );
 }
 
-// ----- AccountPanel ----- //
+// AccountPanel 영역을 정의함.
 
-function AccountPanel({ userName, userRole, userId }) {
+function AccountPanel({ userName, userRole, userId, profileImage, onLogout }) {
   return (
-    <div className={styles.accountPanel}>
+    <div className={styles.accountPanel} data-userrole={userRole}>
       <div className={styles.buttonCon}>
         <IconTextButton icon="notification" text="알림" border={false} />
-
-        <IconTextButton icon="logout" text="로그아웃" border={false} />
+        <IconTextButton icon="logout" text="로그아웃" border={false} onClick={onLogout} />
       </div>
 
       <div className={styles.userinfoCon}>
-        <div className={styles.profileimgCon}>
-          <img src="/images/hongikLogo-circle.png" alt="" />
+        <div
+          className={styles.profileimgCon}
+          data-profile-image={Boolean(profileImage)}
+        >
+          {userRole === "admin" ? (
+            <img src="/images/hongikLogo-circle.png" alt="" />
+          ) : profileImage ? (
+            <img src={profileImage} alt="프로필" />
+          ) : null}
         </div>
 
         <div className={styles.profiletextCon}>
           <p className={styles.userName}>{userName}</p>
 
           <p className={styles.userInfo}>
-            {userRole === "admin" ? "관리자 모드" : userId}
+            {userId}
           </p>
         </div>
       </div>
@@ -75,75 +82,137 @@ function AccountPanel({ userName, userRole, userId }) {
   );
 }
 
-// ----- Sidebar ----- //
+// Sidebar 영역을 정의함.
 
 function Sidebar() {
-  // Context에서 사용자 정보 읽어옴
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const userName = user.name;
-  const userId = user.id;
+  const userId = user.loginId || user.id;
   const accountMode = user.role;
+  const profileImage = user.profileImageUrl;
+  const isAdmin = accountMode === "admin";
+  const isStudent = accountMode === "student";
+
+
+  async function handleLogout() {
+    await logout();
+    // 뒤로가기로 로그인 이전 페이지에 돌아가지 못하도록 처리함.
+    navigate("/login", { replace: true });
+  }
+
+  if (!isAdmin && !isStudent) {
+    return null;
+  }
+
+  const dashboardPath = isAdmin ? "/admin" : "/student";
+  const isDashboardActive =
+    location.pathname === dashboardPath ||
+    location.pathname === `${dashboardPath}/` ||
+    location.pathname.startsWith(`${dashboardPath}/notices`);
 
   return (
     <section className={styles.sidebar}>
       <h1 className={styles.logoArea}>
-        <img src="/images/h1.png" alt="홍익대학교" />
-        멀티미디어실
+        <Link
+          className={styles.logoLink}
+          to={dashboardPath}
+          aria-label="현재 역할 대시보드로 이동"
+        >
+          <img src="/images/h1.png" alt="홍익대학교" />
+          <span>멀티미디어실</span>
+        </Link>
       </h1>
 
       <div className={styles.navCon}>
         <NavSubtitle titleName="overview">
           <NavItem
             itemName="대시보드"
-            navLink={`/${accountMode}/`}
+            navLink={dashboardPath}
             icon="dashboard"
             end
+            forceActive={isDashboardActive}
           />
         </NavSubtitle>
 
-        <NavSubtitle titleName="Management">
-          <NavItem
-            itemName="대여신청 승인"
-            navLink={`/${accountMode}/approval`}
-            icon="approval"
-          />
 
-          <NavItem
-            itemName="대여 현황"
-            navLink={`/${accountMode}/status`}
-            icon="status"
-          />
+        {isAdmin ? (
+          <>
+            <NavSubtitle titleName="Management">
+              <NavItem
+                itemName="대여신청 승인"
+                navLink={`/${accountMode}/approval`}
+                icon="approval"
+              />
 
-          <NavItem
-            itemName="기자재 관리"
-            navLink={`/${accountMode}/equipment`}
-            icon="equipment"
-          />
+              <NavItem
+                itemName="대여 현황"
+                navLink={`/${accountMode}/status`}
+                icon="status"
+              />
 
-          <NavItem
-            itemName="대여 기록"
-            navLink={`/${accountMode}/history`}
-            icon="history"
-          />
-        </NavSubtitle>
+              <NavItem
+                itemName="기자재 관리"
+                navLink={`/${accountMode}/equipment`}
+                icon="equipment"
+              />
 
-        <NavSubtitle titleName="Account">
-          <NavItem
-            itemName="회원 관리"
-            navLink={`/${accountMode}/members`}
-            icon="members"
-          />
-        </NavSubtitle>
+              <NavItem
+                itemName="대여 기록"
+                navLink={`/${accountMode}/history`}
+                icon="history"
+              />
+            </NavSubtitle>
+
+            <NavSubtitle titleName="Account">
+              <NavItem
+                itemName="회원 관리"
+                navLink={`/${accountMode}/members`}
+                icon="members"
+              />
+            </NavSubtitle>
+          </>
+        ) : (
+          <>
+            <NavSubtitle titleName="Rental">
+
+              <NavItem
+                itemName="기자재 조회&신청"
+                navLink={`/${accountMode}/equipment`}
+                icon="equipment"
+              />
+              <NavItem
+                itemName="내 대여 내역"
+                navLink={`/${accountMode}/history`}
+                icon="status"
+              />
+            </NavSubtitle>
+
+            <NavSubtitle titleName="Account">
+              <NavItem
+                itemName="마이페이지"
+                navLink={`/${accountMode}/mypage`}
+                icon="user"
+              />
+            </NavSubtitle>
+          </>
+        )}
+
       </div>
 
       <AccountPanel
         userName={userName}
         userRole={accountMode}
         userId={userId}
+        profileImage={profileImage}
+        onLogout={handleLogout}
       />
     </section>
   );
 }
 
 export default Sidebar;
+
+
