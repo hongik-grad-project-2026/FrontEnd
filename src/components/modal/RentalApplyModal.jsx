@@ -165,8 +165,6 @@ function RentalApplyModalContent({
     }
   };
 
-  console.log("000000:", pickupMinDate, pickupMaxDate);
-
   return (
     <BaseModal
       isOpen={isOpen}

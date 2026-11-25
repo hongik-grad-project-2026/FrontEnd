@@ -53,7 +53,6 @@ function StudentEquipmentListPage() {
   const queryClient = useQueryClient();
   const { user } = useUser();
   const { semester, rentalType, isPrePickupPeriod } = useContext(SemesterContext);
-  console.log("----", semester);
 
   const [selectedCategory, setSelectedCategory] = useState(
     ALL_CATEGORY_OPTION.value,
