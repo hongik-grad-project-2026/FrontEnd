@@ -79,6 +79,17 @@
   border-radius: var(--radius-8);
 }
 
+.releaseButton {
+  padding: var(--spacing-4) var(--spacing-12);
+  color: var(--color-status-danger);
+  background: var(--color-white);
+  border: var(--border-width-default) solid currentColor;
+  border-radius: var(--radius-4);
+  cursor: pointer;
+}
+
+.releaseButton:disabled { color: var(--color-neutral-50); cursor: not-allowed; }
+
 .footer {
   display: flex;
   width: 100%;

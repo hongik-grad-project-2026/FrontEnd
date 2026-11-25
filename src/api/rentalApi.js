@@ -141,10 +141,11 @@ function assertRentalMockMode() {
   throw error;
 }
 
-function rentalListPath(path, { statuses = [], keyword = "", page = 0, size = 10 }) {
+function rentalListPath(path, { statuses = [], keyword = "", userId, page = 0, size = 10 }) {
   const query = new URLSearchParams();
   for (const status of statuses) query.append("status", status);
   if (keyword.trim()) query.set("keyword", keyword.trim());
+  if (userId != null) query.set("userId", String(userId));
   query.set("page", String(page));
   query.set("size", String(size));
   return `${path}?${query.toString()}`;
@@ -548,8 +549,29 @@ export async function getMemberRentalHistory(memberId, params = {}) {
   });
 }
 
+export async function getAdminMemberRentalHistory(memberId, params = {}) {
+  if (isMockMode) return getMemberRentalHistory(memberId, params);
+
+  const userId = Number(memberId);
+  if (!Number.isSafeInteger(userId) || userId < 1) {
+    throw new Error("회원 ID가 올바르지 않습니다.");
+  }
+
+  return getRentalPage("/admin/rentals", {
+    ...params,
+    userId,
+  }, mapAdminHistory);
+}
+
 export async function getMemberRentalCount(memberId, options = {}) {
-  assertRentalMockMode();
+  if (!isMockMode) {
+    const page = await getAdminMemberRentalHistory(memberId, {
+      page: 0,
+      size: 1,
+      signal: options.signal,
+    });
+    return page.totalElements;
+  }
 
   if (options.signal?.aborted) {
     const error = new Error("요청이 취소되었습니다.");

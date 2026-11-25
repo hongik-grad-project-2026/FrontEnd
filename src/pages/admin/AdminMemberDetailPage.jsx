@@ -1,20 +1,22 @@
-import { useId, useRef, useState } from "react";
+import { useContext, useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
 import {
   getAdminMemberBlacklistHistory,
   getAdminMemberDetail,
-  getAdminMemberRentalHistory,
+  registerAdminMemberBlacklist,
+  releaseAdminMemberBlacklist,
   updateAdminMember,
   updateAdminMemberStatus,
 } from "../../api/memberApi";
 import { isMockMode } from "../../api/client";
-import { getMemberRentalCount, rentalKeys } from "../../api/rentalApi";
+import { getAdminMemberRentalHistory, getMemberRentalCount, rentalKeys } from "../../api/rentalApi";
 
 import MemberInfoCard from "../../components/card/MemberInfoCard";
 import MemberEditModal from "../../components/modal/MemberEditModal";
 import ConfirmModal from "../../components/modal/ConfirmModal";
+import BlacklistActionModal from "../../components/modal/BlacklistActionModal";
 import IconButton from "../../components/common/IconButton";
 import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/common/SearchBar";
@@ -24,6 +26,7 @@ import PageHeader from "../../components/layout/PageHeader";
 import DataTable from "../../components/table/DataTable";
 import { MEMBER_STATUS, RENTAL_STATUS } from "../../constants/status";
 import { useUser } from "../../context/UserContext";
+import { SemesterContext } from "../../context/SemesterContext";
 
 import styles from "./AdminMemberDetailPage.module.css";
 
@@ -43,10 +46,13 @@ const MEMBER_STATUS_LABEL = {
 const RENTAL_BADGE_STATUS = {
   approvalPending: RENTAL_STATUS.pendingApproval,
   pickupPending: RENTAL_STATUS.readyForPickup,
+  renting: RENTAL_STATUS.renting,
   rented: RENTAL_STATUS.renting,
   overdue: RENTAL_STATUS.overdue,
   returned: RENTAL_STATUS.returned,
+  rejected: RENTAL_STATUS.rejected,
   canceled: RENTAL_STATUS.canceled,
+  noShow: RENTAL_STATUS.noShow,
 };
 
 function TextValue({ value, className = "" }) {
@@ -150,13 +156,30 @@ function RentalStatusCell({ rental }) {
   );
 }
 
+const BLACKLIST_NUMBER_COLUMN = {
+  key: "number",
+  header: "번호",
+  width: 80,
+  render: (record) => <TextValue value={String(record.number)} />,
+};
+
+const BLACKLIST_EDIT_COLUMN = {
+  key: "edit",
+  header: "수정",
+  width: 48,
+  render: (record) => (
+    <IconButton
+      icon="edit"
+      size={24}
+      disabled
+      ariaLabel={`${record.number}번 블랙리스트 기록 수정 기능 미연결`}
+      title="실제 수정 기능 미연결"
+    />
+  ),
+};
+
 const BLACKLIST_COLUMNS = [
-  {
-    key: "number",
-    header: "번호",
-    width: 80,
-    render: (record) => <TextValue value={String(record.number)} />,
-  },
+  BLACKLIST_NUMBER_COLUMN,
   {
     key: "startDate",
     header: "시작날짜",
@@ -183,19 +206,36 @@ const BLACKLIST_COLUMNS = [
     width: 732,
     render: (record) => <TextValue value={record.reason} />,
   },
+  BLACKLIST_EDIT_COLUMN,
+];
+
+const API_BLACKLIST_COLUMNS = [
+  BLACKLIST_NUMBER_COLUMN,
   {
-    key: "edit",
-    header: "수정",
-    width: 48,
-    render: (record) => (
-      <IconButton
-        icon="edit"
-        size={24}
-        disabled
-        ariaLabel={`${record.number}번 블랙리스트 기록 수정 기능 미연결`}
-        title="실제 수정 기능 미연결"
-      />
-    ),
+    key: "semesterName",
+    header: "적용 학기",
+    width: 130,
+    render: (record) => <TextValue value={record.semesterName} />,
+  },
+  {
+    key: "createdAt",
+    header: "등록일",
+    width: 120,
+    render: (record) => <DateValue value={record.createdAt} label="등록일" />,
+  },
+  {
+    key: "releasedAt",
+    header: "해제일",
+    width: 130,
+    render: (record) => record.active
+      ? <TextValue value="미해제" />
+      : <DateValue value={record.releasedAt} label="해제일" />,
+  },
+  {
+    key: "reason",
+    header: "블랙리스트 사유",
+    width: 540,
+    render: (record) => <TextValue value={record.reason} />,
   },
 ];
 
@@ -250,7 +290,9 @@ const RENTAL_COLUMNS = [
 
 function AdminMemberDetailPage() {
   const { user } = useUser();
+  const { schedule, isLoading: isSemesterLoading, error: semesterError } = useContext(SemesterContext);
   const canEditMember = isMockMode || user?.serverRole === "ASSISTANT";
+  const canManageBlacklist = !isMockMode && user?.serverRole === "ASSISTANT";
   const panelId = useId();
   const { userId } = useParams();
   const queryClient = useQueryClient();
@@ -259,6 +301,7 @@ function AdminMemberDetailPage() {
   const [selectedTab, setSelectedTab] = useState("info");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [nextMemberStatus, setNextMemberStatus] = useState(null);
+  const [blacklistAction, setBlacklistAction] = useState(null);
   const [blacklistPage, setBlacklistPage] = useState(1);
   const [rentalKeyword, setRentalKeyword] = useState("");
   const [rentalPage, setRentalPage] = useState(1);
@@ -317,6 +360,24 @@ function AdminMemberDetailPage() {
     },
   });
 
+  const blacklistMutation = useMutation({
+    mutationFn: ({ action, semesterId, reason }) => {
+      if (!canManageBlacklist) throw new Error("블랙리스트 관리 권한이 없습니다.");
+      return action.type === "register"
+        ? registerAdminMemberBlacklist({ memberId: userId, semesterId, reasonDetail: reason })
+        : releaseAdminMemberBlacklist({ blacklistId: action.record.id, releaseReason: reason });
+    },
+    onSuccess: (_result, { action }) => {
+      if (action.type === "register") setBlacklistPage(1);
+      queryClient.invalidateQueries({ queryKey: ["admin", "members", userId, "blacklist-history"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "members", "detail", userId] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "members", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "members", "counts"] });
+      queryClient.invalidateQueries({ queryKey: rentalKeys.all });
+      setBlacklistAction(null);
+    },
+  });
+
   const blacklistQuery = useQuery({
     queryKey: [
       "admin",
@@ -328,11 +389,12 @@ function AdminMemberDetailPage() {
         size: BLACKLIST_PAGE_SIZE,
       },
     ],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       getAdminMemberBlacklistHistory({
         memberId: userId,
         page: blacklistPage - 1,
         size: BLACKLIST_PAGE_SIZE,
+        signal,
       }),
     enabled:
       Boolean(userId) && Boolean(memberQuery.data) && selectedTab === "info",
@@ -346,12 +408,12 @@ function AdminMemberDetailPage() {
       size: RENTAL_PAGE_SIZE,
       keyword: rentalKeyword,
     }),
-    queryFn: () =>
-      getAdminMemberRentalHistory({
-        memberId: userId,
+    queryFn: ({ signal }) =>
+      getAdminMemberRentalHistory(userId, {
         page: rentalPage - 1,
         size: RENTAL_PAGE_SIZE,
         keyword: rentalKeyword,
+        signal,
       }),
     enabled:
       Boolean(userId) &&
@@ -364,7 +426,7 @@ function AdminMemberDetailPage() {
   const rentalCountQuery = useQuery({
     queryKey: rentalKeys.memberCount(userId),
     queryFn: ({ signal }) => getMemberRentalCount(userId, { signal }),
-    enabled: Boolean(userId) && Boolean(memberQuery.data) && isMockMode,
+    enabled: Boolean(userId) && Boolean(memberQuery.data),
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -419,6 +481,8 @@ function AdminMemberDetailPage() {
   ];
 
   const blacklistRows = blacklistQuery.data?.content ?? [];
+  const currentSemester = schedule?.current;
+  const hasCurrentSemester = Number.isSafeInteger(currentSemester?.semesterId) && currentSemester.semesterId > 0;
   const blacklistTotalPages = Math.max(1, blacklistQuery.data?.totalPages ?? 0);
   const resolvedBlacklistPage = blacklistQuery.data
     ? blacklistQuery.data.page + 1
@@ -495,6 +559,25 @@ function AdminMemberDetailPage() {
         ? "블랙리스트 해제"
         : null;
 
+  const apiBlacklistColumns = [
+    ...API_BLACKLIST_COLUMNS,
+    {
+      key: "release",
+      header: "해제",
+      width: 120,
+      align: "center",
+      render: (record) => record.active ? (
+        <button
+          type="button"
+          className={styles.releaseButton}
+          disabled={!canManageBlacklist || blacklistMutation.isPending}
+          title={!canManageBlacklist ? "조교만 해제할 수 있습니다." : undefined}
+          onClick={() => { blacklistMutation.reset(); setBlacklistAction({ type: "release", record }); }}
+        >해제</button>
+      ) : "-",
+    },
+  ];
+
   return (
     <div className={styles.page}>
       <PageHeader customTitle={member.name} />
@@ -552,12 +635,18 @@ function AdminMemberDetailPage() {
                   onEditPhone={canEditMember ? handleOpenEditModal : undefined}
                   onEditEmail={canEditMember ? handleOpenEditModal : undefined}
                   editDisabledReason={!canEditMember ? "조교만 수정할 수 있습니다." : undefined}
-                  statusActionLabel={statusActionLabel}
-                  statusActionPending={updateStatusMutation.isPending}
-                  onStatusAction={
-                    canEditMember && statusActionLabel ? handleOpenStatusModal : undefined
-                  }
-                  statusActionDisabledReason={!canEditMember ? "조교만 처리할 수 있습니다." : undefined}
+                  statusActionLabel={isMockMode ? statusActionLabel : "블랙리스트 등록"}
+                  statusActionPending={isMockMode ? updateStatusMutation.isPending : blacklistMutation.isPending}
+                  onStatusAction={isMockMode
+                    ? statusActionLabel ? handleOpenStatusModal : undefined
+                    : canManageBlacklist && hasCurrentSemester
+                      ? () => { blacklistMutation.reset(); setBlacklistAction({ type: "register" }); }
+                      : undefined}
+                  statusActionDisabledReason={isMockMode ? undefined
+                    : !canManageBlacklist ? "조교만 등록할 수 있습니다."
+                      : isSemesterLoading ? "학기 정보를 불러오는 중입니다."
+                        : semesterError ? "학기 정보를 불러오지 못했습니다."
+                          : "등록할 학기 정보가 없습니다."}
                 />
               </section>
 
@@ -573,9 +662,8 @@ function AdminMemberDetailPage() {
                     className={`${styles.state} ${styles.stateError}`}
                     role="alert"
                   >
-                    {blacklistQuery.error?.code === "API_NOT_SUPPORTED"
-                      ? "블랙리스트 기록 API가 아직 제공되지 않았습니다."
-                      : "블랙리스트 기록을 불러오지 못했습니다."}
+                    {blacklistQuery.error?.message ||
+                      "블랙리스트 기록을 불러오지 못했습니다."}
                   </p>
                 ) : (
                   <>
@@ -588,7 +676,7 @@ function AdminMemberDetailPage() {
                     <DataTable
                       className={styles.table}
                       ariaLabel={`${member.name} 블랙리스트 기록`}
-                      columns={BLACKLIST_COLUMNS}
+                      columns={isMockMode ? BLACKLIST_COLUMNS : apiBlacklistColumns}
                       rows={blacklistRows}
                       getRowId={(record) => record.id}
                       minWidth={1120}
@@ -624,9 +712,7 @@ function AdminMemberDetailPage() {
                   className={`${styles.state} ${styles.stateError}`}
                   role="alert"
                 >
-                  {rentalQuery.error?.code === "API_NOT_SUPPORTED"
-                    ? "회원별 대여 기록 API가 아직 제공되지 않았습니다."
-                    : "대여 내역을 불러오지 못했습니다."}
+                  대여 내역을 불러오지 못했습니다.
                 </p>
               ) : (
                 <>
@@ -642,7 +728,7 @@ function AdminMemberDetailPage() {
                     ariaLabel={`${member.name} 대여 내역`}
                     columns={RENTAL_COLUMNS}
                     rows={rentalRows}
-                    getRowId={(rental) => rental.id}
+                    getRowId={(rental) => rental.rentalId}
                     minWidth={1120}
                     emptyMessage={
                       rentalKeyword.trim()
@@ -677,6 +763,20 @@ function AdminMemberDetailPage() {
           onSubmit={(fields) => {
             if (canEditMember) updateMemberMutation.mutate(fields);
           }}
+        />
+      ) : null}
+
+      {canManageBlacklist && blacklistAction ? (
+        <BlacklistActionModal
+          key={`${blacklistAction.type}-${blacklistAction.record?.id ?? "new"}`}
+          action={blacklistAction}
+          memberName={member.name}
+          semester={currentSemester}
+          isPending={blacklistMutation.isPending}
+          error={blacklistMutation.error}
+          onClose={() => { if (!blacklistMutation.isPending) setBlacklistAction(null); }}
+          onSubmit={({ semesterId, reason }) =>
+            blacklistMutation.mutateAsync({ action: blacklistAction, semesterId, reason })}
         />
       ) : null}
 
