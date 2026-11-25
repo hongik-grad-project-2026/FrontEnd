@@ -32,7 +32,13 @@ function isOtherCategory(categoryOption) {
     categoryOption.label.trim() === "기타"
   );
 }
-
+function isSnackCategory(categoryOption) {
+  return (
+    typeof categoryOption?.label === "string" &&
+    (categoryOption.label.trim() === "간식" ||
+      categoryOption.label.trim() === "랜덤 간식 경품")
+  );
+}
 function createEmptyForm() {
   return {
     category: "",
@@ -105,6 +111,7 @@ function EquipmentCreateModal({
   );
 
   const isOtherCategorySelected = isOtherCategory(selectedCategoryOption);
+  const isSnackCategorySelected = isSnackCategory(selectedCategoryOption);
   const metadataInputsDisabled = isPending || isMetadataLocked;
 
   const isRequiredFormComplete =
@@ -114,7 +121,7 @@ function EquipmentCreateModal({
     isValidDate(formValues.disposalDate) &&
     Boolean(formValues.name.trim()) &&
     Boolean(formValues.accessories.trim()) &&
-    (isOtherCategorySelected || Boolean(formValues.labelPrefix.trim())) &&
+    (isOtherCategorySelected || isSnackCategorySelected || Boolean(formValues.labelPrefix.trim())) &&
     formValues.imageFile !== null;
 
   const updateFormValue = (field, value) => {
@@ -240,7 +247,7 @@ function EquipmentCreateModal({
       accessories: formValues.accessories.trim(),
       specification: formValues.specification.trim(),
       description: formValues.description.trim(),
-      labelPrefix: isOtherCategorySelected
+      labelPrefix: (isOtherCategorySelected || isSnackCategorySelected)
         ? ""
         : formValues.labelPrefix.trim(),
     };
@@ -332,7 +339,7 @@ function EquipmentCreateModal({
             </div>
 
             <div
-              className={`${styles.pairRow} ${isOtherCategorySelected ? styles.singleFieldRow : ""
+              className={`${styles.pairRow} ${isOtherCategorySelected || isSnackCategorySelected ? styles.singleFieldRow : ""
                 }`}
             >
               <div className={styles.field}>
@@ -385,7 +392,7 @@ function EquipmentCreateModal({
                   />
                 )}
               </div>
-              {!isOtherCategorySelected ? (
+              {(!isOtherCategorySelected && !isSnackCategorySelected) ? (
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor={labelPrefixId}>
                     라벨 번호 접두사*
