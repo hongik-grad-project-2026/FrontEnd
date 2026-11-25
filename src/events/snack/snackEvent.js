@@ -1,8 +1,7 @@
 // 졸업전시(11-26~27) 간식 이벤트 전용 모듈임. 전시 후 src/events/snack 폴더째 삭제함.
 
-// 룰렛 칸 크기(도)임. 0번 칸이 가장 작고, 당첨 결과가 항상 이 칸에 들어감.
-// 나머지 칸은 크기를 제각각으로 둬서 "작은 칸에 걸렸다"는 긴장감을 줌.
-export const ROULETTE_SLOT_ANGLES = [28, 74, 52, 82, 56, 68];
+// 간식 칸에 항상 멈추도록 첫 칸을 작게 배치함.
+export const ROULETTE_SLOT_ANGLES = [36, 81, 81, 81, 81];
 
 // 칸 색상은 기존 디자인 토큰만 사용함. 이웃한 칸끼리 겹치지 않게 배치함.
 const SEGMENT_THEMES = [
@@ -11,19 +10,17 @@ const SEGMENT_THEMES = [
   { fill: "var(--color-brand-secondary)", text: "var(--color-brand-primary-dark)" },
   { fill: "var(--color-brand-primary-dark)", text: "var(--color-white)" },
   { fill: "var(--color-white)", text: "var(--color-brand-primary-dark)" },
-  { fill: "var(--color-brand-secondary)", text: "var(--color-brand-primary-dark)" },
 ];
 
-// 목데이터임. 실제 연동 시 서버 응답(경품 목록 + 당첨 결과)으로 교체함.
+// 다섯 칸은 연출용이며, 실제 지급 간식은 서버 신청 응답을 사용함.
 export const MOCK_SNACK_ROULETTE = Object.freeze({
-  resultId: "A",
+  resultId: "snack",
   prizes: [
-    { id: "A", label: "A", name: "A 간식", imageUrl: "/images/snack/a.png" },
-    { id: "B", label: "B", name: "B 간식", imageUrl: "/images/snack/b.png" },
-    { id: "C", label: "C", name: "C 간식", imageUrl: "/images/snack/c.png" },
-    { id: "D", label: "D", name: "D 간식", imageUrl: "/images/snack/d.png" },
-    { id: "E", label: "E", name: "E 간식", imageUrl: "/images/snack/e.png" },
-    { id: "F", label: "F", name: "F 간식", imageUrl: "/images/snack/f.png" },
+    { id: "snack", label: "간식", labelLines: ["간식"] },
+    { id: "porsche", label: "포르쉐카이엔", labelLines: ["포르쉐", "카이엔"] },
+    { id: "lottery", label: "로또 1등 당첨 실물 용지", labelLines: ["로또 1등", "당첨 실물 용지"] },
+    { id: "skhynix", label: "SK 하이닉스 10주", labelLines: ["SK 하이닉스", "10주"] },
+    { id: "birkin", label: "에르메스 버킨백", labelLines: ["에르메스", "버킨백"] },
   ],
 });
 
@@ -36,7 +33,7 @@ export function buildRouletteSegments(prizes = [], resultId) {
     ROULETTE_SLOT_ANGLES.length,
   );
 
-  // 경품이 6개보다 적어도 한 바퀴(360도)를 채우도록 비율을 맞춤.
+  // 칸 수가 달라져도 한 바퀴(360도)를 채우도록 비율을 맞춤.
   const slots = ROULETTE_SLOT_ANGLES.slice(0, ordered.length);
   const slotTotal = slots.reduce((sum, angle) => sum + angle, 0) || 1;
 

@@ -5,8 +5,7 @@ const WHEEL_RADIUS = 178;
 const RIM_RADIUS = 196;
 const BULB_RADIUS = 187;
 const BULB_COUNT = 24;
-const IMAGE_DISTANCE = 108;
-const LABEL_DISTANCE = 156;
+const LABEL_DISTANCE = 126;
 
 function polar(angle, radius) {
   const radian = (angle * Math.PI) / 180;
@@ -27,12 +26,6 @@ function segmentPath(startAngle, endAngle, radius = WHEEL_RADIUS) {
     `A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`,
     "Z",
   ].join(" ");
-}
-
-// 좁은 칸에서도 이미지가 칸 밖으로 넘치지 않게 크기를 줄임.
-function imageSizeFor(sweep) {
-  const chord = 2 * IMAGE_DISTANCE * Math.sin((sweep * Math.PI) / 360);
-  return Math.max(28, Math.min(56, chord * 0.78));
 }
 
 // 룰렛 원판 화면 컴포넌트임. 회전은 rotorRef의 transform을 직접 바꿔서 처리함.
@@ -84,33 +77,31 @@ function RouletteWheel({
 
           {segments.map((segment) => {
             const middle = segment.startAngle + segment.sweep / 2;
-            const size = imageSizeFor(segment.sweep);
+            const { x, y } = polar(middle, LABEL_DISTANCE);
+            const lines = segment.labelLines ?? [segment.label];
 
             return (
               <g
                 key={`${segment.id}-content`}
                 className={styles.content}
                 data-dimmed={isWon && !segment.isResult}
-                transform={`rotate(${middle} ${CENTER} ${CENTER})`}
               >
                 <text
                   className={styles.label}
-                  x={CENTER}
-                  y={CENTER - LABEL_DISTANCE}
+                  x={x}
+                  y={y}
                   style={{ fill: segment.theme.text }}
                 >
-                  {segment.label}
+                  {lines.map((line, index) => (
+                    <tspan
+                      key={line}
+                      x={x}
+                      dy={index === 0 ? -((lines.length - 1) * 9) : 18}
+                    >
+                      {line}
+                    </tspan>
+                  ))}
                 </text>
-                {segment.imageUrl ? (
-                  <image
-                    href={segment.imageUrl}
-                    x={CENTER - size / 2}
-                    y={CENTER - IMAGE_DISTANCE - size / 2}
-                    width={size}
-                    height={size}
-                    preserveAspectRatio="xMidYMid meet"
-                  />
-                ) : null}
               </g>
             );
           })}

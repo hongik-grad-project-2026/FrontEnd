@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 
 import Button from "../../components/common/Button";
 import BaseModal from "../../components/modal/BaseModal";
@@ -30,12 +30,15 @@ function SnackRouletteModalContent({
   isOpen = false,
   prizes,
   resultId,
+  outcome,
+  autoStart = false,
   onClose,
   returnFocusRef,
 }) {
   const titleId = `${useId()}-title`;
   const startButtonRef = useRef(null);
   const confirmButtonRef = useRef(null);
+  const autoStartedRef = useRef(false);
 
   const segments = useMemo(
     () => buildRouletteSegments(prizes, resultId),
@@ -50,8 +53,27 @@ function SnackRouletteModalContent({
     },
   });
 
+  useEffect(() => {
+    if (!isOpen || !autoStart || autoStartedRef.current) return undefined;
+
+    const frameId = requestAnimationFrame(() => {
+      autoStartedRef.current = true;
+      spin();
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [isOpen, autoStart, spin]);
+
   const isWon = phase === "won";
-  const canClose = phase !== "spinning";
+  const canClose = autoStart ? isWon : phase !== "spinning";
+  const isBlankPrize = outcome?.rank === "꽝";
+  const actualResult = outcome
+    ? {
+        label: outcome.rank || "결과 확인 필요",
+        name: outcome.snackName || "대여 내역에서 결과를 확인해 주세요.",
+        imageUrl: outcome.imageUrl,
+      }
+    : result;
 
   const handleClose = (reason, event) => {
     if (canClose) onClose?.(reason, event);
@@ -65,7 +87,7 @@ function SnackRouletteModalContent({
       closeOnOverlay={false}
       className={styles.modal}
       ariaLabelledBy={titleId}
-      initialFocusRef={startButtonRef}
+      initialFocusRef={autoStart ? undefined : startButtonRef}
       returnFocusRef={returnFocusRef}
     >
       <header className={styles.header}>
@@ -75,7 +97,9 @@ function SnackRouletteModalContent({
 
       <div className={styles.body}>
         <p className={styles.guide} aria-live="polite">
-          {GUIDE_TEXT[phase]}
+          {isWon && outcome
+            ? "추첨 결과를 확인해 주세요."
+            : GUIDE_TEXT[phase]}
         </p>
 
         <div className={styles.stage}>
@@ -88,37 +112,29 @@ function SnackRouletteModalContent({
             onStart={spin}
           />
 
-          {isWon && result ? (
+          {isWon && actualResult ? (
             <div className={styles.resultLayer}>
               <div className={styles.resultCard} role="status">
                 <span className={styles.burst} aria-hidden="true" />
-                {result.imageUrl ? (
-                  <img className={styles.resultImage} src={result.imageUrl} alt="" />
+                {actualResult.imageUrl ? (
+                  <img className={styles.resultImage} src={actualResult.imageUrl} alt="" />
                 ) : null}
-                <p className={styles.resultEyebrow}>축하합니다!</p>
-                <p className={styles.resultTitle}>
-                  <strong>{result.label}</strong> 당첨!
+                <p className={styles.resultEyebrow}>
+                  {outcome
+                    ? isBlankPrize ? "간식 추첨 결과" : "간식 당첨 등수"
+                    : "추첨 완료"}
                 </p>
-                {result.name ? (
-                  <p className={styles.resultName}>{result.name}</p>
+                <p className={styles.resultTitle}>
+                  <strong>{actualResult.label}</strong>
+                  {!outcome && !isBlankPrize ? " 당첨!" : ""}
+                </p>
+                {actualResult.name ? (
+                  <p className={styles.resultName}>{actualResult.name}</p>
                 ) : null}
               </div>
             </div>
           ) : null}
         </div>
-
-        <ul className={styles.prizeList} aria-label="경품 목록">
-          {prizes.map((prize) => (
-            <li
-              key={prize.id}
-              className={styles.prizeItem}
-              data-selected={isWon && prize.id === resultId}
-            >
-              {prize.imageUrl ? <img src={prize.imageUrl} alt="" /> : null}
-              <span>{prize.label}</span>
-            </li>
-          ))}
-        </ul>
       </div>
 
       <footer className={styles.actions}>
@@ -134,7 +150,7 @@ function SnackRouletteModalContent({
         />
       </footer>
 
-      {isWon ? <Confetti /> : null}
+      {isWon && !isBlankPrize ? <Confetti /> : null}
     </BaseModal>
   );
 }

@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 
 import {
   getAdminMemberBlacklistHistory,
+  getAdminMemberCurrentBlacklistStatus,
   getAdminMemberDetail,
   registerAdminMemberBlacklist,
   releaseAdminMemberBlacklist,
@@ -293,6 +294,8 @@ function AdminMemberDetailPage() {
   const { schedule, isLoading: isSemesterLoading, error: semesterError } = useContext(SemesterContext);
   const canEditMember = isMockMode || user?.serverRole === "ASSISTANT";
   const canManageBlacklist = !isMockMode && user?.serverRole === "ASSISTANT";
+  const currentSemester = schedule?.current;
+  const hasCurrentSemester = Number.isSafeInteger(currentSemester?.semesterId) && currentSemester.semesterId > 0;
   const panelId = useId();
   const { userId } = useParams();
   const queryClient = useQueryClient();
@@ -370,6 +373,7 @@ function AdminMemberDetailPage() {
     onSuccess: (_result, { action }) => {
       if (action.type === "register") setBlacklistPage(1);
       queryClient.invalidateQueries({ queryKey: ["admin", "members", userId, "blacklist-history"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "members", userId, "blacklist-status"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "members", "detail", userId] });
       queryClient.invalidateQueries({ queryKey: ["admin", "members", "list"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "members", "counts"] });
@@ -398,6 +402,18 @@ function AdminMemberDetailPage() {
       }),
     enabled:
       Boolean(userId) && Boolean(memberQuery.data) && selectedTab === "info",
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const blacklistStatusQuery = useQuery({
+    queryKey: ["admin", "members", userId, "blacklist-status", currentSemester?.semesterId],
+    queryFn: ({ signal }) => getAdminMemberCurrentBlacklistStatus({
+      memberId: userId,
+      semesterId: currentSemester.semesterId,
+      signal,
+    }),
+    enabled: !isMockMode && Boolean(userId) && hasCurrentSemester,
     retry: false,
     refetchOnWindowFocus: false,
   });
@@ -465,6 +481,11 @@ function AdminMemberDetailPage() {
   }
 
   const member = memberQuery.data;
+  const membershipStatus = isMockMode || member.membershipStatus === "withdrawn"
+    ? member.membershipStatus
+    : blacklistStatusQuery.data === true
+      ? "suspended"
+      : blacklistStatusQuery.data === false ? "active" : "unknown";
 
   const tabItems = [
     {
@@ -481,8 +502,6 @@ function AdminMemberDetailPage() {
   ];
 
   const blacklistRows = blacklistQuery.data?.content ?? [];
-  const currentSemester = schedule?.current;
-  const hasCurrentSemester = Number.isSafeInteger(currentSemester?.semesterId) && currentSemester.semesterId > 0;
   const blacklistTotalPages = Math.max(1, blacklistQuery.data?.totalPages ?? 0);
   const resolvedBlacklistPage = blacklistQuery.data
     ? blacklistQuery.data.page + 1
@@ -624,10 +643,10 @@ function AdminMemberDetailPage() {
 
                 <MemberInfoCard
                   member={member}
-                  badgeStatus={MEMBER_BADGE_STATUS[member.membershipStatus]}
+                  badgeStatus={MEMBER_BADGE_STATUS[membershipStatus]}
                   statusLabel={
-                    MEMBER_STATUS_LABEL[member.membershipStatus] ??
-                    (member.membershipStatus === "active"
+                    MEMBER_STATUS_LABEL[membershipStatus] ??
+                    (membershipStatus === "active"
                       ? null
                       : "상태 미확인")
                   }
@@ -635,18 +654,21 @@ function AdminMemberDetailPage() {
                   onEditPhone={canEditMember ? handleOpenEditModal : undefined}
                   onEditEmail={canEditMember ? handleOpenEditModal : undefined}
                   editDisabledReason={!canEditMember ? "조교만 수정할 수 있습니다." : undefined}
-                  statusActionLabel={isMockMode ? statusActionLabel : "블랙리스트 등록"}
+                  statusActionLabel={isMockMode ? statusActionLabel
+                    : membershipStatus === "suspended" ? null : "블랙리스트 등록"}
                   statusActionPending={isMockMode ? updateStatusMutation.isPending : blacklistMutation.isPending}
                   onStatusAction={isMockMode
                     ? statusActionLabel ? handleOpenStatusModal : undefined
-                    : canManageBlacklist && hasCurrentSemester
+                    : canManageBlacklist && hasCurrentSemester && blacklistStatusQuery.data === false
                       ? () => { blacklistMutation.reset(); setBlacklistAction({ type: "register" }); }
                       : undefined}
                   statusActionDisabledReason={isMockMode ? undefined
                     : !canManageBlacklist ? "조교만 등록할 수 있습니다."
                       : isSemesterLoading ? "학기 정보를 불러오는 중입니다."
                         : semesterError ? "학기 정보를 불러오지 못했습니다."
-                          : "등록할 학기 정보가 없습니다."}
+                          : !hasCurrentSemester ? "등록할 학기 정보가 없습니다."
+                            : blacklistStatusQuery.isPending ? "블랙리스트 상태를 확인하는 중입니다."
+                              : blacklistStatusQuery.error?.message ?? "블랙리스트 상태를 확인할 수 없습니다."}
                 />
               </section>
 
