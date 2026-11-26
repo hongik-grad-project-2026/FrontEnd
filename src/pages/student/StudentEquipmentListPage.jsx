@@ -18,6 +18,7 @@ import {
   rentalKeys,
   studentRentalKeys,
 } from "../../api/rentalApi";
+import SnackRouletteModal from "../../events/snack/SnackRouletteModal";
 import Button from "../../components/common/Button";
 import SearchBar from "../../components/common/SearchBar";
 import Tabs from "../../components/common/Tabs";
@@ -28,6 +29,11 @@ import { useUser } from "../../context/UserContext";
 import { SemesterContext } from "../../context/SemesterContext";
 import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import styles from "./StudentEquipmentListPage.module.css";
+import { MOCK_SNACK_ROULETTE } from "../../events/snack/snackEvent.js";
+
+function isRandomSnackModel(model) {
+  return model?.category?.trim() === "간식" && model?.modelName?.trim() === "랜덤";
+}
 
 function formatSemesterDate(value) {
   if (!value) return "미정";
@@ -65,6 +71,7 @@ function StudentEquipmentListPage() {
   const rentalTriggerRef = useRef(null);
   const rentalSubmitGuardRef = useRef(false);
   const [rentalTarget, setRentalTarget] = useState(null);
+  const [snackResult, setSnackResult] = useState(null);
 
   const categoryQuery = useQuery({
     queryKey: categoryKeys.list(),
@@ -106,7 +113,12 @@ function StudentEquipmentListPage() {
 
   const rentalMutation = useMutation({
     mutationFn: createStudentRental,
-    onSuccess: async () => {
+    onSuccess: async (result, variables) => {
+      const isRandomSnack = isRandomSnackModel(variables.model);
+      if (isRandomSnack) {
+        setRentalTarget(null);
+        setSnackResult(result);
+      }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: rentalKeys.all }),
         queryClient.invalidateQueries({ queryKey: studentRentalKeys.all }),
@@ -114,7 +126,9 @@ function StudentEquipmentListPage() {
         queryClient.invalidateQueries({ queryKey: equipmentKeys.adminModelLists() }),
         queryClient.invalidateQueries({ queryKey: ["admin", "members"] }),
       ]);
-      setRentalTarget(null);
+      if (!isRandomSnack) {
+        setRentalTarget(null);
+      }
     },
     onSettled: () => {
       rentalSubmitGuardRef.current = false;
@@ -349,6 +363,16 @@ function StudentEquipmentListPage() {
           }
         }}
         onSubmit={handleSubmitRental}
+        returnFocusRef={rentalTriggerRef}
+      />
+
+      <SnackRouletteModal
+        isOpen={Boolean(snackResult)}
+        prizes={MOCK_SNACK_ROULETTE.prizes}
+        resultId={MOCK_SNACK_ROULETTE.resultId}
+        outcome={snackResult}
+        autoStart
+        onClose={() => setSnackResult(null)}
         returnFocusRef={rentalTriggerRef}
       />
     </main >

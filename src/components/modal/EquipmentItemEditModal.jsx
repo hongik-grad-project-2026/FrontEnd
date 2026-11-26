@@ -31,6 +31,14 @@ function allowsFlexibleRentalPolicies(categoryOption) {
   return FLEXIBLE_POLICY_CATEGORY_LABELS.has(categoryOption?.label);
 }
 
+function isSnackCategory(categoryOption) {
+  return (
+    typeof categoryOption?.label === "string" &&
+    (categoryOption.label.trim() === "간식" ||
+      categoryOption.label.trim() === "랜덤 간식 경품")
+  );
+}
+
 function isOtherCategory(categoryOption) {
   return (
     typeof categoryOption?.label === "string" &&
@@ -178,8 +186,9 @@ function EquipmentItemEditModal({
     (option) => option.value === formValues.category,
   );
   const isOtherCategorySelected = isOtherCategory(selectedCategoryOption);
+  const isSnackCategorySelected = isSnackCategory(selectedCategoryOption);
   const hasRequiredLabelPrefix =
-    isOtherCategorySelected || Boolean(normalizeText(formValues.labelPrefix));
+    isOtherCategorySelected || isSnackCategorySelected || Boolean(normalizeText(formValues.labelPrefix));
   const hasMetadataChanges = hasChangedValues(formValues, initialFormValues, { includeImage: false });
   const hasFormChanges = hasMetadataChanges ||
     formValues.replacementImageFile !== initialFormValues.replacementImageFile;
@@ -383,7 +392,7 @@ function EquipmentItemEditModal({
             </div>
 
             <div
-              className={`${styles.pairRow} ${isOtherCategorySelected ? styles.singleFieldRow : ""
+              className={`${styles.pairRow} ${isOtherCategorySelected || isSnackCategorySelected ? styles.singleFieldRow : ""
                 }`}
             >
               <div className={styles.field}>
@@ -439,7 +448,7 @@ function EquipmentItemEditModal({
                 )}
               </div>
 
-              {!isOtherCategorySelected ? (
+              {(!isOtherCategorySelected && !isSnackCategorySelected) ? (
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor={labelPrefixId}>
                     라벨 번호 접두사*
